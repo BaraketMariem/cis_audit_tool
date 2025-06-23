@@ -1,0 +1,63 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "cis_benchmark_version": "1.0.0",
+    "target_system": "RHEL 9",
+    "last_updated": "2024-01-01",
+    "total_rules": 150
+  },
+  "sections": {
+    "1": {
+      "title": "Initial Setup",
+      "description": "System initialization and basic security setup",
+      "rules_count": 25
+    },
+    "2": {
+      "title": "Services",
+      "description": "Service configuration and unnecessary service removal",
+      "rules_count": 20
+    },
+    "3": {
+      "title": "Network Configuration",
+      "description": "Network security and firewall configuration",
+      "rules_count": 15
+    },
+    "4": {
+      "title": "Logging and Auditing",
+      "description": "System logging and audit configuration",
+      "rules_count": 30
+    },
+    "5": {
+      "title": "Access, Authentication and Authorization",
+      "description": "User access control and authentication",
+      "rules_count": 35
+    },
+    "6": {
+      "title": "System Maintenance",
+      "description": "System file permissions and maintenance",
+      "rules_count": 25
+    }
+  },
+  "rules": {
+    "1.1.2": {
+      "title": "Ensure /tmp is configured",
+      "description": "The /tmp directory is a world-writable directory used for temporary storage by all users and some applications.",
+      "rationale": "Making /tmp its own file system allows an administrator to set the noexec option on the mount, making /tmp useless for an attacker to install executable code.",
+      "severity": "HIGH",
+      "level": 1,
+      "section": "1",
+      "automated": true,
+      "remediation": "Configure /tmp as separate partition or tmpfs mount"
+    },
+    "5.2.4": {
+      "title": "Ensure SSH root login is disabled",
+      "description": "The PermitRootLogin parameter specifies if the root user can log in using ssh.",
+      "rationale": "Disallowing root logins over SSH requires system admins to authenticate using their own individual account, then escalating to root via sudo or su.",
+      "severity": "HIGH",
+      "level": 1,
+      "section": "5",
+      "automated": true,
+      "remediation": "Set 'PermitRootLogin no' in /etc/ssh/sshd_config"
+    }
+  }
+}
