@@ -19,24 +19,7 @@ fi
 echo "🔥 Collecting firewall configuration..."
 systemctl is-active firewalld > "$DATA_DIR/firewall/firewalld_active.txt" 2>/dev/null
 systemctl is-enabled firewalld > "$DATA_DIR/firewall/firewalld_enabled.txt" 2>/dev/null
-systemctl is-enabled nftables > "$DATA_DIR/services/nftables_enabled.txt" 2>/dev/null
-systemctl is-enabled iptables > "$DATA_DIR/services/iptables_enabled.txt" 2>/dev/null
-
-# FirewallD specific data
-if systemctl is-active firewalld >/dev/null 2>&1; then
-    firewall-cmd --list-services > "$DATA_DIR/firewall/firewall_services.txt" 2>/dev/null
-    firewall-cmd --list-ports > "$DATA_DIR/firewall/firewall_ports.txt" 2>/dev/null
-    firewall-cmd --list-all-zones > "$DATA_DIR/firewall/firewall_zones.txt" 2>/dev/null
-fi
-
-# NFTables specific data
-if systemctl is-enabled nftables >/dev/null 2>&1; then
-    nft list ruleset > "$DATA_DIR/firewall/nftables_rules.txt" 2>/dev/null
-fi
-
-# IPTables specific data (legacy)
-iptables -L -n > "$DATA_DIR/firewall/iptables_rules.txt" 2>/dev/null
-ip6tables -L -n > "$DATA_DIR/firewall/ip6tables_rules.txt" 2>/dev/null
+firewall-cmd --get-default-zone > "$DATA_DIR/firewall/firewall_default_zone.txt" 2>/dev/null
 
 # Collect filesystem data
 echo "💾 Collecting filesystem information..."

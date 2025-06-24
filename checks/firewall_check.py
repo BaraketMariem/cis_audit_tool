@@ -56,10 +56,10 @@ def check_nftables_installed_online():
 
 def check_nftables_installed_offline(data_dir):
     """4.1.1 - Ensure nftables is installed - Offline"""
-    packages_file = Path(data_dir) / 'packages' / 'installed_packages.txt'
+    packages_file = Path(data_dir) / 'packages' / 'nftables_package.txt'
     if packages_file.exists():
         packages_content = packages_file.read_text()
-        if 'nftables-' in packages_content:
+        if 'nftables-' in packages_content and 'not installed' not in packages_content:
             return {'rule_id': '4.1.1', 'title': 'Ensure nftables is installed', 'status': 'PASS'}
     return {'rule_id': '4.1.1', 'title': 'Ensure nftables is installed', 'status': 'FAIL'}
 
@@ -85,24 +85,29 @@ def check_single_firewall_utility_online():
 def check_single_firewall_utility_offline(data_dir):
     """4.1.2 - Ensure a single firewall configuration utility is in use - Offline"""
     firewall_dir = Path(data_dir) / 'firewall'
-    services_dir = Path(data_dir) / 'services'
     
     active_firewalls = []
     
     # Check firewalld
     firewalld_active_file = firewall_dir / 'firewalld_active.txt'
-    if firewalld_active_file.exists() and 'active' in firewalld_active_file.read_text():
-        active_firewalls.append('firewalld')
+    if firewalld_active_file.exists():
+        content = firewalld_active_file.read_text()
+        if 'active' in content:
+            active_firewalls.append('firewalld')
     
     # Check nftables
-    nftables_enabled_file = services_dir / 'nftables_enabled.txt'
-    if nftables_enabled_file.exists() and 'enabled' in nftables_enabled_file.read_text():
-        active_firewalls.append('nftables')
+    nftables_enabled_file = firewall_dir / 'nftables_enabled.txt'
+    if nftables_enabled_file.exists():
+        content = nftables_enabled_file.read_text()
+        if 'enabled' in content:
+            active_firewalls.append('nftables')
     
     # Check iptables
-    iptables_enabled_file = services_dir / 'iptables_enabled.txt'
-    if iptables_enabled_file.exists() and 'enabled' in iptables_enabled_file.read_text():
-        active_firewalls.append('iptables')
+    iptables_active_file = firewall_dir / 'iptables_active.txt'
+    if iptables_active_file.exists():
+        content = iptables_active_file.read_text()
+        if 'active' in content:
+            active_firewalls.append('iptables')
     
     if len(active_firewalls) == 1:
         return {'rule_id': '4.1.2', 'title': 'Ensure a single firewall configuration utility is in use', 'status': 'PASS'}
@@ -147,7 +152,11 @@ def check_firewalld_drops_unnecessary_services_offline(data_dir):
     
     # Check if firewalld is active
     firewalld_active_file = firewall_dir / 'firewalld_active.txt'
-    if not firewalld_active_file.exists() or 'active' not in firewalld_active_file.read_text():
+    if not firewalld_active_file.exists():
+        return {'rule_id': '4.2.1', 'title': 'Ensure firewalld drops unnecessary services and ports', 'status': 'SKIP'}
+    
+    content = firewalld_active_file.read_text()
+    if 'active' not in content:
         return {'rule_id': '4.2.1', 'title': 'Ensure firewalld drops unnecessary services and ports', 'status': 'SKIP'}
     
     services_file = firewall_dir / 'firewall_services.txt'
@@ -157,19 +166,35 @@ def check_firewalld_drops_unnecessary_services_offline(data_dir):
     issues = []
     
     if services_file.exists():
-        services = services_file.read_text().strip()
-        if services:
-            active_services = services.split()
-            unnecessary = [svc for svc in active_services if svc not in necessary_services]
-            if unnecessary:
-                issues.append(f"Unnecessary services: {', '.join(unnecessary)}")
+        services_content = services_file.read_text()
+        # Extract services from the command output
+        lines = services_content.split('\n')
+        for line in lines:
+            if '--- STDOUT ---' in line:
+                # Find the line after STDOUT
+                idx = lines.index(line)
+                if idx + 1 < len(lines):
+                    services = lines[idx + 1].strip()
+                    if services:
+                        active_services = services.split()
+                        unnecessary = [svc for svc in active_services if svc not in necessary_services]
+                        if unnecessary:
+                            issues.append(f"Unnecessary services: {', '.join(unnecessary)}")
+                break
     
     if ports_file.exists():
-        ports = ports_file.read_text().strip()
-        if ports:
-            active_ports = ports.split()
-            if active_ports:
-                issues.append(f"Open ports: {', '.join(active_ports)}")
+        ports_content = ports_file.read_text()
+        lines = ports_content.split('\n')
+        for line in lines:
+            if '--- STDOUT ---' in line:
+                idx = lines.index(line)
+                if idx + 1 < len(lines):
+                    ports = lines[idx + 1].strip()
+                    if ports:
+                        active_ports = ports.split()
+                        if active_ports:
+                            issues.append(f"Open ports: {', '.join(active_ports)}")
+                break
     
     if issues:
         return {'rule_id': '4.2.1', 'title': 'Ensure firewalld drops unnecessary services and ports', 'status': 'FAIL'}
@@ -197,14 +222,18 @@ def check_firewalld_loopback_traffic_offline(data_dir):
     
     # Check if firewalld is active
     firewalld_active_file = firewall_dir / 'firewalld_active.txt'
-    if not firewalld_active_file.exists() or 'active' not in firewalld_active_file.read_text():
+    if not firewalld_active_file.exists():
+        return {'rule_id': '4.2.2', 'title': 'Ensure firewalld loopback traffic is configured', 'status': 'SKIP'}
+    
+    content = firewalld_active_file.read_text()
+    if 'active' not in content:
         return {'rule_id': '4.2.2', 'title': 'Ensure firewalld loopback traffic is configured', 'status': 'SKIP'}
     
     # Check for loopback configuration in zones
-    zones_file = firewall_dir / 'firewall_zones.txt'
-    if zones_file.exists():
-        content = zones_file.read_text()
-        if 'trusted' in content and 'lo' in content:
+    trusted_interfaces_file = firewall_dir / 'firewall_trusted_interfaces.txt'
+    if trusted_interfaces_file.exists():
+        content = trusted_interfaces_file.read_text()
+        if 'lo' in content:
             return {'rule_id': '4.2.2', 'title': 'Ensure firewalld loopback traffic is configured', 'status': 'PASS'}
     
     return {'rule_id': '4.2.2', 'title': 'Ensure firewalld loopback traffic is configured', 'status': 'FAIL'}
@@ -235,12 +264,15 @@ def check_nftables_base_chains_online():
 
 def check_nftables_base_chains_offline(data_dir):
     """4.3.1 - Ensure nftables base chains exist - Offline"""
-    services_dir = Path(data_dir) / 'services'
     firewall_dir = Path(data_dir) / 'firewall'
     
     # Check if nftables is enabled
-    nftables_enabled_file = services_dir / 'nftables_enabled.txt'
-    if not nftables_enabled_file.exists() or 'enabled' not in nftables_enabled_file.read_text():
+    nftables_enabled_file = firewall_dir / 'nftables_enabled.txt'
+    if not nftables_enabled_file.exists():
+        return {'rule_id': '4.3.1', 'title': 'Ensure nftables base chains exist', 'status': 'SKIP'}
+    
+    content = nftables_enabled_file.read_text()
+    if 'enabled' not in content:
         return {'rule_id': '4.3.1', 'title': 'Ensure nftables base chains exist', 'status': 'SKIP'}
     
     # Check for base chains in ruleset
@@ -278,12 +310,15 @@ def check_nftables_established_connections_online():
 
 def check_nftables_established_connections_offline(data_dir):
     """4.3.2 - Ensure nftables established connections are configured - Offline"""
-    services_dir = Path(data_dir) / 'services'
     firewall_dir = Path(data_dir) / 'firewall'
     
     # Check if nftables is enabled
-    nftables_enabled_file = services_dir / 'nftables_enabled.txt'
-    if not nftables_enabled_file.exists() or 'enabled' not in nftables_enabled_file.read_text():
+    nftables_enabled_file = firewall_dir / 'nftables_enabled.txt'
+    if not nftables_enabled_file.exists():
+        return {'rule_id': '4.3.2', 'title': 'Ensure nftables established connections are configured', 'status': 'SKIP'}
+    
+    content = nftables_enabled_file.read_text()
+    if 'enabled' not in content:
         return {'rule_id': '4.3.2', 'title': 'Ensure nftables established connections are configured', 'status': 'SKIP'}
     
     # Check for connection tracking rules
@@ -314,12 +349,15 @@ def check_nftables_default_deny_policy_online():
 
 def check_nftables_default_deny_policy_offline(data_dir):
     """4.3.3 - Ensure nftables default deny firewall policy - Offline"""
-    services_dir = Path(data_dir) / 'services'
     firewall_dir = Path(data_dir) / 'firewall'
     
     # Check if nftables is enabled
-    nftables_enabled_file = services_dir / 'nftables_enabled.txt'
-    if not nftables_enabled_file.exists() or 'enabled' not in nftables_enabled_file.read_text():
+    nftables_enabled_file = firewall_dir / 'nftables_enabled.txt'
+    if not nftables_enabled_file.exists():
+        return {'rule_id': '4.3.3', 'title': 'Ensure nftables default deny firewall policy', 'status': 'SKIP'}
+    
+    content = nftables_enabled_file.read_text()
+    if 'enabled' not in content:
         return {'rule_id': '4.3.3', 'title': 'Ensure nftables default deny firewall policy', 'status': 'SKIP'}
     
     # Check for default drop/deny policy
@@ -350,12 +388,15 @@ def check_nftables_loopback_traffic_online():
 
 def check_nftables_loopback_traffic_offline(data_dir):
     """4.3.4 - Ensure nftables loopback traffic is configured - Offline"""
-    services_dir = Path(data_dir) / 'services'
     firewall_dir = Path(data_dir) / 'firewall'
     
     # Check if nftables is enabled
-    nftables_enabled_file = services_dir / 'nftables_enabled.txt'
-    if not nftables_enabled_file.exists() or 'enabled' not in nftables_enabled_file.read_text():
+    nftables_enabled_file = firewall_dir / 'nftables_enabled.txt'
+    if not nftables_enabled_file.exists():
+        return {'rule_id': '4.3.4', 'title': 'Ensure nftables loopback traffic is configured', 'status': 'SKIP'}
+    
+    content = nftables_enabled_file.read_text()
+    if 'enabled' not in content:
         return {'rule_id': '4.3.4', 'title': 'Ensure nftables loopback traffic is configured', 'status': 'SKIP'}
     
     # Check for loopback rules

@@ -1,61 +1,37 @@
 """
-CIS Section 1: Initial Setup
-Filesystem partitions, software updates, mandatory access controls
+Filesystem and Partition Security Checks - CIS Section 1
 """
 from pathlib import Path
-
-def run_command(command):
-    """Execute a command and return its output"""
-    import subprocess
-    try:
-        result = subprocess.run(command, capture_output=True, text=True, timeout=30)
-        return result.stdout.strip() if result.stdout else None
-    except:
-        return None
+from utils.parsers import run_command, parse_config_file
 
 def run_online():
-    """Run Initial Setup checks on live system"""
+    """Run filesystem checks on live system"""
     results = []
-    
-    # 1.1 Filesystem Configuration
     results.append(check_tmp_partition_online())
     results.append(check_tmp_noexec_online())
     results.append(check_tmp_nodev_online())
     results.append(check_tmp_nosuid_online())
     results.append(check_var_tmp_partition_online())
     results.append(check_home_partition_online())
-    
-    # 1.6 Mandatory Access Controls
-    results.append(check_selinux_installed_online())
-    results.append(check_selinux_not_disabled_online())
-    results.append(check_selinux_enforcing_online())
-    
     return results
 
 def run_offline(data_dir):
-    """Run Initial Setup checks on collected data"""
+    """Run filesystem checks on collected data"""
     results = []
-    
-    # 1.1 Filesystem Configuration
     results.append(check_tmp_partition_offline(data_dir))
     results.append(check_tmp_noexec_offline(data_dir))
     results.append(check_tmp_nodev_offline(data_dir))
     results.append(check_tmp_nosuid_offline(data_dir))
     results.append(check_var_tmp_partition_offline(data_dir))
     results.append(check_home_partition_offline(data_dir))
-    
-    # 1.6 Mandatory Access Controls
-    results.append(check_selinux_installed_offline(data_dir))
-    results.append(check_selinux_not_disabled_offline(data_dir))
-    results.append(check_selinux_enforcing_offline(data_dir))
-    
     return results
 
-# 1.1 Filesystem Configuration
 def check_tmp_partition_online():
     """1.1.2 - Ensure /tmp is configured"""
     mount_output = run_command(['mount'])
-    if mount_output and ('/tmp' in mount_output or 'tmpfs' in mount_output):
+    df_output = run_command(['df', '/tmp'])
+    
+    if mount_output and ('/tmp' in mount_output or 'tmpfs' in df_output):
         return {'rule_id': '1.1.2', 'title': 'Ensure /tmp is configured', 'status': 'PASS'}
     else:
         return {'rule_id': '1.1.2', 'title': 'Ensure /tmp is configured', 'status': 'FAIL'}
@@ -63,11 +39,23 @@ def check_tmp_partition_online():
 def check_tmp_partition_offline(data_dir):
     """1.1.2 - Ensure /tmp is configured - Offline"""
     mount_file = Path(data_dir) / 'filesystem' / 'mount_output.txt'
+    fstab_file = Path(data_dir) / 'filesystem' / 'fstab'
+    
+    tmp_configured = False
     if mount_file.exists():
         mount_content = mount_file.read_text()
         if '/tmp' in mount_content or 'tmpfs' in mount_content:
-            return {'rule_id': '1.1.2', 'title': 'Ensure /tmp is configured', 'status': 'PASS'}
-    return {'rule_id': '1.1.2', 'title': 'Ensure /tmp is configured', 'status': 'FAIL'}
+            tmp_configured = True
+    
+    if fstab_file.exists():
+        fstab_content = fstab_file.read_text()
+        if '/tmp' in fstab_content:
+            tmp_configured = True
+    
+    if tmp_configured:
+        return {'rule_id': '1.1.2', 'title': 'Ensure /tmp is configured', 'status': 'PASS'}
+    else:
+        return {'rule_id': '1.1.2', 'title': 'Ensure /tmp is configured', 'status': 'FAIL'}
 
 def check_tmp_noexec_online():
     """1.1.3 - Ensure noexec option set on /tmp partition"""
@@ -144,78 +132,18 @@ def check_var_tmp_partition_offline(data_dir):
     return {'rule_id': '1.1.6', 'title': 'Ensure /var/tmp is configured', 'status': 'FAIL'}
 
 def check_home_partition_online():
-    """1.1.13 - Ensure /home is configured"""
+    """1.1.17 - Ensure /home is configured"""
     mount_output = run_command(['mount'])
     if mount_output and '/home' in mount_output:
-        return {'rule_id': '1.1.13', 'title': 'Ensure /home is configured', 'status': 'PASS'}
+        return {'rule_id': '1.1.17', 'title': 'Ensure /home is configured', 'status': 'PASS'}
     else:
-        return {'rule_id': '1.1.13', 'title': 'Ensure /home is configured', 'status': 'FAIL'}
+        return {'rule_id': '1.1.17', 'title': 'Ensure /home is configured', 'status': 'FAIL'}
 
 def check_home_partition_offline(data_dir):
-    """1.1.13 - Ensure /home is configured - Offline"""
+    """1.1.17 - Ensure /home is configured - Offline"""
     mount_file = Path(data_dir) / 'filesystem' / 'mount_output.txt'
     if mount_file.exists():
         mount_content = mount_file.read_text()
         if '/home' in mount_content:
-            return {'rule_id': '1.1.13', 'title': 'Ensure /home is configured', 'status': 'PASS'}
-    return {'rule_id': '1.1.13', 'title': 'Ensure /home is configured', 'status': 'FAIL'}
-
-# 1.6 Mandatory Access Controls
-def check_selinux_installed_online():
-    """1.6.1.1 - Ensure SELinux is installed"""
-    result = run_command(['rpm', '-q', 'libselinux'])
-    if result and 'not installed' not in result:
-        return {'rule_id': '1.6.1.1', 'title': 'Ensure SELinux is installed', 'status': 'PASS'}
-    else:
-        return {'rule_id': '1.6.1.1', 'title': 'Ensure SELinux is installed', 'status': 'FAIL'}
-
-def check_selinux_installed_offline(data_dir):
-    """1.6.1.1 - Ensure SELinux is installed - Offline"""
-    packages_file = Path(data_dir) / 'packages' / 'installed_packages.txt'
-    if packages_file.exists():
-        packages_content = packages_file.read_text()
-        if 'libselinux' in packages_content:
-            return {'rule_id': '1.6.1.1', 'title': 'Ensure SELinux is installed', 'status': 'PASS'}
-    return {'rule_id': '1.6.1.1', 'title': 'Ensure SELinux is installed', 'status': 'FAIL'}
-
-def check_selinux_not_disabled_online():
-    """1.6.1.2 - Ensure SELinux is not disabled in bootloader configuration"""
-    try:
-        with open('/proc/cmdline', 'r') as f:
-            cmdline = f.read()
-            if 'selinux=0' not in cmdline and 'enforcing=0' not in cmdline:
-                return {'rule_id': '1.6.1.2', 'title': 'Ensure SELinux is not disabled in bootloader configuration', 'status': 'PASS'}
-    except:
-        pass
-    return {'rule_id': '1.6.1.2', 'title': 'Ensure SELinux is not disabled in bootloader configuration', 'status': 'FAIL'}
-
-def check_selinux_not_disabled_offline(data_dir):
-    """1.6.1.2 - Ensure SELinux is not disabled in bootloader configuration - Offline"""
-    cmdline_file = Path(data_dir) / 'system' / 'cmdline.txt'
-    if cmdline_file.exists():
-        cmdline = cmdline_file.read_text()
-        if 'selinux=0' not in cmdline and 'enforcing=0' not in cmdline:
-            return {'rule_id': '1.6.1.2', 'title': 'Ensure SELinux is not disabled in bootloader configuration', 'status': 'PASS'}
-    return {'rule_id': '1.6.1.2', 'title': 'Ensure SELinux is not disabled in bootloader configuration', 'status': 'FAIL'}
-
-def check_selinux_enforcing_online():
-    """1.6.1.4 - Ensure the SELinux mode is enforcing"""
-    result = run_command(['getenforce'])
-    if result and result.strip().lower() == 'enforcing':
-        return {'rule_id': '1.6.1.4', 'title': 'Ensure the SELinux mode is enforcing', 'status': 'PASS'}
-    else:
-        return {'rule_id': '1.6.1.4', 'title': 'Ensure the SELinux mode is enforcing', 'status': 'FAIL'}
-
-def check_selinux_enforcing_offline(data_dir):
-    """1.6.1.4 - Ensure the SELinux mode is enforcing - Offline"""
-    getenforce_file = Path(data_dir) / 'selinux' / 'selinux_mode.txt'
-    if getenforce_file.exists():
-        content = getenforce_file.read_text()
-        # Extract the actual output from the collected file
-        lines = content.split('\n')
-        for line in lines:
-            if not line.startswith('#') and not line.startswith('Command:') and not line.startswith('Return Code:') and not line.startswith('---'):
-                if line.strip().lower() == 'enforcing':
-                    return {'rule_id': '1.6.1.4', 'title': 'Ensure the SELinux mode is enforcing', 'status': 'PASS'}
-                break
-    return {'rule_id': '1.6.1.4', 'title': 'Ensure the SELinux mode is enforcing', 'status': 'FAIL'}
+            return {'rule_id': '1.1.17', 'title': 'Ensure /home is configured', 'status': 'PASS'}
+    return {'rule_id': '1.1.17', 'title': 'Ensure /home is configured', 'status': 'FAIL'}

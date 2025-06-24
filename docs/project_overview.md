@@ -1,73 +1,46 @@
-# RHEL 9 CIS Benchmark Audit Tool - Complete Project Overview
+"""
+Core Auditor - Base class for all CIS checks
+"""
+from abc import ABC, abstractmethod
+from enum import Enum
+from dataclasses import dataclass
+from typing import List, Dict, Any
+from datetime import datetime
 
-## 🎯 Project Status
+class CheckStatus(Enum):
+    PASS = "PASS"
+    FAIL = "FAIL"
+    ERROR = "ERROR"
+    SKIP = "SKIP"
 
-### ✅ IMPLEMENTED (40%)
-- **Data Collection System**: Comprehensive system configuration collection
-- **Project Structure**: Well-organized codebase architecture  
-- **Basic Testing**: Collection testing framework
-- **Documentation**: Basic usage and setup documentation
+class Severity(Enum):
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+    CRITICAL = "CRITICAL"
 
-### ❌ TO BE IMPLEMENTED (60%)
-- **CIS Rule Engine**: Core auditing logic (CRITICAL)
-- **Offline Analysis**: File-based compliance checking
-- **Online Mode**: Direct live system auditing  
-- **Report Generation**: HTML/JSON/CSV reporting
-- **Remediation System**: Automated fix generation
-- **Complete Testing**: Full test suite
+@dataclass
+class CheckResult:
+    rule_id: str
+    title: str
+    status: CheckStatus
+    severity: Severity
+    details: str
+    remediation: str = None
+    timestamp: str = None
+    
+    def __post_init__(self):
+        if self.timestamp is None:
+            self.timestamp = datetime.now().isoformat()
 
-## 🏗️ Architecture Overview
-
-\`\`\`
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   COLLECTION    │    │   ANALYSIS      │    │   REPORTING     │
-│                 │    │                 │    │                 │
-│ • System Files  │───▶│ • CIS Rules     │───▶│ • HTML Reports  │
-│ • Commands      │    │ • Compliance    │    │ • JSON Export   │
-│ • Configurations│    │ • Scoring       │    │ • Executive     │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         ▼                       ▼                       ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   OFFLINE       │    │   ONLINE        │    │  REMEDIATION    │
-│                 │    │                 │    │                 │
-│ • File Analysis │    │ • Live Checks   │    │ • Fix Scripts   │
-│ • Batch Mode    │    │ • Real-time     │    │ • Risk Analysis │
-│ • Scheduled     │    │ • Interactive   │    │ • Automation    │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-\`\`\`
-
-## 📊 Implementation Priority
-
-### 🔥 CRITICAL (Must Implement First)
-1. **CIS Rule Engine** - Core auditing logic
-2. **Offline Analyzer** - File-based compliance checking  
-3. **Basic HTML Reporting** - Results presentation
-
-### ⚡ HIGH PRIORITY (Implement Second)  
-4. **Online Mode** - Direct system checking
-5. **JSON Export** - Machine-readable output
-6. **Remediation Generator** - Fix suggestions
-
-### 📈 MEDIUM PRIORITY (Implement Third)
-7. **Advanced Reporting** - Executive dashboards
-8. **Automated Remediation** - Apply fixes automatically
-9. **Compliance Tracking** - Historical analysis
-
-## 🎓 Educational Value
-
-This project demonstrates:
-- **Python System Programming**
-- **Linux System Administration** 
-- **Cybersecurity Best Practices**
-- **Security Auditing Methodologies**
-- **Compliance Framework Implementation**
-- **Report Generation and Automation**
-
-## 🚀 Next Steps
-
-1. **Implement CIS Rule Engine** (Most Critical)
-2. **Build Offline Analysis** 
-3. **Add Online Mode**
-4. **Create Report Generation**
-5. **Add Remediation System**
+class BaseAuditor(ABC):
+    def __init__(self):
+        self.results: List[CheckResult] = []
+    
+    @abstractmethod
+    def check(self, data: Dict[str, Any]) -> CheckResult:
+        """Perform the CIS check"""
+        pass
+    
+    def add_result(self, result: CheckResult):
+        self.results.append(result)

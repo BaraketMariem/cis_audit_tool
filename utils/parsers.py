@@ -1,29 +1,33 @@
 """
-Shared helper functions
+Utility functions for parsing system data
 """
 import subprocess
+from typing import Optional
 
-def run_command(command, timeout=30):
-    """Run a system command and return output"""
+def run_command(command: list) -> Optional[str]:
+    """Execute a command and return its output"""
     try:
-        result = subprocess.run(command, capture_output=True, text=True, timeout=timeout)
-        return result.stdout.strip() if result.returncode == 0 else None
-    except:
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+        return result.stdout.strip() if result.stdout else None
+    except (subprocess.TimeoutExpired, subprocess.CalledProcessError, FileNotFoundError):
         return None
 
-def parse_config_file(file_path):
-    """Parse configuration file into key-value pairs"""
+def parse_config_file(file_path: str) -> dict:
+    """Parse a configuration file and return key-value pairs"""
     config = {}
     try:
         with open(file_path, 'r') as f:
             for line in f:
                 line = line.strip()
-                if not line or line.startswith('#'):
-                    continue
-                if ' ' in line:
-                    parts = line.split()
-                    if len(parts) >= 2:
-                        config[parts[0]] = ' '.join(parts[1:])
-    except:
+                if line and not line.startswith('#'):
+                    if '=' in line:
+                        key, value = line.split('=', 1)
+                        config[key.strip()] = value.strip()
+    except FileNotFoundError:
         pass
     return config
