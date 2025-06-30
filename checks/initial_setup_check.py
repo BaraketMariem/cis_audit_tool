@@ -255,10 +255,9 @@ def check_filesystem_partitions_offline(data_dir):
     results = []
     
     mount_file = Path(data_dir) / 'filesystem' / 'mount_output.txt'
-    if not mount_file.exists():
-        return results
-    
-    mount_content = mount_file.read_text()
+    mount_content = ''
+    if mount_file.exists():
+        mount_content = mount_file.read_text()
     
     # Define partitions and their required options
     partitions = [
@@ -273,7 +272,7 @@ def check_filesystem_partitions_offline(data_dir):
     
     for partition, required_options, base_rule_id in partitions:
         # Check if partition exists
-        partition_exists = any(partition in line for line in mount_content.split('\n'))
+        partition_exists = any(partition in line for line in mount_content.split('\n')) if mount_content else False
         
         # Rule X.1 - Check if separate partition exists
         results.append({
@@ -393,6 +392,21 @@ def check_package_management_offline(data_dir):
             'title': 'Ensure repo_gpgcheck is globally activated',
             'status': 'PASS' if repo_gpgcheck_enabled else 'FAIL',
             'details': f'repo_gpgcheck is {"enabled" if repo_gpgcheck_enabled else "not enabled"} globally'
+        })
+    else:
+        # If file doesn't exist, mark as FAIL
+        results.append({
+            'rule_id': '1.2.1.2',
+            'title': 'Ensure gpgcheck is globally activated',
+            'status': 'FAIL',
+            'details': 'dnf.conf file not found'
+        })
+        
+        results.append({
+            'rule_id': '1.2.1.3',
+            'title': 'Ensure repo_gpgcheck is globally activated',
+            'status': 'FAIL',
+            'details': 'dnf.conf file not found'
         })
     
     # 1.2.1.4 - Repository configuration (Manual)
@@ -520,6 +534,45 @@ def check_selinux_offline(data_dir):
             'status': 'PASS' if selinux_installed else 'FAIL',
             'details': f'SELinux package: {"installed" if selinux_installed else "not installed"}'
         })
+        
+        # Check other packages while we have the file
+        mcstrans_not_installed = 'mcstrans' not in packages_content
+        results.append({
+            'rule_id': '1.3.1.7',
+            'title': 'Ensure the MCS Translation Service (mcstrans) is not installed',
+            'status': 'PASS' if mcstrans_not_installed else 'FAIL',
+            'details': f'mcstrans package: {"not installed" if mcstrans_not_installed else "installed"}'
+        })
+        
+        setroubleshoot_not_installed = 'setroubleshoot' not in packages_content
+        results.append({
+            'rule_id': '1.3.1.8',
+            'title': 'Ensure SETroubleshoot is not installed',
+            'status': 'PASS' if setroubleshoot_not_installed else 'FAIL',
+            'details': f'setroubleshoot package: {"not installed" if setroubleshoot_not_installed else "installed"}'
+        })
+    else:
+        # If packages file doesn't exist, mark as FAIL
+        results.append({
+            'rule_id': '1.3.1.1',
+            'title': 'Ensure SELinux is installed',
+            'status': 'FAIL',
+            'details': 'Package information not available'
+        })
+        
+        results.append({
+            'rule_id': '1.3.1.7',
+            'title': 'Ensure the MCS Translation Service (mcstrans) is not installed',
+            'status': 'FAIL',
+            'details': 'Package information not available'
+        })
+        
+        results.append({
+            'rule_id': '1.3.1.8',
+            'title': 'Ensure SETroubleshoot is not installed',
+            'status': 'FAIL',
+            'details': 'Package information not available'
+        })
     
     # 1.3.1.2 - Bootloader configuration
     cmdline_file = Path(data_dir) / 'system' / 'cmdline.txt'
@@ -531,6 +584,32 @@ def check_selinux_offline(data_dir):
             'title': 'Ensure SELinux is not disabled in bootloader configuration',
             'status': 'PASS' if selinux_not_disabled else 'FAIL',
             'details': f'SELinux bootloader status: {"not disabled" if selinux_not_disabled else "disabled"}'
+        })
+    else:
+        results.append({
+            'rule_id': '1.3.1.2',
+            'title': 'Ensure SELinux is not disabled in bootloader configuration',
+            'status': 'FAIL',
+            'details': 'Bootloader cmdline information not available'
+        })
+    
+    # 1.3.1.3 - SELinux policy
+    sestatus_file = Path(data_dir) / 'selinux' / 'sestatus.txt'
+    if sestatus_file.exists():
+        sestatus_content = sestatus_file.read_text()
+        policy_configured = 'targeted' in sestatus_content or 'mls' in sestatus_content
+        results.append({
+            'rule_id': '1.3.1.3',
+            'title': 'Ensure SELinux policy is configured',
+            'status': 'PASS' if policy_configured else 'FAIL',
+            'details': f'SELinux policy: {"configured" if policy_configured else "not configured"}'
+        })
+    else:
+        results.append({
+            'rule_id': '1.3.1.3',
+            'title': 'Ensure SELinux policy is configured',
+            'status': 'FAIL',
+            'details': 'SELinux status information not available'
         })
     
     # 1.3.1.4 & 1.3.1.5 - SELinux mode
@@ -564,6 +643,34 @@ def check_selinux_offline(data_dir):
                 'status': 'PASS' if mode_enforcing else 'FAIL',
                 'details': f'SELinux mode: {selinux_mode}'
             })
+        else:
+            results.append({
+                'rule_id': '1.3.1.4',
+                'title': 'Ensure the SELinux mode is not disabled',
+                'status': 'FAIL',
+                'details': 'SELinux mode could not be determined'
+            })
+            
+            results.append({
+                'rule_id': '1.3.1.5',
+                'title': 'Ensure the SELinux mode is enforcing',
+                'status': 'FAIL',
+                'details': 'SELinux mode could not be determined'
+            })
+    else:
+        results.append({
+            'rule_id': '1.3.1.4',
+            'title': 'Ensure the SELinux mode is not disabled',
+            'status': 'FAIL',
+            'details': 'SELinux mode information not available'
+        })
+        
+        results.append({
+            'rule_id': '1.3.1.5',
+            'title': 'Ensure the SELinux mode is enforcing',
+            'status': 'FAIL',
+            'details': 'SELinux mode information not available'
+        })
     
     # 1.3.1.6 - Unconfined services (Manual)
     results.append({
@@ -658,6 +765,13 @@ def check_bootloader_offline(data_dir):
             'status': 'PASS' if permissions_ok else 'FAIL',
             'details': f'Bootloader config permissions: {"correct" if permissions_ok else "incorrect"}'
         })
+    else:
+        results.append({
+            'rule_id': '1.4.2',
+            'title': 'Ensure access to bootloader config is configured',
+            'status': 'FAIL',
+            'details': 'Bootloader permissions information not available'
+        })
     
     return results
 
@@ -738,6 +852,21 @@ def check_process_hardening_offline(data_dir):
             'status': 'PASS' if ptrace_restricted else 'FAIL',
             'details': f'ptrace_scope: {"restricted" if ptrace_restricted else "not restricted"}'
         })
+    else:
+        # If sysctl file doesn't exist, mark as FAIL
+        results.append({
+            'rule_id': '1.5.1',
+            'title': 'Ensure address space layout randomization is enabled',
+            'status': 'FAIL',
+            'details': 'System configuration information not available'
+        })
+        
+        results.append({
+            'rule_id': '1.5.2',
+            'title': 'Ensure ptrace_scope is restricted',
+            'status': 'FAIL',
+            'details': 'System configuration information not available'
+        })
     
     # Check systemd services
     services_file = Path(data_dir) / 'services' / 'systemctl_list_unit_files.txt'
@@ -760,6 +889,21 @@ def check_process_hardening_offline(data_dir):
             'title': 'Ensure core dump storage is disabled',
             'status': 'PASS' if storage_disabled else 'FAIL',
             'details': f'systemd-coredump service: {"masked" if storage_disabled else "not masked"}'
+        })
+    else:
+        # If services file doesn't exist, mark as FAIL
+        results.append({
+            'rule_id': '1.5.3',
+            'title': 'Ensure core dump backtraces are disabled',
+            'status': 'FAIL',
+            'details': 'Service information not available'
+        })
+        
+        results.append({
+            'rule_id': '1.5.4',
+            'title': 'Ensure core dump storage is disabled',
+            'status': 'FAIL',
+            'details': 'Service information not available'
         })
     
     return results
@@ -857,6 +1001,13 @@ def check_crypto_policy_offline(data_dir):
             'status': 'PASS' if policy_not_legacy else 'FAIL',
             'details': f'Crypto policy: {policy}'
         })
+    else:
+        results.append({
+            'rule_id': '1.6.1',
+            'title': 'Ensure system wide crypto policy is not set to legacy',
+            'status': 'FAIL',
+            'details': 'Crypto policy information not available'
+        })
     
     # 1.6.2 - Check sshd config
     sshd_config_file = Path(data_dir) / 'ssh' / 'sshd_config'
@@ -868,6 +1019,13 @@ def check_crypto_policy_offline(data_dir):
             'title': 'Ensure system wide crypto policy is not set in sshd configuration',
             'status': 'PASS' if sshd_crypto_not_set else 'FAIL',
             'details': f'SSHD crypto policy override: {"not found" if sshd_crypto_not_set else "found"}'
+        })
+    else:
+        results.append({
+            'rule_id': '1.6.2',
+            'title': 'Ensure system wide crypto policy is not set in sshd configuration',
+            'status': 'FAIL',
+            'details': 'SSHD configuration not available'
         })
     
     # Check crypto policy backend files
@@ -900,6 +1058,28 @@ def check_crypto_policy_offline(data_dir):
             'title': 'Ensure system wide crypto policy disables cbc for ssh',
             'status': 'PASS' if cbc_disabled else 'FAIL',
             'details': f'CBC ciphers: {"disabled" if cbc_disabled else "enabled"}'
+        })
+    else:
+        # If openssh config doesn't exist, mark crypto checks as FAIL
+        results.append({
+            'rule_id': '1.6.3',
+            'title': 'Ensure system wide crypto policy disables sha1 hash and signature support',
+            'status': 'FAIL',
+            'details': 'Crypto policy backend configuration not available'
+        })
+        
+        results.append({
+            'rule_id': '1.6.4',
+            'title': 'Ensure system wide crypto policy disables macs less than 128 bits',
+            'status': 'FAIL',
+            'details': 'Crypto policy backend configuration not available'
+        })
+        
+        results.append({
+            'rule_id': '1.6.5',
+            'title': 'Ensure system wide crypto policy disables cbc for ssh',
+            'status': 'FAIL',
+            'details': 'Crypto policy backend configuration not available'
         })
     
     # Manual checks
@@ -970,6 +1150,13 @@ def check_warning_banners_online():
                 'status': 'PASS' if permissions_ok else 'FAIL',
                 'details': f'{file_path} permissions: {perms} {owner}:{group}'
             })
+        else:
+            results.append({
+                'rule_id': rule_id,
+                'title': f'Ensure access to {file_path} is configured',
+                'status': 'FAIL',
+                'details': f'Could not check permissions for {file_path}'
+            })
     
     return results
 
@@ -1004,6 +1191,34 @@ def check_warning_banners_offline(data_dir):
                 'title': f'Ensure {description} is configured properly',
                 'status': 'FAIL',
                 'details': f'{filename} file not found'
+            })
+    
+    # Check file permissions
+    permissions_files = [
+        ('motd', '1.7.4'),
+        ('issue', '1.7.5'),
+        ('issue.net', '1.7.6')
+    ]
+    
+    permissions_dir = Path(data_dir) / 'system_files'
+    
+    for filename, rule_id in permissions_files:
+        permissions_file = permissions_dir / f'{filename}_permissions.txt'
+        if permissions_file.exists():
+            content = permissions_file.read_text()
+            permissions_ok = '644 root root' in content
+            results.append({
+                'rule_id': rule_id,
+                'title': f'Ensure access to /etc/{filename} is configured',
+                'status': 'PASS' if permissions_ok else 'FAIL',
+                'details': f'/etc/{filename} permissions: {"correct" if permissions_ok else "incorrect"}'
+            })
+        else:
+            results.append({
+                'rule_id': rule_id,
+                'title': f'Ensure access to /etc/{filename} is configured',
+                'status': 'FAIL',
+                'details': f'Permission information for /etc/{filename} not available'
             })
     
     return results
@@ -1087,16 +1302,16 @@ def check_gnome_display_manager_online():
             })
         
         # 1.8.5 - GDM screen locks cannot be overridden
-        gdm_lock_file = '/etc/dconf/db/local.d/locks/screensaver'
+        gdm_lock_file = '/etc/dconf/db/local.d/locks/00-screensaver'
         try:
             with open(gdm_lock_file, 'r') as f:
                 lock_content = f.read()
-                lock_override_disabled = 'idle-delay' in lock_content and 'lock-enabled' in lock_content
+                lock_configured = '/org/gnome/desktop/screensaver/lock-enabled' in lock_content
                 results.append({
                     'rule_id': '1.8.5',
                     'title': 'Ensure GDM screen locks cannot be overridden',
-                    'status': 'PASS' if lock_override_disabled else 'FAIL',
-                    'details': f'GDM lock override: {"disabled" if lock_override_disabled else "not disabled"}'
+                    'status': 'PASS' if lock_configured else 'FAIL',
+                    'details': f'GDM lock override: {"prevented" if lock_configured else "not prevented"}'
                 })
         except:
             results.append({
@@ -1106,48 +1321,48 @@ def check_gnome_display_manager_online():
                 'details': 'GDM lock configuration file not found'
             })
         
-        # 1.8.6 - GDM automatic mounting disabled
-        gdm_media_file = '/etc/dconf/db/local.d/00-media-handling'
+        # 1.8.6 - GDM automatic mounting of removable media is disabled
+        gdm_media_file = '/etc/dconf/db/local.d/00-media-autorun'
         try:
             with open(gdm_media_file, 'r') as f:
                 media_content = f.read()
-                automount_disabled = 'automount=false' in media_content and 'automount-open=false' in media_content
+                media_disabled = 'automount=false' in media_content and 'automount-open=false' in media_content
                 results.append({
                     'rule_id': '1.8.6',
                     'title': 'Ensure GDM automatic mounting of removable media is disabled',
-                    'status': 'PASS' if automount_disabled else 'FAIL',
-                    'details': f'GDM automount: {"disabled" if automount_disabled else "not disabled"}'
+                    'status': 'PASS' if media_disabled else 'FAIL',
+                    'details': f'GDM automount: {"disabled" if media_disabled else "not disabled"}'
                 })
         except:
             results.append({
                 'rule_id': '1.8.6',
                 'title': 'Ensure GDM automatic mounting of removable media is disabled',
                 'status': 'FAIL',
-                'details': 'GDM media handling configuration file not found'
+                'details': 'GDM media autorun configuration file not found'
             })
         
-        # 1.8.7 - GDM automount override disabled
-        gdm_media_lock_file = '/etc/dconf/db/local.d/locks/media-handling'
+        # 1.8.7 - GDM disabling automatic mounting is not overridden
+        gdm_media_lock_file = '/etc/dconf/db/local.d/locks/00-media-autorun'
         try:
             with open(gdm_media_lock_file, 'r') as f:
                 media_lock_content = f.read()
-                automount_override_disabled = 'automount' in media_lock_content and 'automount-open' in media_lock_content
+                media_lock_configured = '/org/gnome/desktop/media-handling/automount' in media_lock_content
                 results.append({
                     'rule_id': '1.8.7',
                     'title': 'Ensure GDM disabling automatic mounting of removable media is not overridden',
-                    'status': 'PASS' if automount_override_disabled else 'FAIL',
-                    'details': f'GDM automount override: {"disabled" if automount_override_disabled else "not disabled"}'
+                    'status': 'PASS' if media_lock_configured else 'FAIL',
+                    'details': f'GDM automount override: {"prevented" if media_lock_configured else "not prevented"}'
                 })
         except:
             results.append({
                 'rule_id': '1.8.7',
                 'title': 'Ensure GDM disabling automatic mounting of removable media is not overridden',
                 'status': 'FAIL',
-                'details': 'GDM media handling lock file not found'
+                'details': 'GDM media autorun lock configuration file not found'
             })
         
-        # 1.8.8 - GDM autorun-never enabled
-        gdm_autorun_file = '/etc/dconf/db/local.d/00-media-handling'
+        # 1.8.8 - GDM autorun-never is enabled
+        gdm_autorun_file = '/etc/dconf/db/local.d/00-media-autorun'
         try:
             with open(gdm_autorun_file, 'r') as f:
                 autorun_content = f.read()
@@ -1156,45 +1371,56 @@ def check_gnome_display_manager_online():
                     'rule_id': '1.8.8',
                     'title': 'Ensure GDM autorun-never is enabled',
                     'status': 'PASS' if autorun_disabled else 'FAIL',
-                    'details': f'GDM autorun: {"disabled" if autorun_disabled else "not disabled"}'
+                    'details': f'GDM autorun-never: {"enabled" if autorun_disabled else "not enabled"}'
                 })
         except:
             results.append({
                 'rule_id': '1.8.8',
                 'title': 'Ensure GDM autorun-never is enabled',
                 'status': 'FAIL',
-                'details': 'GDM autorun configuration not found'
+                'details': 'GDM autorun configuration file not found'
             })
         
-        # 1.8.9 - GDM autorun-never not overridden
-        gdm_autorun_lock_file = '/etc/dconf/db/local.d/locks/media-handling'
+        # 1.8.9 - GDM autorun-never is not overridden
+        gdm_autorun_lock_file = '/etc/dconf/db/local.d/locks/00-media-autorun'
         try:
             with open(gdm_autorun_lock_file, 'r') as f:
                 autorun_lock_content = f.read()
-                autorun_override_disabled = 'autorun-never' in autorun_lock_content
+                autorun_lock_configured = '/org/gnome/desktop/media-handling/autorun-never' in autorun_lock_content
                 results.append({
                     'rule_id': '1.8.9',
                     'title': 'Ensure GDM autorun-never is not overridden',
-                    'status': 'PASS' if autorun_override_disabled else 'FAIL',
-                    'details': f'GDM autorun override: {"disabled" if autorun_override_disabled else "not disabled"}'
+                    'status': 'PASS' if autorun_lock_configured else 'FAIL',
+                    'details': f'GDM autorun-never override: {"prevented" if autorun_lock_configured else "not prevented"}'
                 })
         except:
             results.append({
                 'rule_id': '1.8.9',
                 'title': 'Ensure GDM autorun-never is not overridden',
                 'status': 'FAIL',
-                'details': 'GDM autorun lock file not found'
+                'details': 'GDM autorun lock configuration file not found'
             })
+    else:
+        # If GDM is not installed, mark GDM-specific checks as PASS
+        gdm_rules = ['1.8.2', '1.8.3', '1.8.4', '1.8.5', '1.8.6', '1.8.7', '1.8.8', '1.8.9']
+        gdm_titles = [
+            'Ensure GDM login banner is configured',
+            'Ensure GDM disable-user-list option is enabled',
+            'Ensure GDM screen locks when the user is idle',
+            'Ensure GDM screen locks cannot be overridden',
+            'Ensure GDM automatic mounting of removable media is disabled',
+            'Ensure GDM disabling automatic mounting of removable media is not overridden',
+            'Ensure GDM autorun-never is enabled',
+            'Ensure GDM autorun-never is not overridden'
+        ]
         
-        # 1.8.10 - XDMCP not enabled
-        gdm_xdmcp_check = run_command(['grep', '-i', 'enable.*true', '/etc/gdm/custom.conf'])
-        xdmcp_disabled = not gdm_xdmcp_check or 'xdmcp' not in gdm_xdmcp_check.lower()
-        results.append({
-            'rule_id': '1.8.10',
-            'title': 'Ensure XDMCP is not enabled',
-            'status': 'PASS' if xdmcp_disabled else 'FAIL',
-            'details': f'XDMCP: {"disabled" if xdmcp_disabled else "enabled"}'
-        })
+        for rule_id, title in zip(gdm_rules, gdm_titles):
+            results.append({
+                'rule_id': rule_id,
+                'title': title,
+                'status': 'PASS',
+                'details': 'GDM is not installed - check not applicable'
+            })
     
     return results
 
@@ -1204,263 +1430,199 @@ def check_gnome_display_manager_offline(data_dir):
     
     # 1.8.1 - Check if GDM is installed
     packages_file = Path(data_dir) / 'packages' / 'installed_packages.txt'
+    gdm_installed = False
+    
     if packages_file.exists():
         packages_content = packages_file.read_text()
-        gdm_removed = 'gdm-' not in packages_content
+        gdm_installed = 'gdm' in packages_content
         
         results.append({
             'rule_id': '1.8.1',
             'title': 'Ensure GNOME Display Manager is removed',
-            'status': 'PASS' if gdm_removed else 'FAIL',
-            'details': f'GDM package: {"not installed" if gdm_removed else "installed"}'
+            'status': 'PASS' if not gdm_installed else 'FAIL',
+            'details': f'GDM package: {"installed" if gdm_installed else "not installed"}'
         })
+    else:
+        results.append({
+            'rule_id': '1.8.1',
+            'title': 'Ensure GNOME Display Manager is removed',
+            'status': 'FAIL',
+            'details': 'Package information not available'
+        })
+    
+    # If GDM is installed, check its configuration
+    if gdm_installed:
+        gdm_dir = Path(data_dir) / 'gdm'
         
-        # If GDM is installed, check configuration files
-        if not gdm_removed:
-            gdm_dir = Path(data_dir) / 'gdm'
-            
-            # 1.8.2 - Banner configuration
-            banner_file = gdm_dir / '01-banner-message'
-            if banner_file.exists():
-                banner_content = banner_file.read_text()
-                banner_configured = 'banner-message-enable=true' in banner_content
-                results.append({
-                    'rule_id': '1.8.2',
-                    'title': 'Ensure GDM login banner is configured',
-                    'status': 'PASS' if banner_configured else 'FAIL',
-                    'details': f'GDM banner: {"configured" if banner_configured else "not configured"}'
-                })
-            
-            # 1.8.3 - User list configuration
-            user_list_file = gdm_dir / '00-login-screen'
-            if user_list_file.exists():
-                user_list_content = user_list_file.read_text()
-                user_list_disabled = 'disable-user-list=true' in user_list_content
-                results.append({
-                    'rule_id': '1.8.3',
-                    'title': 'Ensure GDM disable-user-list option is enabled',
-                    'status': 'PASS' if user_list_disabled else 'FAIL',
-                    'details': f'GDM user list: {"disabled" if user_list_disabled else "not disabled"}'
-                })
-        
-        # Add checks for 1.8.4 through 1.8.10 similar to online version but reading from data_dir files
-        
-        # 1.8.4-1.8.9 - GDM configuration files
-        gdm_config_files = [
-            ('00-screensaver', '1.8.4', 'GDM screen locks when the user is idle'),
-            ('screensaver_locks', '1.8.5', 'GDM screen locks cannot be overridden'),
-            ('00-media-handling', '1.8.6', 'GDM automatic mounting of removable media is disabled'),
-            ('media-handling_locks', '1.8.7', 'GDM disabling automatic mounting is not overridden'),
-            ('00-media-handling', '1.8.8', 'GDM autorun-never is enabled'),
-            ('media-handling_locks', '1.8.9', 'GDM autorun-never is not overridden')
-        ]
-        
-        for config_file, rule_id, title in gdm_config_files:
-            config_path = gdm_dir / config_file
-            if config_path.exists():
-                content = config_path.read_text()
-                # Simplified check - in real implementation would check specific settings
-                configured = len(content.strip()) > 0
-                results.append({
-                    'rule_id': rule_id,
-                    'title': f'Ensure {title}',
-                    'status': 'PASS' if configured else 'FAIL',
-                    'details': f'GDM configuration: {"found" if configured else "not found"}'
-                })
-            else:
-                results.append({
-                    'rule_id': rule_id,
-                    'title': f'Ensure {title}',
-                    'status': 'FAIL',
-                    'details': f'GDM configuration file {config_file} not found'
-                })
-        
-        # 1.8.10 - XDMCP
-        gdm_custom_file = gdm_dir / 'custom.conf'
-        if gdm_custom_file.exists():
-            custom_content = gdm_custom_file.read_text()
-            xdmcp_disabled = 'enable=true' not in custom_content.lower() or 'xdmcp' not in custom_content.lower()
+        # 1.8.2 - GDM login banner
+        banner_file = gdm_dir / '01-banner-message'
+        if banner_file.exists():
+            banner_content = banner_file.read_text()
+            banner_configured = 'banner-message-enable=true' in banner_content
             results.append({
-                'rule_id': '1.8.10',
-                'title': 'Ensure XDMCP is not enabled',
-                'status': 'PASS' if xdmcp_disabled else 'FAIL',
-                'details': f'XDMCP: {"disabled" if xdmcp_disabled else "enabled"}'
+                'rule_id': '1.8.2',
+                'title': 'Ensure GDM login banner is configured',
+                'status': 'PASS' if banner_configured else 'FAIL',
+                'details': f'GDM banner: {"configured" if banner_configured else "not configured"}'
             })
         else:
             results.append({
-                'rule_id': '1.8.10',
-                'title': 'Ensure XDMCP is not enabled',
+                'rule_id': '1.8.2',
+                'title': 'Ensure GDM login banner is configured',
+                'status': 'FAIL',
+                'details': 'GDM banner configuration not found'
+            })
+        
+        # 1.8.3 - GDM disable-user-list
+        user_list_file = gdm_dir / '00-login-screen'
+        if user_list_file.exists():
+            user_list_content = user_list_file.read_text()
+            user_list_disabled = 'disable-user-list=true' in user_list_content
+            results.append({
+                'rule_id': '1.8.3',
+                'title': 'Ensure GDM disable-user-list option is enabled',
+                'status': 'PASS' if user_list_disabled else 'FAIL',
+                'details': f'GDM user list: {"disabled" if user_list_disabled else "not disabled"}'
+            })
+        else:
+            results.append({
+                'rule_id': '1.8.3',
+                'title': 'Ensure GDM disable-user-list option is enabled',
+                'status': 'FAIL',
+                'details': 'GDM login screen configuration not found'
+            })
+        
+        # 1.8.4 - GDM screen locks when user is idle
+        screensaver_file = gdm_dir / '00-screensaver'
+        if screensaver_file.exists():
+            screensaver_content = screensaver_file.read_text()
+            idle_configured = 'idle-delay' in screensaver_content and 'lock-enabled=true' in screensaver_content
+            results.append({
+                'rule_id': '1.8.4',
+                'title': 'Ensure GDM screen locks when the user is idle',
+                'status': 'PASS' if idle_configured else 'FAIL',
+                'details': f'GDM idle lock: {"configured" if idle_configured else "not configured"}'
+            })
+        else:
+            results.append({
+                'rule_id': '1.8.4',
+                'title': 'Ensure GDM screen locks when the user is idle',
+                'status': 'FAIL',
+                'details': 'GDM screensaver configuration not found'
+            })
+        
+        # 1.8.5 - GDM screen locks cannot be overridden
+        screensaver_lock_file = gdm_dir / '00-screensaver-lock'
+        if screensaver_lock_file.exists():
+            lock_content = screensaver_lock_file.read_text()
+            lock_configured = '/org/gnome/desktop/screensaver/lock-enabled' in lock_content
+            results.append({
+                'rule_id': '1.8.5',
+                'title': 'Ensure GDM screen locks cannot be overridden',
+                'status': 'PASS' if lock_configured else 'FAIL',
+                'details': f'GDM lock override: {"prevented" if lock_configured else "not prevented"}'
+            })
+        else:
+            results.append({
+                'rule_id': '1.8.5',
+                'title': 'Ensure GDM screen locks cannot be overridden',
+                'status': 'FAIL',
+                'details': 'GDM lock configuration not found'
+            })
+        
+        # 1.8.6 - GDM automatic mounting of removable media is disabled
+        media_file = gdm_dir / '00-media-autorun'
+        if media_file.exists():
+            media_content = media_file.read_text()
+            media_disabled = 'automount=false' in media_content and 'automount-open=false' in media_content
+            results.append({
+                'rule_id': '1.8.6',
+                'title': 'Ensure GDM automatic mounting of removable media is disabled',
+                'status': 'PASS' if media_disabled else 'FAIL',
+                'details': f'GDM automount: {"disabled" if media_disabled else "not disabled"}'
+            })
+        else:
+            results.append({
+                'rule_id': '1.8.6',
+                'title': 'Ensure GDM automatic mounting of removable media is disabled',
+                'status': 'FAIL',
+                'details': 'GDM media autorun configuration not found'
+            })
+        
+        # 1.8.7 - GDM disabling automatic mounting is not overridden
+        media_lock_file = gdm_dir / '00-media-autorun-lock'
+        if media_lock_file.exists():
+            media_lock_content = media_lock_file.read_text()
+            media_lock_configured = '/org/gnome/desktop/media-handling/automount' in media_lock_content
+            results.append({
+                'rule_id': '1.8.7',
+                'title': 'Ensure GDM disabling automatic mounting of removable media is not overridden',
+                'status': 'PASS' if media_lock_configured else 'FAIL',
+                'details': f'GDM automount override: {"prevented" if media_lock_configured else "not prevented"}'
+            })
+        else:
+            results.append({
+                'rule_id': '1.8.7',
+                'title': 'Ensure GDM disabling automatic mounting of removable media is not overridden',
+                'status': 'FAIL',
+                'details': 'GDM media autorun lock configuration not found'
+            })
+        
+        # 1.8.8 - GDM autorun-never is enabled
+        if media_file.exists():
+            media_content = media_file.read_text()
+            autorun_disabled = 'autorun-never=true' in media_content
+            results.append({
+                'rule_id': '1.8.8',
+                'title': 'Ensure GDM autorun-never is enabled',
+                'status': 'PASS' if autorun_disabled else 'FAIL',
+                'details': f'GDM autorun-never: {"enabled" if autorun_disabled else "not enabled"}'
+            })
+        else:
+            results.append({
+                'rule_id': '1.8.8',
+                'title': 'Ensure GDM autorun-never is enabled',
+                'status': 'FAIL',
+                'details': 'GDM autorun configuration not found'
+            })
+        
+        # 1.8.9 - GDM autorun-never is not overridden
+        if media_lock_file.exists():
+            media_lock_content = media_lock_file.read_text()
+            autorun_lock_configured = '/org/gnome/desktop/media-handling/autorun-never' in media_lock_content
+            results.append({
+                'rule_id': '1.8.9',
+                'title': 'Ensure GDM autorun-never is not overridden',
+                'status': 'PASS' if autorun_lock_configured else 'FAIL',
+                'details': f'GDM autorun-never override: {"prevented" if autorun_lock_configured else "not prevented"}'
+            })
+        else:
+            results.append({
+                'rule_id': '1.8.9',
+                'title': 'Ensure GDM autorun-never is not overridden',
+                'status': 'FAIL',
+                'details': 'GDM autorun lock configuration not found'
+            })
+    else:
+        # If GDM is not installed, mark GDM-specific checks as PASS
+        gdm_rules = ['1.8.2', '1.8.3', '1.8.4', '1.8.5', '1.8.6', '1.8.7', '1.8.8', '1.8.9']
+        gdm_titles = [
+            'Ensure GDM login banner is configured',
+            'Ensure GDM disable-user-list option is enabled',
+            'Ensure GDM screen locks when the user is idle',
+            'Ensure GDM screen locks cannot be overridden',
+            'Ensure GDM automatic mounting of removable media is disabled',
+            'Ensure GDM disabling automatic mounting of removable media is not overridden',
+            'Ensure GDM autorun-never is enabled',
+            'Ensure GDM autorun-never is not overridden'
+        ]
+        
+        for rule_id, title in zip(gdm_rules, gdm_titles):
+            results.append({
+                'rule_id': rule_id,
+                'title': title,
                 'status': 'PASS',
-                'details': 'GDM custom.conf not found - XDMCP disabled by default'
+                'details': 'GDM is not installed - check not applicable'
             })
     
     return results
-
-# Legacy functions for backward compatibility
-def check_tmp_partition_online():
-    """1.1.2.1.1 - Ensure /tmp is a separate partition"""
-    mount_output = run_command(['mount'])
-    if mount_output and ('/tmp' in mount_output or 'tmpfs' in mount_output):
-        return {'rule_id': '1.1.2.1.1', 'title': 'Ensure /tmp is a separate partition', 'status': 'PASS'}
-    else:
-        return {'rule_id': '1.1.2.1.1', 'title': 'Ensure /tmp is a separate partition', 'status': 'FAIL'}
-
-def check_tmp_partition_offline(data_dir):
-    """1.1.2.1.1 - Ensure /tmp is a separate partition - Offline"""
-    mount_file = Path(data_dir) / 'filesystem' / 'mount_output.txt'
-    if mount_file.exists():
-        mount_content = mount_file.read_text()
-        if '/tmp' in mount_content or 'tmpfs' in mount_content:
-            return {'rule_id': '1.1.2.1.1', 'title': 'Ensure /tmp is a separate partition', 'status': 'PASS'}
-    return {'rule_id': '1.1.2.1.1', 'title': 'Ensure /tmp is a separate partition', 'status': 'FAIL'}
-
-def check_tmp_noexec_online():
-    """1.1.2.1.4 - Ensure noexec option set on /tmp partition"""
-    mount_output = run_command(['mount'])
-    if mount_output:
-        for line in mount_output.split('\n'):
-            if '/tmp' in line and 'noexec' in line:
-                return {'rule_id': '1.1.2.1.4', 'title': 'Ensure noexec option set on /tmp', 'status': 'PASS'}
-    return {'rule_id': '1.1.2.1.4', 'title': 'Ensure noexec option set on /tmp', 'status': 'FAIL'}
-
-def check_tmp_noexec_offline(data_dir):
-    """1.1.2.1.4 - Ensure noexec option set on /tmp partition - Offline"""
-    mount_file = Path(data_dir) / 'filesystem' / 'mount_output.txt'
-    if mount_file.exists():
-        mount_content = mount_file.read_text()
-        for line in mount_content.split('\n'):
-            if '/tmp' in line and 'noexec' in line:
-                return {'rule_id': '1.1.2.1.4', 'title': 'Ensure noexec option set on /tmp', 'status': 'PASS'}
-    return {'rule_id': '1.1.2.1.4', 'title': 'Ensure noexec option set on /tmp', 'status': 'FAIL'}
-
-def check_tmp_nodev_online():
-    """1.1.2.1.2 - Ensure nodev option set on /tmp partition"""
-    mount_output = run_command(['mount'])
-    if mount_output:
-        for line in mount_output.split('\n'):
-            if '/tmp' in line and 'nodev' in line:
-                return {'rule_id': '1.1.2.1.2', 'title': 'Ensure nodev option set on /tmp', 'status': 'PASS'}
-    return {'rule_id': '1.1.2.1.2', 'title': 'Ensure nodev option set on /tmp', 'status': 'FAIL'}
-
-def check_tmp_nodev_offline(data_dir):
-    """1.1.2.1.2 - Ensure nodev option set on /tmp partition - Offline"""
-    mount_file = Path(data_dir) / 'filesystem' / 'mount_output.txt'
-    if mount_file.exists():
-        mount_content = mount_file.read_text()
-        for line in mount_content.split('\n'):
-            if '/tmp' in line and 'nodev' in line:
-                return {'rule_id': '1.1.2.1.2', 'title': 'Ensure nodev option set on /tmp', 'status': 'PASS'}
-    return {'rule_id': '1.1.2.1.2', 'title': 'Ensure nodev option set on /tmp', 'status': 'FAIL'}
-
-def check_tmp_nosuid_online():
-    """1.1.2.1.3 - Ensure nosuid option set on /tmp partition"""
-    mount_output = run_command(['mount'])
-    if mount_output:
-        for line in mount_output.split('\n'):
-            if '/tmp' in line and 'nosuid' in line:
-                return {'rule_id': '1.1.2.1.3', 'title': 'Ensure nosuid option set on /tmp', 'status': 'PASS'}
-    return {'rule_id': '1.1.2.1.3', 'title': 'Ensure nosuid option set on /tmp', 'status': 'FAIL'}
-
-def check_tmp_nosuid_offline(data_dir):
-    """1.1.2.1.3 - Ensure nosuid option set on /tmp partition - Offline"""
-    mount_file = Path(data_dir) / 'filesystem' / 'mount_output.txt'
-    if mount_file.exists():
-        mount_content = mount_file.read_text()
-        for line in mount_content.split('\n'):
-            if '/tmp' in line and 'nosuid' in line:
-                return {'rule_id': '1.1.2.1.3', 'title': 'Ensure nosuid option set on /tmp', 'status': 'PASS'}
-    return {'rule_id': '1.1.2.1.3', 'title': 'Ensure nosuid option set on /tmp', 'status': 'FAIL'}
-
-def check_var_tmp_partition_online():
-    """1.1.2.5.1 - Ensure /var/tmp is configured"""
-    mount_output = run_command(['mount'])
-    if mount_output and '/var/tmp' in mount_output:
-        return {'rule_id': '1.1.2.5.1', 'title': 'Ensure /var/tmp is configured', 'status': 'PASS'}
-    else:
-        return {'rule_id': '1.1.2.5.1', 'title': 'Ensure /var/tmp is configured', 'status': 'FAIL'}
-
-def check_var_tmp_partition_offline(data_dir):
-    """1.1.2.5.1 - Ensure /var/tmp is configured - Offline"""
-    mount_file = Path(data_dir) / 'filesystem' / 'mount_output.txt'
-    if mount_file.exists():
-        mount_content = mount_file.read_text()
-        if '/var/tmp' in mount_content:
-            return {'rule_id': '1.1.2.5.1', 'title': 'Ensure /var/tmp is configured', 'status': 'PASS'}
-    return {'rule_id': '1.1.2.5.1', 'title': 'Ensure /var/tmp is configured', 'status': 'FAIL'}
-
-def check_home_partition_online():
-    """1.1.2.3.1 - Ensure /home is configured"""
-    mount_output = run_command(['mount'])
-    if mount_output and '/home' in mount_output:
-        return {'rule_id': '1.1.2.3.1', 'title': 'Ensure /home is configured', 'status': 'PASS'}
-    else:
-        return {'rule_id': '1.1.2.3.1', 'title': 'Ensure /home is configured', 'status': 'FAIL'}
-
-def check_home_partition_offline(data_dir):
-    """1.1.2.3.1 - Ensure /home is configured - Offline"""
-    mount_file = Path(data_dir) / 'filesystem' / 'mount_output.txt'
-    if mount_file.exists():
-        mount_content = mount_file.read_text()
-        if '/home' in mount_content:
-            return {'rule_id': '1.1.2.3.1', 'title': 'Ensure /home is configured', 'status': 'PASS'}
-    return {'rule_id': '1.1.2.3.1', 'title': 'Ensure /home is configured', 'status': 'FAIL'}
-
-# SELinux functions for backward compatibility
-def check_selinux_installed_online():
-    """1.3.1.1 - Ensure SELinux is installed"""
-    result = run_command(['rpm', '-q', 'libselinux'])
-    if result and 'not installed' not in result:
-        return {'rule_id': '1.3.1.1', 'title': 'Ensure SELinux is installed', 'status': 'PASS'}
-    else:
-        return {'rule_id': '1.3.1.1', 'title': 'Ensure SELinux is installed', 'status': 'FAIL'}
-
-def check_selinux_installed_offline(data_dir):
-    """1.3.1.1 - Ensure SELinux is installed - Offline"""
-    packages_file = Path(data_dir) / 'packages' / 'installed_packages.txt'
-    if packages_file.exists():
-        packages_content = packages_file.read_text()
-        if 'libselinux' in packages_content:
-            return {'rule_id': '1.3.1.1', 'title': 'Ensure SELinux is installed', 'status': 'PASS'}
-    return {'rule_id': '1.3.1.1', 'title': 'Ensure SELinux is installed', 'status': 'FAIL'}
-
-def check_selinux_not_disabled_online():
-    """1.3.1.2 - Ensure SELinux is not disabled in bootloader configuration"""
-    try:
-        with open('/proc/cmdline', 'r') as f:
-            cmdline = f.read()
-            if 'selinux=0' not in cmdline and 'enforcing=0' not in cmdline:
-                return {'rule_id': '1.3.1.2', 'title': 'Ensure SELinux is not disabled in bootloader configuration', 'status': 'PASS'}
-    except:
-        pass
-    return {'rule_id': '1.3.1.2', 'title': 'Ensure SELinux is not disabled in bootloader configuration', 'status': 'FAIL'}
-
-def check_selinux_not_disabled_offline(data_dir):
-    """1.3.1.2 - Ensure SELinux is not disabled in bootloader configuration - Offline"""
-    cmdline_file = Path(data_dir) / 'system' / 'cmdline.txt'
-    if cmdline_file.exists():
-        cmdline = cmdline_file.read_text()
-        if 'selinux=0' not in cmdline and 'enforcing=0' not in cmdline:
-            return {'rule_id': '1.3.1.2', 'title': 'Ensure SELinux is not disabled in bootloader configuration', 'status': 'PASS'}
-    return {'rule_id': '1.3.1.2', 'title': 'Ensure SELinux is not disabled in bootloader configuration', 'status': 'FAIL'}
-
-def check_selinux_enforcing_online():
-    """1.3.1.5 - Ensure the SELinux mode is enforcing"""
-    result = run_command(['getenforce'])
-    if result and result.strip().lower() == 'enforcing':
-        return {'rule_id': '1.3.1.5', 'title': 'Ensure the SELinux mode is enforcing', 'status': 'PASS'}
-    else:
-        return {'rule_id': '1.3.1.5', 'title': 'Ensure the SELinux mode is enforcing', 'status': 'FAIL'}
-
-def check_selinux_enforcing_offline(data_dir):
-    """1.3.1.5 - Ensure the SELinux mode is enforcing - Offline"""
-    getenforce_file = Path(data_dir) / 'selinux' / 'selinux_mode.txt'
-    if getenforce_file.exists():
-        content = getenforce_file.read_text()
-        # Extract the actual output from the collected file
-        lines = content.split('\n')
-        for line in lines:
-            if not line.startswith('#') and not line.startswith('Command:') and not line.startswith('Return Code:') and not line.startswith('---'):
-                if line.strip().lower() == 'enforcing':
-                    return {'rule_id': '1.3.1.5', 'title': 'Ensure the SELinux mode is enforcing', 'status': 'PASS'}
-                break
-    return {'rule_id': '1.3.1.5', 'title': 'Ensure the SELinux mode is enforcing', 'status': 'FAIL'}
