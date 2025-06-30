@@ -1207,8 +1207,6 @@ def check_package_management_online():
             results.append({
                 'rule_id': '1.2.2',
                 'title': 'Ensure gpgcheck is globally activated',
-                'status': 'PASS',
-                'title': 'Ensure gpgcheck is globally activated',
                 'status': 'FAIL',
                 'details': 'gpgcheck is not globally activated'
             })
@@ -2745,4 +2743,630 @@ def check_warning_banners_online():
             'details': f'Error checking /etc/issue permissions: {str(e)}'
         })
     
-    # 1
+    # 1.7.6 - Ensure permissions on /etc/issue.net are configured
+    try:
+        if os.path.exists('/etc/issue.net'):
+            stat_info = os.stat('/etc/issue.net')
+            mode = oct(stat_info.st_mode)[-3:]
+            
+            if mode == '644':
+                results.append({
+                    'rule_id': '1.7.6',
+                    'title': 'Ensure permissions on /etc/issue.net are configured',
+                    'status': 'PASS',
+                    'details': f'/etc/issue.net permissions: {mode}'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.7.6',
+                    'title': 'Ensure permissions on /etc/issue.net are configured',
+                    'status': 'FAIL',
+                    'details': f'/etc/issue.net permissions: {mode} (should be 644)'
+                })
+        else:
+            results.append({
+                'rule_id': '1.7.6',
+                'title': 'Ensure permissions on /etc/issue.net are configured',
+                'status': 'FAIL',
+                'details': '/etc/issue.net does not exist'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.7.6',
+            'title': 'Ensure permissions on /etc/issue.net are configured',
+            'status': 'FAIL',
+            'details': f'Error checking /etc/issue.net permissions: {str(e)}'
+        })
+    
+    return results
+
+def check_warning_banners_offline(data_dir):
+    """Check command line warning banners offline"""
+    results = []
+    
+    # 1.7.1 - Ensure message of the day is configured properly
+    try:
+        motd_file = Path(data_dir) / "config" / "motd.txt"
+        
+        if motd_file.exists():
+            content = motd_file.read_text().strip()
+            # Check if MOTD contains appropriate warning content or is empty (which is acceptable)
+            if content == "" or any(word in content.lower() for word in ['authorized', 'warning', 'notice', 'legal']):
+                results.append({
+                    'rule_id': '1.7.1',
+                    'title': 'Ensure message of the day is configured properly',
+                    'status': 'PASS',
+                    'details': 'MOTD is properly configured'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.7.1',
+                    'title': 'Ensure message of the day is configured properly',
+                    'status': 'FAIL',
+                    'details': 'MOTD contains inappropriate content'
+                })
+        else:
+            results.append({
+                'rule_id': '1.7.1',
+                'title': 'Ensure message of the day is configured properly',
+                'status': 'FAIL',
+                'details': 'No MOTD data available'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.7.1',
+            'title': 'Ensure message of the day is configured properly',
+            'status': 'FAIL',
+            'details': f'Error checking MOTD: {str(e)}'
+        })
+    
+    # 1.7.2 - Ensure local login warning banner is configured properly
+    try:
+        issue_file = Path(data_dir) / "config" / "issue.txt"
+        
+        if issue_file.exists():
+            content = issue_file.read_text().strip()
+            # Check if issue contains appropriate warning content or is empty (which is acceptable)
+            if content == "" or any(word in content.lower() for word in ['authorized', 'warning', 'notice', 'legal']):
+                results.append({
+                    'rule_id': '1.7.2',
+                    'title': 'Ensure local login warning banner is configured properly',
+                    'status': 'PASS',
+                    'details': 'Local login banner is properly configured'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.7.2',
+                    'title': 'Ensure local login warning banner is configured properly',
+                    'status': 'FAIL',
+                    'details': 'Local login banner contains inappropriate content'
+                })
+        else:
+            results.append({
+                'rule_id': '1.7.2',
+                'title': 'Ensure local login warning banner is configured properly',
+                'status': 'FAIL',
+                'details': 'No local login banner data available'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.7.2',
+            'title': 'Ensure local login warning banner is configured properly',
+            'status': 'FAIL',
+            'details': f'Error checking local login banner: {str(e)}'
+        })
+    
+    # 1.7.3 - Ensure remote login warning banner is configured properly
+    try:
+        issue_net_file = Path(data_dir) / "config" / "issue_net.txt"
+        
+        if issue_net_file.exists():
+            content = issue_net_file.read_text().strip()
+            # Check if issue.net contains appropriate warning content or is empty (which is acceptable)
+            if content == "" or any(word in content.lower() for word in ['authorized', 'warning', 'notice', 'legal']):
+                results.append({
+                    'rule_id': '1.7.3',
+                    'title': 'Ensure remote login warning banner is configured properly',
+                    'status': 'PASS',
+                    'details': 'Remote login banner is properly configured'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.7.3',
+                    'title': 'Ensure remote login warning banner is configured properly',
+                    'status': 'FAIL',
+                    'details': 'Remote login banner contains inappropriate content'
+                })
+        else:
+            results.append({
+                'rule_id': '1.7.3',
+                'title': 'Ensure remote login warning banner is configured properly',
+                'status': 'FAIL',
+                'details': 'No remote login banner data available'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.7.3',
+            'title': 'Ensure remote login warning banner is configured properly',
+            'status': 'FAIL',
+            'details': f'Error checking remote login banner: {str(e)}'
+        })
+    
+    # 1.7.4 - Ensure permissions on /etc/motd are configured
+    try:
+        motd_perms_file = Path(data_dir) / "config" / "motd_permissions.txt"
+        
+        if motd_perms_file.exists():
+            content = motd_perms_file.read_text().strip()
+            if '644' in content:
+                results.append({
+                    'rule_id': '1.7.4',
+                    'title': 'Ensure permissions on /etc/motd are configured',
+                    'status': 'PASS',
+                    'details': f'/etc/motd permissions: {content}'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.7.4',
+                    'title': 'Ensure permissions on /etc/motd are configured',
+                    'status': 'FAIL',
+                    'details': f'/etc/motd permissions: {content} (should be 644)'
+                })
+        else:
+            results.append({
+                'rule_id': '1.7.4',
+                'title': 'Ensure permissions on /etc/motd are configured',
+                'status': 'PASS',
+                'details': '/etc/motd does not exist (acceptable)'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.7.4',
+            'title': 'Ensure permissions on /etc/motd are configured',
+            'status': 'FAIL',
+            'details': f'Error checking /etc/motd permissions: {str(e)}'
+        })
+    
+    # 1.7.5 - Ensure permissions on /etc/issue are configured
+    try:
+        issue_perms_file = Path(data_dir) / "config" / "issue_permissions.txt"
+        
+        if issue_perms_file.exists():
+            content = issue_perms_file.read_text().strip()
+            if '644' in content:
+                results.append({
+                    'rule_id': '1.7.5',
+                    'title': 'Ensure permissions on /etc/issue are configured',
+                    'status': 'PASS',
+                    'details': f'/etc/issue permissions: {content}'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.7.5',
+                    'title': 'Ensure permissions on /etc/issue are configured',
+                    'status': 'FAIL',
+                    'details': f'/etc/issue permissions: {content} (should be 644)'
+                })
+        else:
+            results.append({
+                'rule_id': '1.7.5',
+                'title': 'Ensure permissions on /etc/issue are configured',
+                'status': 'FAIL',
+                'details': 'No /etc/issue permission data available'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.7.5',
+            'title': 'Ensure permissions on /etc/issue are configured',
+            'status': 'FAIL',
+            'details': f'Error checking /etc/issue permissions: {str(e)}'
+        })
+    
+    # 1.7.6 - Ensure permissions on /etc/issue.net are configured
+    try:
+        issue_net_perms_file = Path(data_dir) / "config" / "issue_net_permissions.txt"
+        
+        if issue_net_perms_file.exists():
+            content = issue_net_perms_file.read_text().strip()
+            if '644' in content:
+                results.append({
+                    'rule_id': '1.7.6',
+                    'title': 'Ensure permissions on /etc/issue.net are configured',
+                    'status': 'PASS',
+                    'details': f'/etc/issue.net permissions: {content}'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.7.6',
+                    'title': 'Ensure permissions on /etc/issue.net are configured',
+                    'status': 'FAIL',
+                    'details': f'/etc/issue.net permissions: {content} (should be 644)'
+                })
+        else:
+            results.append({
+                'rule_id': '1.7.6',
+                'title': 'Ensure permissions on /etc/issue.net are configured',
+                'status': 'FAIL',
+                'details': 'No /etc/issue.net permission data available'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.7.6',
+            'title': 'Ensure permissions on /etc/issue.net are configured',
+            'status': 'FAIL',
+            'details': f'Error checking /etc/issue.net permissions: {str(e)}'
+        })
+    
+    return results
+
+# 1.8 GNOME Display Manager
+def check_gdm_online():
+    """Check GNOME Display Manager configuration"""
+    results = []
+    
+    # 1.8.1 - Ensure GNOME Display Manager is removed
+    try:
+        result = subprocess.run("rpm -q gdm", shell=True, capture_output=True, text=True)
+        
+        if result.returncode != 0:
+            results.append({
+                'rule_id': '1.8.1',
+                'title': 'Ensure GNOME Display Manager is removed',
+                'status': 'PASS',
+                'details': 'GDM is not installed'
+            })
+        else:
+            results.append({
+                'rule_id': '1.8.1',
+                'title': 'Ensure GNOME Display Manager is removed',
+                'status': 'FAIL',
+                'details': f'GDM is installed: {result.stdout.strip()}'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.8.1',
+            'title': 'Ensure GNOME Display Manager is removed',
+            'status': 'FAIL',
+            'details': f'Error checking GDM: {str(e)}'
+        })
+    
+    # 1.8.2 - Ensure GDM login banner is configured
+    try:
+        gdm_conf_files = ['/etc/gdm/custom.conf', '/etc/dconf/db/gdm.d/01-banner-message']
+        banner_configured = False
+        
+        for conf_file in gdm_conf_files:
+            if os.path.exists(conf_file):
+                with open(conf_file, 'r') as f:
+                    content = f.read()
+                    if 'banner-message-enable=true' in content or 'banner-message-text' in content:
+                        banner_configured = True
+                        break
+        
+        if banner_configured:
+            results.append({
+                'rule_id': '1.8.2',
+                'title': 'Ensure GDM login banner is configured',
+                'status': 'PASS',
+                'details': 'GDM login banner is configured'
+            })
+        else:
+            results.append({
+                'rule_id': '1.8.2',
+                'title': 'Ensure GDM login banner is configured',
+                'status': 'FAIL',
+                'details': 'GDM login banner is not configured'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.8.2',
+            'title': 'Ensure GDM login banner is configured',
+            'status': 'FAIL',
+            'details': f'Error checking GDM banner: {str(e)}'
+        })
+    
+    # 1.8.3 - Ensure GDM disable-user-list option is enabled
+    try:
+        gdm_conf_files = ['/etc/dconf/db/gdm.d/00-login-screen']
+        user_list_disabled = False
+        
+        for conf_file in gdm_conf_files:
+            if os.path.exists(conf_file):
+                with open(conf_file, 'r') as f:
+                    content = f.read()
+                    if 'disable-user-list=true' in content:
+                        user_list_disabled = True
+                        break
+        
+        if user_list_disabled:
+            results.append({
+                'rule_id': '1.8.3',
+                'title': 'Ensure GDM disable-user-list option is enabled',
+                'status': 'PASS',
+                'details': 'GDM user list is disabled'
+            })
+        else:
+            results.append({
+                'rule_id': '1.8.3',
+                'title': 'Ensure GDM disable-user-list option is enabled',
+                'status': 'FAIL',
+                'details': 'GDM user list is not disabled'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.8.3',
+            'title': 'Ensure GDM disable-user-list option is enabled',
+            'status': 'FAIL',
+            'details': f'Error checking GDM user list: {str(e)}'
+        })
+    
+    # 1.8.4 - Ensure GDM screen locks when the user is idle
+    try:
+        gdm_conf_files = ['/etc/dconf/db/local.d/00-screensaver']
+        screen_lock_configured = False
+        
+        for conf_file in gdm_conf_files:
+            if os.path.exists(conf_file):
+                with open(conf_file, 'r') as f:
+                    content = f.read()
+                    if 'idle-delay' in content and 'lock-enabled=true' in content:
+                        screen_lock_configured = True
+                        break
+        
+        if screen_lock_configured:
+            results.append({
+                'rule_id': '1.8.4',
+                'title': 'Ensure GDM screen locks when the user is idle',
+                'status': 'PASS',
+                'details': 'GDM screen lock is configured'
+            })
+        else:
+            results.append({
+                'rule_id': '1.8.4',
+                'title': 'Ensure GDM screen locks when the user is idle',
+                'status': 'FAIL',
+                'details': 'GDM screen lock is not configured'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.8.4',
+            'title': 'Ensure GDM screen locks when the user is idle',
+            'status': 'FAIL',
+            'details': f'Error checking GDM screen lock: {str(e)}'
+        })
+    
+    # 1.8.5 - Ensure GDM screen locks cannot be overridden
+    try:
+        gdm_conf_files = ['/etc/dconf/db/local.d/locks/00-screensaver']
+        screen_lock_locked = False
+        
+        for conf_file in gdm_conf_files:
+            if os.path.exists(conf_file):
+                with open(conf_file, 'r') as f:
+                    content = f.read()
+                    if '/org/gnome/desktop/screensaver/idle-activation-enabled' in content:
+                        screen_lock_locked = True
+                        break
+        
+        if screen_lock_locked:
+            results.append({
+                'rule_id': '1.8.5',
+                'title': 'Ensure GDM screen locks cannot be overridden',
+                'status': 'PASS',
+                'details': 'GDM screen lock settings are locked'
+            })
+        else:
+            results.append({
+                'rule_id': '1.8.5',
+                'title': 'Ensure GDM screen locks cannot be overridden',
+                'status': 'FAIL',
+                'details': 'GDM screen lock settings are not locked'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.8.5',
+            'title': 'Ensure GDM screen locks cannot be overridden',
+            'status': 'FAIL',
+            'details': f'Error checking GDM screen lock override: {str(e)}'
+        })
+    
+    return results
+
+def check_gdm_offline(data_dir):
+    """Check GNOME Display Manager configuration offline"""
+    results = []
+    
+    # 1.8.1 - Ensure GNOME Display Manager is removed
+    try:
+        packages_file = Path(data_dir) / "packages" / "installed_packages.txt"
+        
+        if packages_file.exists():
+            content = packages_file.read_text()
+            if 'gdm' in content.lower():
+                results.append({
+                    'rule_id': '1.8.1',
+                    'title': 'Ensure GNOME Display Manager is removed',
+                    'status': 'FAIL',
+                    'details': 'GDM is installed'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.8.1',
+                    'title': 'Ensure GNOME Display Manager is removed',
+                    'status': 'PASS',
+                    'details': 'GDM is not installed'
+                })
+        else:
+            results.append({
+                'rule_id': '1.8.1',
+                'title': 'Ensure GNOME Display Manager is removed',
+                'status': 'FAIL',
+                'details': 'No package data available'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.8.1',
+            'title': 'Ensure GNOME Display Manager is removed',
+            'status': 'FAIL',
+            'details': f'Error checking GDM: {str(e)}'
+        })
+    
+    # 1.8.2 - Ensure GDM login banner is configured
+    try:
+        gdm_conf_file = Path(data_dir) / "config" / "gdm_custom.conf"
+        gdm_banner_file = Path(data_dir) / "config" / "gdm_banner.conf"
+        
+        banner_configured = False
+        
+        for conf_file in [gdm_conf_file, gdm_banner_file]:
+            if conf_file.exists():
+                content = conf_file.read_text()
+                if 'banner-message-enable=true' in content or 'banner-message-text' in content:
+                    banner_configured = True
+                    break
+        
+        if banner_configured:
+            results.append({
+                'rule_id': '1.8.2',
+                'title': 'Ensure GDM login banner is configured',
+                'status': 'PASS',
+                'details': 'GDM login banner is configured'
+            })
+        else:
+            results.append({
+                'rule_id': '1.8.2',
+                'title': 'Ensure GDM login banner is configured',
+                'status': 'FAIL',
+                'details': 'GDM login banner is not configured'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.8.2',
+            'title': 'Ensure GDM login banner is configured',
+            'status': 'FAIL',
+            'details': f'Error checking GDM banner: {str(e)}'
+        })
+    
+    # 1.8.3 - Ensure GDM disable-user-list option is enabled
+    try:
+        gdm_login_file = Path(data_dir) / "config" / "gdm_login_screen.conf"
+        
+        if gdm_login_file.exists():
+            content = gdm_login_file.read_text()
+            if 'disable-user-list=true' in content:
+                results.append({
+                    'rule_id': '1.8.3',
+                    'title': 'Ensure GDM disable-user-list option is enabled',
+                    'status': 'PASS',
+                    'details': 'GDM user list is disabled'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.8.3',
+                    'title': 'Ensure GDM disable-user-list option is enabled',
+                    'status': 'FAIL',
+                    'details': 'GDM user list is not disabled'
+                })
+        else:
+            results.append({
+                'rule_id': '1.8.3',
+                'title': 'Ensure GDM disable-user-list option is enabled',
+                'status': 'FAIL',
+                'details': 'No GDM login screen config data available'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.8.3',
+            'title': 'Ensure GDM disable-user-list option is enabled',
+            'status': 'FAIL',
+            'details': f'Error checking GDM user list: {str(e)}'
+        })
+    
+    # 1.8.4 - Ensure GDM screen locks when the user is idle
+    try:
+        screensaver_file = Path(data_dir) / "config" / "gdm_screensaver.conf"
+        
+        if screensaver_file.exists():
+            content = screensaver_file.read_text()
+            if 'idle-delay' in content and 'lock-enabled=true' in content:
+                results.append({
+                    'rule_id': '1.8.4',
+                    'title': 'Ensure GDM screen locks when the user is idle',
+                    'status': 'PASS',
+                    'details': 'GDM screen lock is configured'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.8.4',
+                    'title': 'Ensure GDM screen locks when the user is idle',
+                    'status': 'FAIL',
+                    'details': 'GDM screen lock is not configured'
+                })
+        else:
+            results.append({
+                'rule_id': '1.8.4',
+                'title': 'Ensure GDM screen locks when the user is idle',
+                'status': 'FAIL',
+                'details': 'No GDM screensaver config data available'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.8.4',
+            'title': 'Ensure GDM screen locks when the user is idle',
+            'status': 'FAIL',
+            'details': f'Error checking GDM screen lock: {str(e)}'
+        })
+    
+    # 1.8.5 - Ensure GDM screen locks cannot be overridden
+    try:
+        screensaver_locks_file = Path(data_dir) / "config" / "gdm_screensaver_locks.conf"
+        
+        if screensaver_locks_file.exists():
+            content = screensaver_locks_file.read_text()
+            if '/org/gnome/desktop/screensaver/idle-activation-enabled' in content:
+                results.append({
+                    'rule_id': '1.8.5',
+                    'title': 'Ensure GDM screen locks cannot be overridden',
+                    'status': 'PASS',
+                    'details': 'GDM screen lock settings are locked'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.8.5',
+                    'title': 'Ensure GDM screen locks cannot be overridden',
+                    'status': 'FAIL',
+                    'details': 'GDM screen lock settings are not locked'
+                })
+        else:
+            results.append({
+                'rule_id': '1.8.5',
+                'title': 'Ensure GDM screen locks cannot be overridden',
+                'status': 'FAIL',
+                'details': 'No GDM screensaver locks config data available'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.8.5',
+            'title': 'Ensure GDM screen locks cannot be overridden',
+            'status': 'FAIL',
+            'details': f'Error checking GDM screen lock override: {str(e)}'
+        })
+    
+    return results
