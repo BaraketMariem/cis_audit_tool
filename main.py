@@ -27,276 +27,183 @@ def print_banner():
     print(banner)
 
 def print_results(results, verbose=False, failed_only=False):
-    """Print audit results with enhanced formatting"""
+    """Print audit results with summary"""
     if not results:
-        print("❌ No results to display.")
+        print("❌ No results to display. Check for errors above.")
         return
+        
+    total = len(results)
+    passed = len([r for r in results if r.get('status') == 'PASS'])
+    failed = len([r for r in results if r.get('status') == 'FAIL'])
+    skipped = len([r for r in results if r.get('status') == 'SKIP'])
     
-    # Group results by section
+    print(f"\n📊 AUDIT RESULTS SUMMARY")
+    print("=" * 50)
+    print(f"Total Checks: {total}")
+    print(f"✅ Passed: {passed} ({passed/total*100:.1f}%)")
+    print(f"❌ Failed: {failed} ({failed/total*100:.1f}%)")
+    if skipped > 0:
+        print(f"⏭️  Skipped: {skipped} ({skipped/total*100:.1f}%)")
+    print("=" * 50)
+    
+    # Group results by status
+    passed_results = [r for r in results if r.get('status') == 'PASS']
+    failed_results = [r for r in results if r.get('status') == 'FAIL']
+    skipped_results = [r for r in results if r.get('status') == 'SKIP']
+    
+    # Show results based on flags
+    if failed_only:
+        # Only show failed checks
+        if failed_results:
+            print(f"\n❌ FAILED CHECKS ({len(failed_results)}):")
+            for result in failed_results:
+                rule_id = result.get('rule_id', 'Unknown')
+                title = result.get('title', 'Unknown Check')
+                details = result.get('details', '')
+                print(f"   ❌ {rule_id}: {title}")
+                if details and verbose:
+                    print(f"      Details: {details}")
+        else:
+            print("\n🎉 No failed checks!")
+    else:
+        # Show both passed and failed checks (default behavior)
+        if passed_results:
+            print(f"\n✅ PASSED CHECKS ({len(passed_results)}):")
+            for result in passed_results:
+                rule_id = result.get('rule_id', 'Unknown')
+                title = result.get('title', 'Unknown Check')
+                print(f"   ✅ {rule_id}: {title}")
+        
+        if failed_results:
+            print(f"\n❌ FAILED CHECKS ({len(failed_results)}):")
+            for result in failed_results:
+                rule_id = result.get('rule_id', 'Unknown')
+                title = result.get('title', 'Unknown Check')
+                details = result.get('details', '')
+                print(f"   ❌ {rule_id}: {title}")
+                if details and verbose:
+                    print(f"      Details: {details}")
+        
+        if skipped_results:
+            print(f"\n⏭️  SKIPPED CHECKS ({len(skipped_results)}):")
+            for result in skipped_results:
+                rule_id = result.get('rule_id', 'Unknown')
+                title = result.get('title', 'Unknown Check')
+                reason = result.get('details', 'No reason provided')
+                print(f"   ⏭️  {rule_id}: {title}")
+                if verbose:
+                    print(f"      Reason: {reason}")
+    
+    # Summary by section (always show if verbose)
+    if verbose:
+        print_section_summary(results)
+
+def print_section_summary(results):
+    """Print summary by CIS section"""
     sections = {}
     for result in results:
-        section = result.get('section', 'Unknown')
+        rule_id = result.get('rule_id', '0.0.0')
+        section = rule_id.split('.')[0]
+        section_name = result.get('section_name', f'Section {section}')
+        
         if section not in sections:
-            sections[section] = {'passed': [], 'failed': [], 'manual': [], 'error': [], 'skip': []}
+            sections[section] = {
+                'name': section_name,
+                'total': 0, 
+                'passed': 0, 
+                'failed': 0, 
+                'skipped': 0
+            }
         
-        status = result.get('status', 'UNKNOWN').upper()
+        sections[section]['total'] += 1
+        status = result.get('status', 'UNKNOWN')
         if status == 'PASS':
-            sections[section]['passed'].append(result)
+            sections[section]['passed'] += 1
         elif status == 'FAIL':
-            sections[section]['failed'].append(result)
-        elif status == 'MANUAL':
-            sections[section]['manual'].append(result)
+            sections[section]['failed'] += 1
         elif status == 'SKIP':
-            sections[section]['skip'].append(result)
-        else:
-            sections[section]['error'].append(result)
+            sections[section]['skipped'] += 1
     
-    # Calculate totals
-    total_checks = len(results)
-    total_passed = sum(len(section['passed']) for section in sections.values())
-    total_failed = sum(len(section['failed']) for section in sections.values())
-    total_manual = sum(len(section['manual']) for section in sections.values())
-    total_skip = sum(len(section['skip']) for section in sections.values())
-    total_error = sum(len(section['error']) for section in sections.values())
-    
-    print("\n" + "="*80)
-    print("🔍 CIS RHEL 9 BENCHMARK AUDIT RESULTS")
-    print("="*80)
-    
-    # Print section results
-    for section_name, section_results in sorted(sections.items()):
-        section_total = sum(len(section_results[status]) for status in section_results)
-        section_passed = len(section_results['passed'])
-        section_failed = len(section_results['failed'])
-        section_manual = len(section_results['manual'])
-        section_skip = len(section_results['skip'])
-        section_error = len(section_results['error'])
+    print(f"\n📈 SECTION SUMMARY:")
+    print("-" * 60)
+    for section_id in sorted(sections.keys()):
+        if section_id == '0':  # Skip invalid section IDs
+            continue
+        section_data = sections[section_id]
+        compliance = (section_data['passed'] / section_data['total']) * 100 if section_data['total'] > 0 else 0
         
-        print(f"\n📋 SECTION {section_name}")
-        print("-" * 60)
-        print(f"Total: {section_total} | ✅ Passed: {section_passed} | ❌ Failed: {section_failed} | ⚠️  Manual: {section_manual} | ⏭️  Skip: {section_skip} | 🔴 Error: {section_error}")
-        
-        # Show results based on flags
-        if not failed_only:
-            # Show passed tests unless failed_only is set
-            if section_results['passed']:
-                print(f"\n✅ PASSED CHECKS ({len(section_results['passed'])}):")
-                for result in section_results['passed']:
-                    print(f"  ✓ {result.get('rule_id', 'N/A')}: {result.get('title', 'No title')}")
-                    if verbose and result.get('details'):
-                        print(f"    Details: {result['details']}")
-        
-        # Always show failed tests
-        if section_results['failed']:
-            print(f"\n❌ FAILED CHECKS ({len(section_results['failed'])}):")
-            for result in section_results['failed']:
-                print(f"  ✗ {result.get('rule_id', 'N/A')}: {result.get('title', 'No title')}")
-                if result.get('details'):
-                    print(f"    Details: {result['details']}")
-                if result.get('remediation'):
-                    print(f"    Remediation: {result['remediation']}")
-        
-        # Show manual checks if not failed_only
-        if not failed_only and section_results['manual']:
-            print(f"\n⚠️  MANUAL CHECKS ({len(section_results['manual'])}):")
-            for result in section_results['manual']:
-                print(f"  ⚠ {result.get('rule_id', 'N/A')}: {result.get('title', 'No title')}")
-                if result.get('details'):
-                    print(f"    Details: {result['details']}")
-        
-        # Show skipped checks if verbose and not failed_only
-        if verbose and not failed_only and section_results['skip']:
-            print(f"\n⏭️  SKIPPED CHECKS ({len(section_results['skip'])}):")
-            for result in section_results['skip']:
-                print(f"  ⏭ {result.get('rule_id', 'N/A')}: {result.get('title', 'No title')}")
-                if result.get('details'):
-                    print(f"    Details: {result['details']}")
-        
-        # Always show error checks
-        if section_results['error']:
-            print(f"\n🔴 ERROR CHECKS ({len(section_results['error'])}):")
-            for result in section_results['error']:
-                print(f"  🔴 {result.get('rule_id', 'N/A')}: {result.get('title', 'No title')}")
-                if result.get('details'):
-                    print(f"    Details: {result['details']}")
-    
-    # Print summary
-    success_rate = (total_passed / total_checks * 100) if total_checks > 0 else 0
-    
-    print("\n" + "="*80)
-    print("📊 AUDIT SUMMARY")
-    print("="*80)
-    print(f"Total Checks: {total_checks}")
-    print(f"✅ Passed: {total_passed} ({total_passed/total_checks*100:.1f}%)")
-    print(f"❌ Failed: {total_failed} ({total_failed/total_checks*100:.1f}%)")
-    if total_manual > 0:
-        print(f"⚠️  Manual: {total_manual} ({total_manual/total_checks*100:.1f}%)")
-    if total_skip > 0:
-        print(f"⏭️  Skip: {total_skip} ({total_skip/total_checks*100:.1f}%)")
-    if total_error > 0:
-        print(f"🔴 Error: {total_error} ({total_error/total_checks*100:.1f}%)")
-    print(f"🎯 Success Rate: {success_rate:.1f}%")
-    print("="*80)
+        print(f"Section {section_id} - {section_data['name']}:")
+        print(f"  ✅ Passed: {section_data['passed']}/{section_data['total']} ({compliance:.1f}%)")
+        if section_data['failed'] > 0:
+            print(f"  ❌ Failed: {section_data['failed']}")
+        if section_data['skipped'] > 0:
+            print(f"  ⏭️  Skipped: {section_data['skipped']}")
+        print()
 
 def save_results_json(results, output_file):
     """Save results to JSON file"""
     try:
-        # Add metadata
         output_data = {
-            'metadata': {
-                'tool': 'RHEL 9 CIS Benchmark Audit Tool',
-                'timestamp': datetime.now().isoformat(),
-                'hostname': os.uname().nodename,
-                'total_checks': len(results)
+            'timestamp': datetime.now().isoformat(),
+            'total_checks': len(results),
+            'summary': {
+                'passed': len([r for r in results if r.get('status') == 'PASS']),
+                'failed': len([r for r in results if r.get('status') == 'FAIL']),
+                'skipped': len([r for r in results if r.get('status') == 'SKIP'])
             },
             'results': results
         }
         
         with open(output_file, 'w') as f:
             json.dump(output_data, f, indent=2)
-        
-        print(f"📄 Results saved to: {output_file}")
-        
     except Exception as e:
-        print(f"❌ Error saving results to JSON: {e}")
+        print(f"❌ Error saving JSON: {e}")
 
-def run_online_audit(sections=None, verbose=False):
-    """Run audit on live system"""
-    print("🔴 Running online audit on live system...")
-    
-    all_results = []
-    
-    # Define section mapping with correct module names
-    section_modules = {
-        'initial_setup': ('1️⃣  Initial Setup', 'initial_setup_check'),
-        'services': ('2️⃣  Services', 'services_check'),
-        'network': ('3️⃣  Network', 'network_check'),
-        'host_firewall': ('4️⃣  Host Firewall', 'firewall_check'),
-        'access_control': ('5️⃣  Access Control', 'access_control_check'),
-        'logging': ('6️⃣  Logging', 'logging_check'),
-        'system_maintenance': ('7️⃣  System Maintenance', 'system_maintenance_check')
-    }
-    
-    # If no sections specified, run all
-    if not sections:
-        sections = list(section_modules.keys())
-    
-    for section in sections:
-        if section in section_modules:
-            section_name, module_name = section_modules[section]
-            print(f"\n🔍 Running {section_name} checks...")
-            
-            try:
-                # Import module dynamically
-                module = __import__(f'checks.{module_name}', fromlist=[module_name])
-                
-                if hasattr(module, 'run_online'):
-                    section_results = module.run_online()
-                    
-                    # Add section identifier to each result
-                    for result in section_results:
-                        result['section'] = section_name
-                    
-                    all_results.extend(section_results)
-                    print(f"✅ Completed {section_name} checks: {len(section_results)} checks")
+def run_online_checks(check_modules, results, verbose):
+    """Run online checks"""
+    for section_id, (section_name, module, section_key) in check_modules.items():
+        if verbose:
+            print(f"📋 Section {section_id}: {section_name}")
+        try:
+            if hasattr(module, 'run_online'):
+                section_results = module.run_online()
+                if section_results:
+                    results.extend(section_results)
+                    if verbose:
+                        print(f"   ✅ {len(section_results)} checks completed")
                 else:
-                    print(f"⚠️  Warning: {module_name} missing run_online() function")
-                
-            except ImportError as e:
-                print(f"❌ Error importing {module_name}: {e}")
-                # Add error result
-                all_results.append({
-                    'rule_id': f'{section}.import_error',
-                    'title': f'Error importing {section_name} module',
-                    'status': 'ERROR',
-                    'details': str(e),
-                    'section': section_name
-                })
-            except Exception as e:
-                print(f"❌ Error running {section_name} checks: {e}")
-                # Add error result
-                all_results.append({
-                    'rule_id': f'{section}.error',
-                    'title': f'Error running {section_name} checks',
-                    'status': 'ERROR',
-                    'details': str(e),
-                    'section': section_name
-                })
-        else:
-            print(f"⚠️  Unknown section: {section}")
-    
-    return all_results
+                    if verbose:
+                        print(f"   ⚠️  No results returned from {section_name}")
+            else:
+                print(f"⚠️  Warning: {section_name} module missing run_online() function")
+        except Exception as e:
+            print(f"❌ Error in {section_name}: {e}")
+            if verbose:
+                import traceback
+                traceback.print_exc()
 
-def run_offline_audit(data_dir, sections=None, verbose=False):
-    """Run audit on collected data"""
-    print(f"🔍 Running offline audit on data from: {data_dir}")
-    
-    if not os.path.exists(data_dir):
-        print(f"❌ Data directory not found: {data_dir}")
-        return []
-    
-    all_results = []
-    
-    # Define section mapping with correct module names
-    section_modules = {
-        'initial_setup': ('1️⃣  Initial Setup', 'initial_setup_check'),
-        'services': ('2️⃣  Services', 'services_check'),
-        'network': ('3️⃣  Network', 'network_check'),
-        'host_firewall': ('4️⃣  Host Firewall', 'firewall_check'),
-        'access_control': ('5️⃣  Access Control', 'access_control_check'),
-        'logging': ('6️⃣  Logging', 'logging_check'),
-        'system_maintenance': ('7️⃣  System Maintenance', 'system_maintenance_check')
-    }
-    
-    # If no sections specified, run all
-    if not sections:
-        sections = list(section_modules.keys())
-    
-    for section in sections:
-        if section in section_modules:
-            section_name, module_name = section_modules[section]
-            print(f"\n🔍 Running {section_name} checks...")
-            
-            try:
-                # Import module dynamically
-                module = __import__(f'checks.{module_name}', fromlist=[module_name])
-                
-                if hasattr(module, 'run_offline'):
-                    section_results = module.run_offline(data_dir)
-                    
-                    # Add section identifier to each result
-                    for result in section_results:
-                        result['section'] = section_name
-                    
-                    all_results.extend(section_results)
-                    print(f"✅ Completed {section_name} checks: {len(section_results)} checks")
+def run_offline_checks(check_modules, results, data_dir, verbose):
+    """Run offline checks"""
+    for section_id, (section_name, module, section_key) in check_modules.items():
+        if verbose:
+            print(f"📋 Section {section_id}: {section_name}")
+        try:
+            if hasattr(module, 'run_offline'):
+                section_results = module.run_offline(data_dir)
+                if section_results:
+                    results.extend(section_results)
+                    if verbose:
+                        print(f"   ✅ {len(section_results)} checks completed")
                 else:
-                    print(f"⚠️  Warning: {module_name} missing run_offline() function")
-                
-            except ImportError as e:
-                print(f"❌ Error importing {module_name}: {e}")
-                # Add error result
-                all_results.append({
-                    'rule_id': f'{section}.import_error',
-                    'title': f'Error importing {section_name} module',
-                    'status': 'ERROR',
-                    'details': str(e),
-                    'section': section_name
-                })
-            except Exception as e:
-                print(f"❌ Error running {section_name} checks: {e}")
-                # Add error result
-                all_results.append({
-                    'rule_id': f'{section}.error',
-                    'title': f'Error running {section_name} checks',
-                    'status': 'ERROR',
-                    'details': str(e),
-                    'section': section_name
-                })
-        else:
-            print(f"⚠️  Unknown section: {section}")
-    
-    return all_results
+                    if verbose:
+                        print(f"   ⚠️  No results returned from {section_name}")
+            else:
+                print(f"⚠️  Warning: {section_name} module missing run_offline() function")
+        except Exception as e:
+            print(f"❌ Error in {section_name}: {e}")
+            if verbose:
+                import traceback
+                traceback.print_exc()
 
 def main():
     """Main function"""
@@ -314,7 +221,7 @@ Examples:
   python3 main.py --output results.json              # Save results to JSON file
 
 Available sections:
-  initial_setup, services, network, host_firewall, access_control, logging, system_maintenance
+  initial_setup, services, network, firewall, access_control, logging, system_maintenance
         """
     )
     
@@ -325,7 +232,7 @@ Available sections:
     parser.add_argument('--data-dir', default='./data',
                        help='Directory containing collected data (default: ./data)')
     parser.add_argument('--sections', nargs='+',
-                       choices=['initial_setup', 'services', 'network', 'host_firewall', 
+                       choices=['initial_setup', 'services', 'network', 'firewall', 
                                'access_control', 'logging', 'system_maintenance'],
                        help='Specific sections to audit (default: all)')
     parser.add_argument('--verbose', '-v', action='store_true',
@@ -342,48 +249,99 @@ Available sections:
     # Validate arguments
     if not args.online and not args.offline:
         print("❌ Error: Must specify either --online or --offline")
-        parser.print_help()
+        print("Usage examples:")
+        print("  python3 main.py --online --verbose")
+        print("  python3 main.py --offline --data-dir ./data")
         sys.exit(1)
     
     if args.online and args.offline:
         print("❌ Error: Cannot specify both --online and --offline")
         sys.exit(1)
     
-    # Print banner unless quiet mode
-    if not args.quiet:
-        print_banner()
+    results = []
     
-    # Run audit
-    try:
-        if args.offline:
-            results = run_offline_audit(args.data_dir, args.sections, args.verbose)
-        else:
-            results = run_online_audit(args.sections, args.verbose)
-        
-        # Print results
-        if not args.quiet:
-            print_results(results, args.verbose, args.failed_only)
-        
-        # Save to JSON if requested
-        if args.output:
-            save_results_json(results, args.output)
-        
-        # Exit with appropriate code
-        failed_count = sum(1 for r in results if r.get('status') == 'FAIL')
-        if failed_count > 0:
-            sys.exit(1)  # Exit with error if any checks failed
-        else:
-            sys.exit(0)  # Exit successfully
-            
-    except KeyboardInterrupt:
-        print("\n⚠️  Audit interrupted by user")
-        sys.exit(130)
-    except Exception as e:
-        print(f"\n❌ Unexpected error: {e}")
-        if args.verbose:
-            import traceback
-            traceback.print_exc()
+    # Define available check modules
+    available_modules = {
+        'initial_setup': ('1', 'Initial Setup', 'checks.initial_setup_check'),
+        'services': ('2', 'Services', 'checks.services_check'),
+        'network': ('3', 'Network Configuration', 'checks.network_check'),
+        'firewall': ('4', 'Host Based Firewall', 'checks.firewall_check'),
+        'access_control': ('5', 'Access Control', 'checks.access_control_check'),
+        'logging': ('6', 'Logging and Auditing', 'checks.logging_check'),
+        'system_maintenance': ('7', 'System Maintenance', 'checks.system_maintenance_check')
+    }
+    
+    # Filter sections if specified
+    if args.sections:
+        selected_modules = {k: v for k, v in available_modules.items() if k in args.sections}
+        if not selected_modules:
+            print(f"❌ Error: No valid sections specified")
+            print(f"Available sections: {list(available_modules.keys())}")
+            sys.exit(1)
+        available_modules = selected_modules
+    
+    # Import and run checks
+    check_modules = {}
+    for section_key, (section_id, section_name, module_path) in available_modules.items():
+        try:
+            module = __import__(module_path, fromlist=[''])
+            check_modules[section_id] = (section_name, module, section_key)
+            if args.verbose:
+                print(f"✅ Loaded {section_name} module")
+        except ImportError as e:
+            if args.verbose:
+                print(f"⚠️  Warning: Could not import {section_name}: {e}")
+            continue
+        except Exception as e:
+            if args.verbose:
+                print(f"❌ Error loading {section_name}: {e}")
+            continue
+    
+    if not check_modules:
+        print("❌ Error: No check modules could be loaded!")
+        print("Make sure all check modules exist in the checks/ directory")
         sys.exit(1)
+    
+    print(f"📋 Loaded {len(check_modules)} check modules")
+    
+    # Run checks
+    if args.online:
+        print("🔴 Running ONLINE audit...")
+        run_online_checks(check_modules, results, args.verbose)
+    elif args.offline:
+        print("🔍 Running OFFLINE audit...")
+        data_path = Path(args.data_dir)
+        if not data_path.exists():
+            print(f"❌ Error: Data directory {data_path} does not exist")
+            print("Run data collection first:")
+            print("  cd scripts && ./collect_focused_data.sh")
+            print("  or")
+            print("  cd scripts && ./collect_comprehensive_data.sh")
+            sys.exit(1)
+        run_offline_checks(check_modules, results, args.data_dir, args.verbose)
+    
+    # Add section information to results
+    for result in results:
+        rule_id = result.get('rule_id', '0.0.0')
+        section_num = rule_id.split('.')[0]
+        for sid, (sname, _, skey) in check_modules.items():
+            if sid == section_num:
+                result['section'] = skey
+                result['section_name'] = sname
+                break
+    
+    # Print results
+    if not args.quiet:
+        print_results(results, args.verbose, args.failed_only)
+    
+    # Save to JSON if requested
+    if args.output:
+        save_results_json(results, args.output)
+        print(f"💾 Results saved to {args.output}")
+    
+    # Exit with appropriate code
+    failed_count = len([r for r in results if r.get('status') == 'FAIL'])
+    sys.exit(1 if failed_count > 0 else 0)
 
 if __name__ == '__main__':
     main()
