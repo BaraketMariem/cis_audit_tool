@@ -1207,7 +1207,7 @@ def check_package_management_online():
             results.append({
                 'rule_id': '1.2.2',
                 'title': 'Ensure gpgcheck is globally activated',
-                'status': 'PASS'
+                'status': 'PASS',
                 'title': 'Ensure gpgcheck is globally activated',
                 'status': 'FAIL',
                 'details': 'gpgcheck is not globally activated'
