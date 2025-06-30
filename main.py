@@ -13,6 +13,7 @@ def main():
     parser.add_argument('--data-dir', default='./data', help='Data directory for offline mode')
     parser.add_argument('--section', help='Run specific CIS section (1-7)')
     parser.add_argument('--verbose', '-v', action='store_true', help='Verbose output')
+    parser.add_argument('--failed-only', action='store_true', help='Show only failed checks')
     
     args = parser.parse_args()
     
@@ -137,9 +138,9 @@ def main():
                     traceback.print_exc()
     
     # Print results
-    print_results(results, args.verbose)
+    print_results(results, args.verbose, args.failed_only)
 
-def print_results(results, verbose=False):
+def print_results(results, verbose=False, failed_only=False):
     """Print audit results with summary"""
     if not results:
         print("❌ No results to display. Check for errors above.")
@@ -160,29 +161,40 @@ def print_results(results, verbose=False):
     failed_results = [r for r in results if r.get('status') == 'FAIL']
     skipped_results = [r for r in results if r.get('status') == 'SKIP']
     
-    # Show failed checks first (most important)
-    if failed_results:
-        print(f"\n❌ FAILED CHECKS ({len(failed_results)}):")
-        for result in failed_results:
-            rule_id = result.get('rule_id', 'Unknown')
-            title = result.get('title', 'Unknown Check')
-            print(f"   ❌ {rule_id}: {title}")
+    # Show results based on flags
+    if failed_only:
+        # Only show failed checks
+        if failed_results:
+            print(f"\n❌ FAILED CHECKS ({len(failed_results)}):")
+            for result in failed_results:
+                rule_id = result.get('rule_id', 'Unknown')
+                title = result.get('title', 'Unknown Check')
+                print(f"   ❌ {rule_id}: {title}")
+    else:
+        # Show both passed and failed checks (default behavior)
+        if passed_results:
+            print(f"\n✅ PASSED CHECKS ({len(passed_results)}):")
+            for result in passed_results:
+                rule_id = result.get('rule_id', 'Unknown')
+                title = result.get('title', 'Unknown Check')
+                print(f"   ✅ {rule_id}: {title}")
+        
+        if failed_results:
+            print(f"\n❌ FAILED CHECKS ({len(failed_results)}):")
+            for result in failed_results:
+                rule_id = result.get('rule_id', 'Unknown')
+                title = result.get('title', 'Unknown Check')
+                print(f"   ❌ {rule_id}: {title}")
+        
+        if skipped_results:
+            print(f"\n⏭️  SKIPPED CHECKS ({len(skipped_results)}):")
+            for result in skipped_results:
+                rule_id = result.get('rule_id', 'Unknown')
+                title = result.get('title', 'Unknown Check')
+                reason = result.get('details', 'No reason provided')
+                print(f"   ⏭️  {rule_id}: {title} - {reason}")
     
-    if skipped_results and verbose:
-        print(f"\n⏭️  SKIPPED CHECKS ({len(skipped_results)}):")
-        for result in skipped_results:
-            rule_id = result.get('rule_id', 'Unknown')
-            title = result.get('title', 'Unknown Check')
-            print(f"   ⏭️  {rule_id}: {title}")
-    
-    if verbose and passed_results:
-        print(f"\n✅ PASSED CHECKS ({len(passed_results)}):")
-        for result in passed_results:
-            rule_id = result.get('rule_id', 'Unknown')
-            title = result.get('title', 'Unknown Check')
-            print(f"   ✅ {rule_id}: {title}")
-    
-    # Summary by section
+    # Summary by section (always show if verbose)
     if verbose:
         print_section_summary(results)
 

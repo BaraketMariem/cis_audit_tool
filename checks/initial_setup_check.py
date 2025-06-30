@@ -1,1628 +1,2748 @@
+#!/usr/bin/env python3
 """
-CIS Section 1: Initial Setup
-Complete implementation of all CIS Section 1 checks including:
-- Filesystem kernel modules and partitions
-- Package management
-- SELinux/Mandatory Access Control
-- Bootloader configuration
-- Process hardening
-- System-wide crypto policy
-- Warning banners
-- GNOME Display Manager
+RHEL 9 CIS Benchmark - Section 1: Initial Setup
+Complete implementation with all 77 checks
 """
-from pathlib import Path
-import re
 
-def run_command(command):
-    """Execute a command and return its output"""
-    import subprocess
-    try:
-        result = subprocess.run(command, capture_output=True, text=True, timeout=30)
-        return result.stdout.strip() if result.stdout else None
-    except:
-        return None
+import os
+import subprocess
+import re
+from pathlib import Path
 
 def run_online():
-    """Run Initial Setup checks on live system"""
+    """Run Section 1 checks in online mode"""
     results = []
     
-    # 1.1.1 Filesystem Kernel Modules
+    # 1.1 Filesystem Configuration
     results.extend(check_filesystem_kernel_modules_online())
+    results.extend(check_partition_configuration_online())
     
-    # 1.1.2 Filesystem Partitions
-    results.extend(check_filesystem_partitions_online())
-    
-    # 1.2 Package Management
+    # 1.2 Configure Software Updates  
     results.extend(check_package_management_online())
     
-    # 1.3 Mandatory Access Control (SELinux)
-    results.extend(check_selinux_online())
+    # 1.3 Filesystem Integrity Checking
+    results.extend(check_filesystem_integrity_online())
     
-    # 1.4 Bootloader
-    results.extend(check_bootloader_online())
+    # 1.4 Secure Boot Settings
+    results.extend(check_secure_boot_online())
     
-    # 1.5 Process Hardening
+    # 1.5 Additional Process Hardening
     results.extend(check_process_hardening_online())
     
-    # 1.6 Crypto Policy
-    results.extend(check_crypto_policy_online())
+    # 1.6 Mandatory Access Controls
+    results.extend(check_selinux_online())
     
-    # 1.7 Warning Banners
+    # 1.7 Command Line Warning Banners
     results.extend(check_warning_banners_online())
     
     # 1.8 GNOME Display Manager
-    results.extend(check_gnome_display_manager_online())
+    results.extend(check_gdm_online())
     
     return results
 
 def run_offline(data_dir):
-    """Run Initial Setup checks on collected data"""
+    """Run Section 1 checks in offline mode"""
     results = []
     
-    # 1.1.1 Filesystem Kernel Modules
+    # 1.1 Filesystem Configuration
     results.extend(check_filesystem_kernel_modules_offline(data_dir))
+    results.extend(check_partition_configuration_offline(data_dir))
     
-    # 1.1.2 Filesystem Partitions
-    results.extend(check_filesystem_partitions_offline(data_dir))
-    
-    # 1.2 Package Management
+    # 1.2 Configure Software Updates
     results.extend(check_package_management_offline(data_dir))
     
-    # 1.3 Mandatory Access Control (SELinux)
-    results.extend(check_selinux_offline(data_dir))
+    # 1.3 Filesystem Integrity Checking
+    results.extend(check_filesystem_integrity_offline(data_dir))
     
-    # 1.4 Bootloader
-    results.extend(check_bootloader_offline(data_dir))
+    # 1.4 Secure Boot Settings
+    results.extend(check_secure_boot_offline(data_dir))
     
-    # 1.5 Process Hardening
+    # 1.5 Additional Process Hardening
     results.extend(check_process_hardening_offline(data_dir))
     
-    # 1.6 Crypto Policy
-    results.extend(check_crypto_policy_offline(data_dir))
+    # 1.6 Mandatory Access Controls
+    results.extend(check_selinux_offline(data_dir))
     
-    # 1.7 Warning Banners
+    # 1.7 Command Line Warning Banners
     results.extend(check_warning_banners_offline(data_dir))
     
     # 1.8 GNOME Display Manager
-    results.extend(check_gnome_display_manager_offline(data_dir))
+    results.extend(check_gdm_offline(data_dir))
     
     return results
 
-# 1.1.1 Configure Filesystem Kernel Modules
+# 1.1 Filesystem Configuration - Kernel Modules
 def check_filesystem_kernel_modules_online():
-    """Check filesystem kernel modules - online"""
+    """Check filesystem kernel modules (1.1.1.1 - 1.1.1.8)"""
     results = []
     
-    dangerous_modules = [
-        ('cramfs', '1.1.1.1'),
-        ('freevxfs', '1.1.1.2'),
-        ('hfs', '1.1.1.3'),
-        ('hfsplus', '1.1.1.4'),
-        ('jffs2', '1.1.1.5'),
-        ('squashfs', '1.1.1.6'),
-        ('udf', '1.1.1.7'),
-        ('usb-storage', '1.1.1.8')
+    modules = [
+        ('1.1.1.1', 'cramfs', 'Ensure cramfs kernel module is not available'),
+        ('1.1.1.2', 'freevxfs', 'Ensure freevxfs kernel module is not available'),
+        ('1.1.1.3', 'hfs', 'Ensure hfs kernel module is not available'),
+        ('1.1.1.4', 'hfsplus', 'Ensure hfsplus kernel module is not available'),
+        ('1.1.1.5', 'jffs2', 'Ensure jffs2 kernel module is not available'),
+        ('1.1.1.6', 'squashfs', 'Ensure squashfs kernel module is not available'),
+        ('1.1.1.7', 'udf', 'Ensure udf kernel module is not available'),
+        ('1.1.1.8', 'usb-storage', 'Ensure usb-storage kernel module is not available')
     ]
     
-    for module, rule_id in dangerous_modules:
-        # Check if module is blacklisted
-        blacklist_check = run_command(['modprobe', '-n', '-v', module])
-        lsmod_check = run_command(['lsmod'])
-        
-        is_blacklisted = blacklist_check and 'install /bin/true' in blacklist_check
-        is_loaded = lsmod_check and module in lsmod_check
-        
-        if is_blacklisted and not is_loaded:
-            status = 'PASS'
-            details = f'{module} kernel module is properly disabled'
-        else:
-            status = 'FAIL'
-            details = f'{module} kernel module is not properly disabled'
+    for rule_id, module, title in modules:
+        try:
+            # Check if module is blacklisted
+            cmd = f"modprobe -n -v {module} 2>&1"
+            result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+            
+            # Check if module is loaded
+            lsmod_result = subprocess.run(f"lsmod | grep {module}", shell=True, capture_output=True, text=True)
+            
+            if "install /bin/true" in result.stdout or "install /bin/false" in result.stdout:
+                if lsmod_result.returncode != 0:  # Module not loaded
+                    status = "PASS"
+                    details = f"Module {module} is properly blacklisted and not loaded"
+                else:
+                    status = "FAIL"
+                    details = f"Module {module} is blacklisted but currently loaded"
+            else:
+                status = "FAIL"
+                details = f"Module {module} is not blacklisted"
+                
+        except Exception as e:
+            status = "FAIL"
+            details = f"Error checking module {module}: {str(e)}"
         
         results.append({
             'rule_id': rule_id,
-            'title': f'Ensure {module} kernel module is not available',
+            'title': title,
             'status': status,
             'details': details
         })
-    
-    # 1.1.1.9 - Ensure unused filesystems kernel modules are not available (Manual)
-    results.append({
-        'rule_id': '1.1.1.9',
-        'title': 'Ensure unused filesystems kernel modules are not available',
-        'status': 'MANUAL',
-        'details': 'Manual review required - check for additional unused filesystem modules'
-    })
     
     return results
 
 def check_filesystem_kernel_modules_offline(data_dir):
-    """Check filesystem kernel modules - offline"""
+    """Check filesystem kernel modules offline"""
     results = []
     
-    dangerous_modules = [
-        ('cramfs', '1.1.1.1'),
-        ('freevxfs', '1.1.1.2'),
-        ('hfs', '1.1.1.3'),
-        ('hfsplus', '1.1.1.4'),
-        ('jffs2', '1.1.1.5'),
-        ('squashfs', '1.1.1.6'),
-        ('udf', '1.1.1.7'),
-        ('usb-storage', '1.1.1.8')
+    modules = [
+        ('1.1.1.1', 'cramfs', 'Ensure cramfs kernel module is not available'),
+        ('1.1.1.2', 'freevxfs', 'Ensure freevxfs kernel module is not available'),
+        ('1.1.1.3', 'hfs', 'Ensure hfs kernel module is not available'),
+        ('1.1.1.4', 'hfsplus', 'Ensure hfsplus kernel module is not available'),
+        ('1.1.1.5', 'jffs2', 'Ensure jffs2 kernel module is not available'),
+        ('1.1.1.6', 'squashfs', 'Ensure squashfs kernel module is not available'),
+        ('1.1.1.7', 'udf', 'Ensure udf kernel module is not available'),
+        ('1.1.1.8', 'usb-storage', 'Ensure usb-storage kernel module is not available')
     ]
     
-    # Check modprobe and lsmod data
-    modprobe_dir = Path(data_dir) / 'kernel_modules'
-    lsmod_file = Path(data_dir) / 'system' / 'lsmod.txt'
-    
-    lsmod_content = ''
-    if lsmod_file.exists():
-        lsmod_content = lsmod_file.read_text()
-    
-    for module, rule_id in dangerous_modules:
-        modprobe_file = modprobe_dir / f'{module}_modprobe.txt'
-        
-        is_blacklisted = False
-        if modprobe_file.exists():
-            modprobe_content = modprobe_file.read_text()
-            is_blacklisted = 'install /bin/true' in modprobe_content
-        
-        is_loaded = module in lsmod_content
-        
-        if is_blacklisted and not is_loaded:
-            status = 'PASS'
-            details = f'{module} kernel module is properly disabled'
-        else:
-            status = 'FAIL'
-            details = f'{module} kernel module is not properly disabled'
+    for rule_id, module, title in modules:
+        try:
+            # Check modprobe data
+            modprobe_file = Path(data_dir) / "kernel" / f"modprobe_{module}.txt"
+            lsmod_file = Path(data_dir) / "kernel" / "lsmod.txt"
+            
+            status = "FAIL"
+            details = f"Module {module} is not blacklisted"
+            
+            if modprobe_file.exists():
+                content = modprobe_file.read_text().strip()
+                if "install /bin/true" in content or "install /bin/false" in content:
+                    # Check if module is loaded
+                    if lsmod_file.exists():
+                        lsmod_content = lsmod_file.read_text()
+                        if module not in lsmod_content:
+                            status = "PASS"
+                            details = f"Module {module} is properly blacklisted and not loaded"
+                        else:
+                            details = f"Module {module} is blacklisted but currently loaded"
+            else:
+                details = f"No modprobe data available for {module}"
+                
+        except Exception as e:
+            status = "FAIL"
+            details = f"Error checking module {module}: {str(e)}"
         
         results.append({
             'rule_id': rule_id,
-            'title': f'Ensure {module} kernel module is not available',
+            'title': title,
             'status': status,
             'details': details
         })
     
-    # 1.1.1.9 - Manual check
-    results.append({
-        'rule_id': '1.1.1.9',
-        'title': 'Ensure unused filesystems kernel modules are not available',
-        'status': 'MANUAL',
-        'details': 'Manual review required - check for additional unused filesystem modules'
-    })
-    
     return results
 
-# 1.1.2 Configure Filesystem Partitions
-def check_filesystem_partitions_online():
-    """Check filesystem partitions - online"""
+# 1.1 Filesystem Configuration - Partitions
+def check_partition_configuration_online():
+    """Check partition configuration (1.1.2.1 - 1.1.10.5)"""
     results = []
     
-    mount_output = run_command(['mount'])
-    if not mount_output:
-        return results
+    # 1.1.2 /tmp partition checks
+    results.extend(check_tmp_partition_online())
     
-    # Define partitions and their required options
-    partitions = [
-        ('/tmp', ['nodev', 'nosuid', 'noexec'], '1.1.2.1'),
-        ('/dev/shm', ['nodev', 'nosuid', 'noexec'], '1.1.2.2'),
-        ('/home', ['nodev', 'nosuid'], '1.1.2.3'),
-        ('/var', ['nodev', 'nosuid'], '1.1.2.4'),
-        ('/var/tmp', ['nodev', 'nosuid', 'noexec'], '1.1.2.5'),
-        ('/var/log', ['nodev', 'nosuid', 'noexec'], '1.1.2.6'),
-        ('/var/log/audit', ['nodev', 'nosuid', 'noexec'], '1.1.2.7')
-    ]
+    # 1.1.3 /var partition checks  
+    results.extend(check_var_partition_online())
     
-    for partition, required_options, base_rule_id in partitions:
-        # Check if partition exists
-        partition_exists = any(partition in line for line in mount_output.split('\n'))
-        
-        # Rule X.1 - Check if separate partition exists
-        results.append({
-            'rule_id': f'{base_rule_id}.1',
-            'title': f'Ensure separate partition exists for {partition}',
-            'status': 'PASS' if partition_exists else 'FAIL',
-            'details': f'{partition} {"is" if partition_exists else "is not"} configured as separate partition'
-        })
-        
-        if partition_exists:
-            # Get mount line for this partition
-            mount_line = next((line for line in mount_output.split('\n') if partition in line), '')
-            
-            # Check each required option
-            for i, option in enumerate(required_options, 2):
-                has_option = option in mount_line
-                results.append({
-                    'rule_id': f'{base_rule_id}.{i}',
-                    'title': f'Ensure {option} option set on {partition} partition',
-                    'status': 'PASS' if has_option else 'FAIL',
-                    'details': f'{option} option {"is" if has_option else "is not"} set on {partition} partition'
-                })
-        else:
-            # If partition doesn't exist, mark option checks as FAIL
-            for i, option in enumerate(required_options, 2):
-                results.append({
-                    'rule_id': f'{base_rule_id}.{i}',
-                    'title': f'Ensure {option} option set on {partition} partition',
-                    'status': 'FAIL',
-                    'details': f'{partition} partition does not exist'
-                })
+    # 1.1.4 /var/tmp partition checks
+    results.extend(check_var_tmp_partition_online())
+    
+    # 1.1.5 /var/log partition checks
+    results.extend(check_var_log_partition_online())
+    
+    # 1.1.6 /var/log/audit partition checks
+    results.extend(check_var_log_audit_partition_online())
+    
+    # 1.1.7 /home partition checks
+    results.extend(check_home_partition_online())
+    
+    # 1.1.8 /dev/shm partition checks
+    results.extend(check_dev_shm_partition_online())
+    
+    # 1.1.9 Disable USB Storage
+    results.append(check_usb_storage_disabled_online())
     
     return results
 
-def check_filesystem_partitions_offline(data_dir):
-    """Check filesystem partitions - offline"""
+def check_partition_configuration_offline(data_dir):
+    """Check partition configuration offline"""
     results = []
     
-    mount_file = Path(data_dir) / 'filesystem' / 'mount_output.txt'
-    mount_content = ''
-    if mount_file.exists():
-        mount_content = mount_file.read_text()
+    # 1.1.2 /tmp partition checks
+    results.extend(check_tmp_partition_offline(data_dir))
     
-    # Define partitions and their required options
-    partitions = [
-        ('/tmp', ['nodev', 'nosuid', 'noexec'], '1.1.2.1'),
-        ('/dev/shm', ['nodev', 'nosuid', 'noexec'], '1.1.2.2'),
-        ('/home', ['nodev', 'nosuid'], '1.1.2.3'),
-        ('/var', ['nodev', 'nosuid'], '1.1.2.4'),
-        ('/var/tmp', ['nodev', 'nosuid', 'noexec'], '1.1.2.5'),
-        ('/var/log', ['nodev', 'nosuid', 'noexec'], '1.1.2.6'),
-        ('/var/log/audit', ['nodev', 'nosuid', 'noexec'], '1.1.2.7')
-    ]
+    # 1.1.3 /var partition checks
+    results.extend(check_var_partition_offline(data_dir))
     
-    for partition, required_options, base_rule_id in partitions:
-        # Check if partition exists
-        partition_exists = any(partition in line for line in mount_content.split('\n')) if mount_content else False
-        
-        # Rule X.1 - Check if separate partition exists
-        results.append({
-            'rule_id': f'{base_rule_id}.1',
-            'title': f'Ensure separate partition exists for {partition}',
-            'status': 'PASS' if partition_exists else 'FAIL',
-            'details': f'{partition} {"is" if partition_exists else "is not"} configured as separate partition'
-        })
-        
-        if partition_exists:
-            # Get mount line for this partition
-            mount_line = next((line for line in mount_content.split('\n') if partition in line), '')
-            
-            # Check each required option
-            for i, option in enumerate(required_options, 2):
-                has_option = option in mount_line
-                results.append({
-                    'rule_id': f'{base_rule_id}.{i}',
-                    'title': f'Ensure {option} option set on {partition} partition',
-                    'status': 'PASS' if has_option else 'FAIL',
-                    'details': f'{option} option {"is" if has_option else "is not"} set on {partition} partition'
-                })
-        else:
-            # If partition doesn't exist, mark option checks as FAIL
-            for i, option in enumerate(required_options, 2):
-                results.append({
-                    'rule_id': f'{base_rule_id}.{i}',
-                    'title': f'Ensure {option} option set on {partition} partition',
-                    'status': 'FAIL',
-                    'details': f'{partition} partition does not exist'
-                })
+    # 1.1.4 /var/tmp partition checks
+    results.extend(check_var_tmp_partition_offline(data_dir))
+    
+    # 1.1.5 /var/log partition checks
+    results.extend(check_var_log_partition_offline(data_dir))
+    
+    # 1.1.6 /var/log/audit partition checks
+    results.extend(check_var_log_audit_partition_offline(data_dir))
+    
+    # 1.1.7 /home partition checks
+    results.extend(check_home_partition_offline(data_dir))
+    
+    # 1.1.8 /dev/shm partition checks
+    results.extend(check_dev_shm_partition_offline(data_dir))
+    
+    # 1.1.9 Disable USB Storage
+    results.append(check_usb_storage_disabled_offline(data_dir))
     
     return results
 
-# 1.2 Package Management
+def check_tmp_partition_online():
+    """Check /tmp partition configuration"""
+    results = []
+    
+    try:
+        # Check if /tmp is a separate partition
+        result = subprocess.run("findmnt -n /tmp", shell=True, capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            # /tmp is mounted
+            mount_info = result.stdout.strip()
+            
+            # 1.1.2.1 - Ensure /tmp is a separate partition
+            results.append({
+                'rule_id': '1.1.2.1',
+                'title': 'Ensure /tmp is a separate partition',
+                'status': 'PASS',
+                'details': f'/tmp is mounted: {mount_info}'
+            })
+            
+            # Check mount options
+            mount_opts = mount_info.split()[3] if len(mount_info.split()) > 3 else ""
+            
+            # 1.1.2.2 - Ensure nodev option set on /tmp partition
+            if 'nodev' in mount_opts:
+                results.append({
+                    'rule_id': '1.1.2.2',
+                    'title': 'Ensure nodev option set on /tmp partition',
+                    'status': 'PASS',
+                    'details': 'nodev option is set on /tmp'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.1.2.2',
+                    'title': 'Ensure nodev option set on /tmp partition',
+                    'status': 'FAIL',
+                    'details': 'nodev option is not set on /tmp'
+                })
+            
+            # 1.1.2.3 - Ensure noexec option set on /tmp partition
+            if 'noexec' in mount_opts:
+                results.append({
+                    'rule_id': '1.1.2.3',
+                    'title': 'Ensure noexec option set on /tmp partition',
+                    'status': 'PASS',
+                    'details': 'noexec option is set on /tmp'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.1.2.3',
+                    'title': 'Ensure noexec option set on /tmp partition',
+                    'status': 'FAIL',
+                    'details': 'noexec option is not set on /tmp'
+                })
+            
+            # 1.1.2.4 - Ensure nosuid option set on /tmp partition
+            if 'nosuid' in mount_opts:
+                results.append({
+                    'rule_id': '1.1.2.4',
+                    'title': 'Ensure nosuid option set on /tmp partition',
+                    'status': 'PASS',
+                    'details': 'nosuid option is set on /tmp'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.1.2.4',
+                    'title': 'Ensure nosuid option set on /tmp partition',
+                    'status': 'FAIL',
+                    'details': 'nosuid option is not set on /tmp'
+                })
+        else:
+            # /tmp is not a separate partition
+            results.append({
+                'rule_id': '1.1.2.1',
+                'title': 'Ensure /tmp is a separate partition',
+                'status': 'FAIL',
+                'details': '/tmp is not a separate partition'
+            })
+            
+            # Other checks fail if no separate partition
+            for rule_id, title in [
+                ('1.1.2.2', 'Ensure nodev option set on /tmp partition'),
+                ('1.1.2.3', 'Ensure noexec option set on /tmp partition'),
+                ('1.1.2.4', 'Ensure nosuid option set on /tmp partition')
+            ]:
+                results.append({
+                    'rule_id': rule_id,
+                    'title': title,
+                    'status': 'FAIL',
+                    'details': '/tmp is not a separate partition'
+                })
+                
+    except Exception as e:
+        for rule_id, title in [
+            ('1.1.2.1', 'Ensure /tmp is a separate partition'),
+            ('1.1.2.2', 'Ensure nodev option set on /tmp partition'),
+            ('1.1.2.3', 'Ensure noexec option set on /tmp partition'),
+            ('1.1.2.4', 'Ensure nosuid option set on /tmp partition')
+        ]:
+            results.append({
+                'rule_id': rule_id,
+                'title': title,
+                'status': 'FAIL',
+                'details': f'Error checking /tmp partition: {str(e)}'
+            })
+    
+    return results
+
+def check_tmp_partition_offline(data_dir):
+    """Check /tmp partition configuration offline"""
+    results = []
+    
+    try:
+        mount_file = Path(data_dir) / "filesystem" / "findmnt_tmp.txt"
+        
+        if mount_file.exists():
+            mount_info = mount_file.read_text().strip()
+            
+            if mount_info and not mount_info.startswith("ERROR"):
+                # /tmp is mounted
+                results.append({
+                    'rule_id': '1.1.2.1',
+                    'title': 'Ensure /tmp is a separate partition',
+                    'status': 'PASS',
+                    'details': f'/tmp is mounted: {mount_info}'
+                })
+                
+                # Check mount options
+                mount_opts = mount_info.split()[3] if len(mount_info.split()) > 3 else ""
+                
+                # Check individual options
+                for rule_id, option, title in [
+                    ('1.1.2.2', 'nodev', 'Ensure nodev option set on /tmp partition'),
+                    ('1.1.2.3', 'noexec', 'Ensure noexec option set on /tmp partition'),
+                    ('1.1.2.4', 'nosuid', 'Ensure nosuid option set on /tmp partition')
+                ]:
+                    if option in mount_opts:
+                        results.append({
+                            'rule_id': rule_id,
+                            'title': title,
+                            'status': 'PASS',
+                            'details': f'{option} option is set on /tmp'
+                        })
+                    else:
+                        results.append({
+                            'rule_id': rule_id,
+                            'title': title,
+                            'status': 'FAIL',
+                            'details': f'{option} option is not set on /tmp'
+                        })
+            else:
+                # /tmp is not a separate partition
+                for rule_id, title in [
+                    ('1.1.2.1', 'Ensure /tmp is a separate partition'),
+                    ('1.1.2.2', 'Ensure nodev option set on /tmp partition'),
+                    ('1.1.2.3', 'Ensure noexec option set on /tmp partition'),
+                    ('1.1.2.4', 'Ensure nosuid option set on /tmp partition')
+                ]:
+                    results.append({
+                        'rule_id': rule_id,
+                        'title': title,
+                        'status': 'FAIL',
+                        'details': '/tmp is not a separate partition'
+                    })
+        else:
+            # No data available
+            for rule_id, title in [
+                ('1.1.2.1', 'Ensure /tmp is a separate partition'),
+                ('1.1.2.2', 'Ensure nodev option set on /tmp partition'),
+                ('1.1.2.3', 'Ensure noexec option set on /tmp partition'),
+                ('1.1.2.4', 'Ensure nosuid option set on /tmp partition')
+            ]:
+                results.append({
+                    'rule_id': rule_id,
+                    'title': title,
+                    'status': 'FAIL',
+                    'details': 'No mount data available for /tmp'
+                })
+                
+    except Exception as e:
+        for rule_id, title in [
+            ('1.1.2.1', 'Ensure /tmp is a separate partition'),
+            ('1.1.2.2', 'Ensure nodev option set on /tmp partition'),
+            ('1.1.2.3', 'Ensure noexec option set on /tmp partition'),
+            ('1.1.2.4', 'Ensure nosuid option set on /tmp partition')
+        ]:
+            results.append({
+                'rule_id': rule_id,
+                'title': title,
+                'status': 'FAIL',
+                'details': f'Error checking /tmp partition: {str(e)}'
+            })
+    
+    return results
+
+def check_var_partition_online():
+    """Check /var partition configuration"""
+    results = []
+    
+    try:
+        result = subprocess.run("findmnt -n /var", shell=True, capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            results.append({
+                'rule_id': '1.1.3.1',
+                'title': 'Ensure /var is a separate partition',
+                'status': 'PASS',
+                'details': f'/var is mounted: {result.stdout.strip()}'
+            })
+        else:
+            results.append({
+                'rule_id': '1.1.3.1',
+                'title': 'Ensure /var is a separate partition',
+                'status': 'FAIL',
+                'details': '/var is not a separate partition'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.1.3.1',
+            'title': 'Ensure /var is a separate partition',
+            'status': 'FAIL',
+            'details': f'Error checking /var partition: {str(e)}'
+        })
+    
+    return results
+
+def check_var_partition_offline(data_dir):
+    """Check /var partition configuration offline"""
+    results = []
+    
+    try:
+        mount_file = Path(data_dir) / "filesystem" / "findmnt_var.txt"
+        
+        if mount_file.exists():
+            mount_info = mount_file.read_text().strip()
+            
+            if mount_info and not mount_info.startswith("ERROR"):
+                results.append({
+                    'rule_id': '1.1.3.1',
+                    'title': 'Ensure /var is a separate partition',
+                    'status': 'PASS',
+                    'details': f'/var is mounted: {mount_info}'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.1.3.1',
+                    'title': 'Ensure /var is a separate partition',
+                    'status': 'FAIL',
+                    'details': '/var is not a separate partition'
+                })
+        else:
+            results.append({
+                'rule_id': '1.1.3.1',
+                'title': 'Ensure /var is a separate partition',
+                'status': 'FAIL',
+                'details': 'No mount data available for /var'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.1.3.1',
+            'title': 'Ensure /var is a separate partition',
+            'status': 'FAIL',
+            'details': f'Error checking /var partition: {str(e)}'
+        })
+    
+    return results
+
+def check_var_tmp_partition_online():
+    """Check /var/tmp partition configuration"""
+    results = []
+    
+    try:
+        result = subprocess.run("findmnt -n /var/tmp", shell=True, capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            mount_info = result.stdout.strip()
+            
+            # 1.1.4.1 - Ensure /var/tmp is a separate partition
+            results.append({
+                'rule_id': '1.1.4.1',
+                'title': 'Ensure /var/tmp is a separate partition',
+                'status': 'PASS',
+                'details': f'/var/tmp is mounted: {mount_info}'
+            })
+            
+            # Check mount options
+            mount_opts = mount_info.split()[3] if len(mount_info.split()) > 3 else ""
+            
+            # Check individual options
+            for rule_id, option, title in [
+                ('1.1.4.2', 'nodev', 'Ensure nodev option set on /var/tmp partition'),
+                ('1.1.4.3', 'noexec', 'Ensure noexec option set on /var/tmp partition'),
+                ('1.1.4.4', 'nosuid', 'Ensure nosuid option set on /var/tmp partition')
+            ]:
+                if option in mount_opts:
+                    results.append({
+                        'rule_id': rule_id,
+                        'title': title,
+                        'status': 'PASS',
+                        'details': f'{option} option is set on /var/tmp'
+                    })
+                else:
+                    results.append({
+                        'rule_id': rule_id,
+                        'title': title,
+                        'status': 'FAIL',
+                        'details': f'{option} option is not set on /var/tmp'
+                    })
+        else:
+            # /var/tmp is not a separate partition
+            for rule_id, title in [
+                ('1.1.4.1', 'Ensure /var/tmp is a separate partition'),
+                ('1.1.4.2', 'Ensure nodev option set on /var/tmp partition'),
+                ('1.1.4.3', 'Ensure noexec option set on /var/tmp partition'),
+                ('1.1.4.4', 'Ensure nosuid option set on /var/tmp partition')
+            ]:
+                results.append({
+                    'rule_id': rule_id,
+                    'title': title,
+                    'status': 'FAIL',
+                    'details': '/var/tmp is not a separate partition'
+                })
+                
+    except Exception as e:
+        for rule_id, title in [
+            ('1.1.4.1', 'Ensure /var/tmp is a separate partition'),
+            ('1.1.4.2', 'Ensure nodev option set on /var/tmp partition'),
+            ('1.1.4.3', 'Ensure noexec option set on /var/tmp partition'),
+            ('1.1.4.4', 'Ensure nosuid option set on /var/tmp partition')
+        ]:
+            results.append({
+                'rule_id': rule_id,
+                'title': title,
+                'status': 'FAIL',
+                'details': f'Error checking /var/tmp partition: {str(e)}'
+            })
+    
+    return results
+
+def check_var_tmp_partition_offline(data_dir):
+    """Check /var/tmp partition configuration offline"""
+    results = []
+    
+    try:
+        mount_file = Path(data_dir) / "filesystem" / "findmnt_var_tmp.txt"
+        
+        if mount_file.exists():
+            mount_info = mount_file.read_text().strip()
+            
+            if mount_info and not mount_info.startswith("ERROR"):
+                # /var/tmp is mounted
+                results.append({
+                    'rule_id': '1.1.4.1',
+                    'title': 'Ensure /var/tmp is a separate partition',
+                    'status': 'PASS',
+                    'details': f'/var/tmp is mounted: {mount_info}'
+                })
+                
+                # Check mount options
+                mount_opts = mount_info.split()[3] if len(mount_info.split()) > 3 else ""
+                
+                # Check individual options
+                for rule_id, option, title in [
+                    ('1.1.4.2', 'nodev', 'Ensure nodev option set on /var/tmp partition'),
+                    ('1.1.4.3', 'noexec', 'Ensure noexec option set on /var/tmp partition'),
+                    ('1.1.4.4', 'nosuid', 'Ensure nosuid option set on /var/tmp partition')
+                ]:
+                    if option in mount_opts:
+                        results.append({
+                            'rule_id': rule_id,
+                            'title': title,
+                            'status': 'PASS',
+                            'details': f'{option} option is set on /var/tmp'
+                        })
+                    else:
+                        results.append({
+                            'rule_id': rule_id,
+                            'title': title,
+                            'status': 'FAIL',
+                            'details': f'{option} option is not set on /var/tmp'
+                        })
+            else:
+                # /var/tmp is not a separate partition
+                for rule_id, title in [
+                    ('1.1.4.1', 'Ensure /var/tmp is a separate partition'),
+                    ('1.1.4.2', 'Ensure nodev option set on /var/tmp partition'),
+                    ('1.1.4.3', 'Ensure noexec option set on /var/tmp partition'),
+                    ('1.1.4.4', 'Ensure nosuid option set on /var/tmp partition')
+                ]:
+                    results.append({
+                        'rule_id': rule_id,
+                        'title': title,
+                        'status': 'FAIL',
+                        'details': '/var/tmp is not a separate partition'
+                    })
+        else:
+            # No data available
+            for rule_id, title in [
+                ('1.1.4.1', 'Ensure /var/tmp is a separate partition'),
+                ('1.1.4.2', 'Ensure nodev option set on /var/tmp partition'),
+                ('1.1.4.3', 'Ensure noexec option set on /var/tmp partition'),
+                ('1.1.4.4', 'Ensure nosuid option set on /var/tmp partition')
+            ]:
+                results.append({
+                    'rule_id': rule_id,
+                    'title': title,
+                    'status': 'FAIL',
+                    'details': 'No mount data available for /var/tmp'
+                })
+                
+    except Exception as e:
+        for rule_id, title in [
+            ('1.1.4.1', 'Ensure /var/tmp is a separate partition'),
+            ('1.1.4.2', 'Ensure nodev option set on /var/tmp partition'),
+            ('1.1.4.3', 'Ensure noexec option set on /var/tmp partition'),
+            ('1.1.4.4', 'Ensure nosuid option set on /var/tmp partition')
+        ]:
+            results.append({
+                'rule_id': rule_id,
+                'title': title,
+                'status': 'FAIL',
+                'details': f'Error checking /var/tmp partition: {str(e)}'
+            })
+    
+    return results
+
+def check_var_log_partition_online():
+    """Check /var/log partition configuration"""
+    results = []
+    
+    try:
+        result = subprocess.run("findmnt -n /var/log", shell=True, capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            results.append({
+                'rule_id': '1.1.5.1',
+                'title': 'Ensure /var/log is a separate partition',
+                'status': 'PASS',
+                'details': f'/var/log is mounted: {result.stdout.strip()}'
+            })
+        else:
+            results.append({
+                'rule_id': '1.1.5.1',
+                'title': 'Ensure /var/log is a separate partition',
+                'status': 'FAIL',
+                'details': '/var/log is not a separate partition'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.1.5.1',
+            'title': 'Ensure /var/log is a separate partition',
+            'status': 'FAIL',
+            'details': f'Error checking /var/log partition: {str(e)}'
+        })
+    
+    return results
+
+def check_var_log_partition_offline(data_dir):
+    """Check /var/log partition configuration offline"""
+    results = []
+    
+    try:
+        mount_file = Path(data_dir) / "filesystem" / "findmnt_var_log.txt"
+        
+        if mount_file.exists():
+            mount_info = mount_file.read_text().strip()
+            
+            if mount_info and not mount_info.startswith("ERROR"):
+                results.append({
+                    'rule_id': '1.1.5.1',
+                    'title': 'Ensure /var/log is a separate partition',
+                    'status': 'PASS',
+                    'details': f'/var/log is mounted: {mount_info}'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.1.5.1',
+                    'title': 'Ensure /var/log is a separate partition',
+                    'status': 'FAIL',
+                    'details': '/var/log is not a separate partition'
+                })
+        else:
+            results.append({
+                'rule_id': '1.1.5.1',
+                'title': 'Ensure /var/log is a separate partition',
+                'status': 'FAIL',
+                'details': 'No mount data available for /var/log'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.1.5.1',
+            'title': 'Ensure /var/log is a separate partition',
+            'status': 'FAIL',
+            'details': f'Error checking /var/log partition: {str(e)}'
+        })
+    
+    return results
+
+def check_var_log_audit_partition_online():
+    """Check /var/log/audit partition configuration"""
+    results = []
+    
+    try:
+        result = subprocess.run("findmnt -n /var/log/audit", shell=True, capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            results.append({
+                'rule_id': '1.1.6.1',
+                'title': 'Ensure /var/log/audit is a separate partition',
+                'status': 'PASS',
+                'details': f'/var/log/audit is mounted: {result.stdout.strip()}'
+            })
+        else:
+            results.append({
+                'rule_id': '1.1.6.1',
+                'title': 'Ensure /var/log/audit is a separate partition',
+                'status': 'FAIL',
+                'details': '/var/log/audit is not a separate partition'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.1.6.1',
+            'title': 'Ensure /var/log/audit is a separate partition',
+            'status': 'FAIL',
+            'details': f'Error checking /var/log/audit partition: {str(e)}'
+        })
+    
+    return results
+
+def check_var_log_audit_partition_offline(data_dir):
+    """Check /var/log/audit partition configuration offline"""
+    results = []
+    
+    try:
+        mount_file = Path(data_dir) / "filesystem" / "findmnt_var_log_audit.txt"
+        
+        if mount_file.exists():
+            mount_info = mount_file.read_text().strip()
+            
+            if mount_info and not mount_info.startswith("ERROR"):
+                results.append({
+                    'rule_id': '1.1.6.1',
+                    'title': 'Ensure /var/log/audit is a separate partition',
+                    'status': 'PASS',
+                    'details': f'/var/log/audit is mounted: {mount_info}'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.1.6.1',
+                    'title': 'Ensure /var/log/audit is a separate partition',
+                    'status': 'FAIL',
+                    'details': '/var/log/audit is not a separate partition'
+                })
+        else:
+            results.append({
+                'rule_id': '1.1.6.1',
+                'title': 'Ensure /var/log/audit is a separate partition',
+                'status': 'FAIL',
+                'details': 'No mount data available for /var/log/audit'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.1.6.1',
+            'title': 'Ensure /var/log/audit is a separate partition',
+            'status': 'FAIL',
+            'details': f'Error checking /var/log/audit partition: {str(e)}'
+        })
+    
+    return results
+
+def check_home_partition_online():
+    """Check /home partition configuration"""
+    results = []
+    
+    try:
+        result = subprocess.run("findmnt -n /home", shell=True, capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            mount_info = result.stdout.strip()
+            
+            # 1.1.7.1 - Ensure /home is a separate partition
+            results.append({
+                'rule_id': '1.1.7.1',
+                'title': 'Ensure /home is a separate partition',
+                'status': 'PASS',
+                'details': f'/home is mounted: {mount_info}'
+            })
+            
+            # Check mount options
+            mount_opts = mount_info.split()[3] if len(mount_info.split()) > 3 else ""
+            
+            # 1.1.7.2 - Ensure nodev option set on /home partition
+            if 'nodev' in mount_opts:
+                results.append({
+                    'rule_id': '1.1.7.2',
+                    'title': 'Ensure nodev option set on /home partition',
+                    'status': 'PASS',
+                    'details': 'nodev option is set on /home'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.1.7.2',
+                    'title': 'Ensure nodev option set on /home partition',
+                    'status': 'FAIL',
+                    'details': 'nodev option is not set on /home'
+                })
+        else:
+            # /home is not a separate partition
+            results.append({
+                'rule_id': '1.1.7.1',
+                'title': 'Ensure /home is a separate partition',
+                'status': 'FAIL',
+                'details': '/home is not a separate partition'
+            })
+            
+            results.append({
+                'rule_id': '1.1.7.2',
+                'title': 'Ensure nodev option set on /home partition',
+                'status': 'FAIL',
+                'details': '/home is not a separate partition'
+            })
+            
+    except Exception as e:
+        for rule_id, title in [
+            ('1.1.7.1', 'Ensure /home is a separate partition'),
+            ('1.1.7.2', 'Ensure nodev option set on /home partition')
+        ]:
+            results.append({
+                'rule_id': rule_id,
+                'title': title,
+                'status': 'FAIL',
+                'details': f'Error checking /home partition: {str(e)}'
+            })
+    
+    return results
+
+def check_home_partition_offline(data_dir):
+    """Check /home partition configuration offline"""
+    results = []
+    
+    try:
+        mount_file = Path(data_dir) / "filesystem" / "findmnt_home.txt"
+        
+        if mount_file.exists():
+            mount_info = mount_file.read_text().strip()
+            
+            if mount_info and not mount_info.startswith("ERROR"):
+                # /home is mounted
+                results.append({
+                    'rule_id': '1.1.7.1',
+                    'title': 'Ensure /home is a separate partition',
+                    'status': 'PASS',
+                    'details': f'/home is mounted: {mount_info}'
+                })
+                
+                # Check mount options
+                mount_opts = mount_info.split()[3] if len(mount_info.split()) > 3 else ""
+                
+                # Check nodev option
+                if 'nodev' in mount_opts:
+                    results.append({
+                        'rule_id': '1.1.7.2',
+                        'title': 'Ensure nodev option set on /home partition',
+                        'status': 'PASS',
+                        'details': 'nodev option is set on /home'
+                    })
+                else:
+                    results.append({
+                        'rule_id': '1.1.7.2',
+                        'title': 'Ensure nodev option set on /home partition',
+                        'status': 'FAIL',
+                        'details': 'nodev option is not set on /home'
+                    })
+            else:
+                # /home is not a separate partition
+                for rule_id, title in [
+                    ('1.1.7.1', 'Ensure /home is a separate partition'),
+                    ('1.1.7.2', 'Ensure nodev option set on /home partition')
+                ]:
+                    results.append({
+                        'rule_id': rule_id,
+                        'title': title,
+                        'status': 'FAIL',
+                        'details': '/home is not a separate partition'
+                    })
+        else:
+            # No data available
+            for rule_id, title in [
+                ('1.1.7.1', 'Ensure /home is a separate partition'),
+                ('1.1.7.2', 'Ensure nodev option set on /home partition')
+            ]:
+                results.append({
+                    'rule_id': rule_id,
+                    'title': title,
+                    'status': 'FAIL',
+                    'details': 'No mount data available for /home'
+                })
+                
+    except Exception as e:
+        for rule_id, title in [
+            ('1.1.7.1', 'Ensure /home is a separate partition'),
+            ('1.1.7.2', 'Ensure nodev option set on /home partition')
+        ]:
+            results.append({
+                'rule_id': rule_id,
+                'title': title,
+                'status': 'FAIL',
+                'details': f'Error checking /home partition: {str(e)}'
+            })
+    
+    return results
+
+def check_dev_shm_partition_online():
+    """Check /dev/shm partition configuration"""
+    results = []
+    
+    try:
+        result = subprocess.run("findmnt -n /dev/shm", shell=True, capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            mount_info = result.stdout.strip()
+            mount_opts = mount_info.split()[3] if len(mount_info.split()) > 3 else ""
+            
+            # Check individual options
+            for rule_id, option, title in [
+                ('1.1.8.1', 'nodev', 'Ensure nodev option set on /dev/shm partition'),
+                ('1.1.8.2', 'noexec', 'Ensure noexec option set on /dev/shm partition'),
+                ('1.1.8.3', 'nosuid', 'Ensure nosuid option set on /dev/shm partition')
+            ]:
+                if option in mount_opts:
+                    results.append({
+                        'rule_id': rule_id,
+                        'title': title,
+                        'status': 'PASS',
+                        'details': f'{option} option is set on /dev/shm'
+                    })
+                else:
+                    results.append({
+                        'rule_id': rule_id,
+                        'title': title,
+                        'status': 'FAIL',
+                        'details': f'{option} option is not set on /dev/shm'
+                    })
+        else:
+            # /dev/shm not found
+            for rule_id, title in [
+                ('1.1.8.1', 'Ensure nodev option set on /dev/shm partition'),
+                ('1.1.8.2', 'Ensure noexec option set on /dev/shm partition'),
+                ('1.1.8.3', 'Ensure nosuid option set on /dev/shm partition')
+            ]:
+                results.append({
+                    'rule_id': rule_id,
+                    'title': title,
+                    'status': 'FAIL',
+                    'details': '/dev/shm partition not found'
+                })
+                
+    except Exception as e:
+        for rule_id, title in [
+            ('1.1.8.1', 'Ensure nodev option set on /dev/shm partition'),
+            ('1.1.8.2', 'Ensure noexec option set on /dev/shm partition'),
+            ('1.1.8.3', 'Ensure nosuid option set on /dev/shm partition')
+        ]:
+            results.append({
+                'rule_id': rule_id,
+                'title': title,
+                'status': 'FAIL',
+                'details': f'Error checking /dev/shm partition: {str(e)}'
+            })
+    
+    return results
+
+def check_dev_shm_partition_offline(data_dir):
+    """Check /dev/shm partition configuration offline"""
+    results = []
+    
+    try:
+        mount_file = Path(data_dir) / "filesystem" / "findmnt_dev_shm.txt"
+        
+        if mount_file.exists():
+            mount_info = mount_file.read_text().strip()
+            
+            if mount_info and not mount_info.startswith("ERROR"):
+                # Check mount options
+                mount_opts = mount_info.split()[3] if len(mount_info.split()) > 3 else ""
+                
+                # Check individual options
+                for rule_id, option, title in [
+                    ('1.1.8.1', 'nodev', 'Ensure nodev option set on /dev/shm partition'),
+                    ('1.1.8.2', 'noexec', 'Ensure noexec option set on /dev/shm partition'),
+                    ('1.1.8.3', 'nosuid', 'Ensure nosuid option set on /dev/shm partition')
+                ]:
+                    if option in mount_opts:
+                        results.append({
+                            'rule_id': rule_id,
+                            'title': title,
+                            'status': 'PASS',
+                            'details': f'{option} option is set on /dev/shm'
+                        })
+                    else:
+                        results.append({
+                            'rule_id': rule_id,
+                            'title': title,
+                            'status': 'FAIL',
+                            'details': f'{option} option is not set on /dev/shm'
+                        })
+            else:
+                # /dev/shm not found
+                for rule_id, title in [
+                    ('1.1.8.1', 'Ensure nodev option set on /dev/shm partition'),
+                    ('1.1.8.2', 'Ensure noexec option set on /dev/shm partition'),
+                    ('1.1.8.3', 'Ensure nosuid option set on /dev/shm partition')
+                ]:
+                    results.append({
+                        'rule_id': rule_id,
+                        'title': title,
+                        'status': 'FAIL',
+                        'details': '/dev/shm partition not found'
+                    })
+        else:
+            # No data available
+            for rule_id, title in [
+                ('1.1.8.1', 'Ensure nodev option set on /dev/shm partition'),
+                ('1.1.8.2', 'Ensure noexec option set on /dev/shm partition'),
+                ('1.1.8.3', 'Ensure nosuid option set on /dev/shm partition')
+            ]:
+                results.append({
+                    'rule_id': rule_id,
+                    'title': title,
+                    'status': 'FAIL',
+                    'details': 'No mount data available for /dev/shm'
+                })
+                
+    except Exception as e:
+        for rule_id, title in [
+            ('1.1.8.1', 'Ensure nodev option set on /dev/shm partition'),
+            ('1.1.8.2', 'Ensure noexec option set on /dev/shm partition'),
+            ('1.1.8.3', 'Ensure nosuid option set on /dev/shm partition')
+        ]:
+            results.append({
+                'rule_id': rule_id,
+                'title': title,
+                'status': 'FAIL',
+                'details': f'Error checking /dev/shm partition: {str(e)}'
+            })
+    
+    return results
+
+def check_usb_storage_disabled_online():
+    """Check if USB storage is disabled"""
+    try:
+        # Check if usb-storage module is blacklisted
+        result = subprocess.run("modprobe -n -v usb-storage 2>&1", shell=True, capture_output=True, text=True)
+        
+        # Check if module is loaded
+        lsmod_result = subprocess.run("lsmod | grep usb_storage", shell=True, capture_output=True, text=True)
+        
+        if "install /bin/true" in result.stdout or "install /bin/false" in result.stdout:
+            if lsmod_result.returncode != 0:  # Module not loaded
+                status = "PASS"
+                details = "USB storage module is properly disabled"
+            else:
+                status = "FAIL"
+                details = "USB storage module is blacklisted but currently loaded"
+        else:
+            status = "FAIL"
+            details = "USB storage module is not disabled"
+            
+    except Exception as e:
+        status = "FAIL"
+        details = f"Error checking USB storage: {str(e)}"
+    
+    return {
+        'rule_id': '1.1.9.1',
+        'title': 'Disable USB Storage',
+        'status': status,
+        'details': details
+    }
+
+def check_usb_storage_disabled_offline(data_dir):
+    """Check if USB storage is disabled offline"""
+    try:
+        modprobe_file = Path(data_dir) / "kernel" / "modprobe_usb-storage.txt"
+        lsmod_file = Path(data_dir) / "kernel" / "lsmod.txt"
+        
+        status = "FAIL"
+        details = "USB storage module is not disabled"
+        
+        if modprobe_file.exists():
+            content = modprobe_file.read_text().strip()
+            if "install /bin/true" in content or "install /bin/false" in content:
+                # Check if module is loaded
+                if lsmod_file.exists():
+                    lsmod_content = lsmod_file.read_text()
+                    if "usb_storage" not in lsmod_content:
+                        status = "PASS"
+                        details = "USB storage module is properly disabled"
+                    else:
+                        details = "USB storage module is blacklisted but currently loaded"
+        else:
+            details = "No modprobe data available for usb-storage"
+            
+    except Exception as e:
+        status = "FAIL"
+        details = f"Error checking USB storage: {str(e)}"
+    
+    return {
+        'rule_id': '1.1.9.1',
+        'title': 'Disable USB Storage',
+        'status': status,
+        'details': details
+    }
+
+# 1.2 Configure Software Updates
 def check_package_management_online():
-    """Check package management configuration - online"""
+    """Check package management configuration"""
     results = []
     
-    # 1.2.1.1 - Ensure GPG keys are configured (Manual)
-    results.append({
-        'rule_id': '1.2.1.1',
-        'title': 'Ensure GPG keys are configured',
-        'status': 'MANUAL',
-        'details': 'Manual review required - verify GPG keys are properly configured'
-    })
+    # 1.2.1 - Ensure GPG keys are configured
+    try:
+        result = subprocess.run("rpm -q gpg-pubkey", shell=True, capture_output=True, text=True)
+        
+        if result.returncode == 0 and result.stdout.strip():
+            results.append({
+                'rule_id': '1.2.1',
+                'title': 'Ensure GPG keys are configured',
+                'status': 'PASS',
+                'details': f'GPG keys are configured: {len(result.stdout.strip().split())} keys found'
+            })
+        else:
+            results.append({
+                'rule_id': '1.2.1',
+                'title': 'Ensure GPG keys are configured',
+                'status': 'FAIL',
+                'details': 'No GPG keys configured'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.2.1',
+            'title': 'Ensure GPG keys are configured',
+            'status': 'FAIL',
+            'details': f'Error checking GPG keys: {str(e)}'
+        })
     
-    # 1.2.1.2 - Ensure gpgcheck is globally activated
-    yum_conf_check = run_command(['grep', '-E', '^gpgcheck', '/etc/dnf/dnf.conf'])
-    gpgcheck_enabled = yum_conf_check and 'gpgcheck=1' in yum_conf_check
-    
-    results.append({
-        'rule_id': '1.2.1.2',
-        'title': 'Ensure gpgcheck is globally activated',
-        'status': 'PASS' if gpgcheck_enabled else 'FAIL',
-        'details': f'gpgcheck is {"enabled" if gpgcheck_enabled else "not enabled"} globally'
-    })
-    
-    # 1.2.1.3 - Ensure repo_gpgcheck is globally activated
-    repo_gpgcheck = run_command(['grep', '-E', '^repo_gpgcheck', '/etc/dnf/dnf.conf'])
-    repo_gpgcheck_enabled = repo_gpgcheck and 'repo_gpgcheck=1' in repo_gpgcheck
-    
-    results.append({
-        'rule_id': '1.2.1.3',
-        'title': 'Ensure repo_gpgcheck is globally activated',
-        'status': 'PASS' if repo_gpgcheck_enabled else 'FAIL',
-        'details': f'repo_gpgcheck is {"enabled" if repo_gpgcheck_enabled else "not enabled"} globally'
-    })
-    
-    # 1.2.1.4 - Ensure package manager repositories are configured (Manual)
-    results.append({
-        'rule_id': '1.2.1.4',
-        'title': 'Ensure package manager repositories are configured',
-        'status': 'MANUAL',
-        'details': 'Manual review required - verify repository configuration'
-    })
-    
-    # 1.2.2.1 - Ensure updates, patches, and additional security software are installed (Manual)
-    results.append({
-        'rule_id': '1.2.2.1',
-        'title': 'Ensure updates, patches, and additional security software are installed',
-        'status': 'MANUAL',
-        'details': 'Manual review required - verify system is up to date'
-    })
+    # 1.2.2 - Ensure gpgcheck is globally activated
+    try:
+        yum_conf_files = ['/etc/yum.conf', '/etc/dnf/dnf.conf']
+        gpgcheck_enabled = False
+        
+        for conf_file in yum_conf_files:
+            if os.path.exists(conf_file):
+                with open(conf_file, 'r') as f:
+                    content = f.read()
+                    if re.search(r'^\s*gpgcheck\s*=\s*1', content, re.MULTILINE):
+                        gpgcheck_enabled = True
+                        break
+        
+        if gpgcheck_enabled:
+            results.append({
+                'rule_id': '1.2.2',
+                'title': 'Ensure gpgcheck is globally activated',
+                'status': 'PASS',
+                'details': 'gpgcheck is globally activated'
+            })
+        else:
+            results.append({
+                'rule_id': '1.2.2',
+                'title': 'Ensure gpgcheck is globally activated',
+                'status': '
+                'title': 'Ensure gpgcheck is globally activated',
+                'status': 'FAIL',
+                'details': 'gpgcheck is not globally activated'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.2.2',
+            'title': 'Ensure gpgcheck is globally activated',
+            'status': 'FAIL',
+            'details': f'Error checking gpgcheck configuration: {str(e)}'
+        })
     
     return results
 
 def check_package_management_offline(data_dir):
-    """Check package management configuration - offline"""
+    """Check package management configuration offline"""
     results = []
     
-    # 1.2.1.1 - GPG keys (Manual)
-    results.append({
-        'rule_id': '1.2.1.1',
-        'title': 'Ensure GPG keys are configured',
-        'status': 'MANUAL',
-        'details': 'Manual review required - verify GPG keys are properly configured'
-    })
-    
-    dnf_conf_file = Path(data_dir) / 'packages' / 'dnf.conf'
-    if dnf_conf_file.exists():
-        dnf_content = dnf_conf_file.read_text()
-        
-        # 1.2.1.2 - gpgcheck
-        gpgcheck_enabled = re.search(r'^gpgcheck\s*=\s*1', dnf_content, re.MULTILINE)
-        results.append({
-            'rule_id': '1.2.1.2',
-            'title': 'Ensure gpgcheck is globally activated',
-            'status': 'PASS' if gpgcheck_enabled else 'FAIL',
-            'details': f'gpgcheck is {"enabled" if gpgcheck_enabled else "not enabled"} globally'
-        })
-        
-        # 1.2.1.3 - repo_gpgcheck
-        repo_gpgcheck_enabled = re.search(r'^repo_gpgcheck\s*=\s*1', dnf_content, re.MULTILINE)
-        results.append({
-            'rule_id': '1.2.1.3',
-            'title': 'Ensure repo_gpgcheck is globally activated',
-            'status': 'PASS' if repo_gpgcheck_enabled else 'FAIL',
-            'details': f'repo_gpgcheck is {"enabled" if repo_gpgcheck_enabled else "not enabled"} globally'
-        })
-    else:
-        # If file doesn't exist, mark as FAIL
-        results.append({
-            'rule_id': '1.2.1.2',
-            'title': 'Ensure gpgcheck is globally activated',
-            'status': 'FAIL',
-            'details': 'dnf.conf file not found'
-        })
-        
-        results.append({
-            'rule_id': '1.2.1.3',
-            'title': 'Ensure repo_gpgcheck is globally activated',
-            'status': 'FAIL',
-            'details': 'dnf.conf file not found'
-        })
-    
-    # 1.2.1.4 - Repository configuration (Manual)
-    results.append({
-        'rule_id': '1.2.1.4',
-        'title': 'Ensure package manager repositories are configured',
-        'status': 'MANUAL',
-        'details': 'Manual review required - verify repository configuration'
-    })
-    
-    # 1.2.2.1 - Updates and patches (Manual)
-    results.append({
-        'rule_id': '1.2.2.1',
-        'title': 'Ensure updates, patches, and additional security software are installed',
-        'status': 'MANUAL',
-        'details': 'Manual review required - verify system is up to date'
-    })
-    
-    return results
-
-# 1.3 Mandatory Access Control (SELinux)
-def check_selinux_online():
-    """Check SELinux configuration - online"""
-    results = []
-    
-    # 1.3.1.1 - Ensure SELinux is installed
-    selinux_installed = run_command(['rpm', '-q', 'libselinux'])
-    results.append({
-        'rule_id': '1.3.1.1',
-        'title': 'Ensure SELinux is installed',
-        'status': 'PASS' if selinux_installed and 'not installed' not in selinux_installed else 'FAIL',
-        'details': f'SELinux package status: {selinux_installed or "not found"}'
-    })
-    
-    # 1.3.1.2 - Ensure SELinux is not disabled in bootloader
+    # 1.2.1 - Ensure GPG keys are configured
     try:
-        with open('/proc/cmdline', 'r') as f:
-            cmdline = f.read()
-            selinux_not_disabled = 'selinux=0' not in cmdline and 'enforcing=0' not in cmdline
+        gpg_file = Path(data_dir) / "packages" / "gpg_keys.txt"
+        
+        if gpg_file.exists():
+            content = gpg_file.read_text().strip()
+            if content and not content.startswith("ERROR"):
+                key_count = len([line for line in content.split('\n') if line.strip()])
+                results.append({
+                    'rule_id': '1.2.1',
+                    'title': 'Ensure GPG keys are configured',
+                    'status': 'PASS',
+                    'details': f'GPG keys are configured: {key_count} keys found'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.2.1',
+                    'title': 'Ensure GPG keys are configured',
+                    'status': 'FAIL',
+                    'details': 'No GPG keys configured'
+                })
+        else:
             results.append({
-                'rule_id': '1.3.1.2',
-                'title': 'Ensure SELinux is not disabled in bootloader configuration',
-                'status': 'PASS' if selinux_not_disabled else 'FAIL',
-                'details': f'SELinux bootloader status: {"not disabled" if selinux_not_disabled else "disabled"}'
-            })
-    except:
-        results.append({
-            'rule_id': '1.3.1.2',
-            'title': 'Ensure SELinux is not disabled in bootloader configuration',
-            'status': 'FAIL',
-            'details': 'Could not read /proc/cmdline'
-        })
-    
-    # 1.3.1.3 - Ensure SELinux policy is configured
-    selinux_policy = run_command(['sestatus'])
-    policy_configured = selinux_policy and ('targeted' in selinux_policy or 'mls' in selinux_policy)
-    results.append({
-        'rule_id': '1.3.1.3',
-        'title': 'Ensure SELinux policy is configured',
-        'status': 'PASS' if policy_configured else 'FAIL',
-        'details': f'SELinux policy: {selinux_policy or "unknown"}'
-    })
-    
-    # 1.3.1.4 - Ensure SELinux mode is not disabled
-    selinux_mode = run_command(['getenforce'])
-    mode_not_disabled = selinux_mode and selinux_mode.lower() != 'disabled'
-    results.append({
-        'rule_id': '1.3.1.4',
-        'title': 'Ensure the SELinux mode is not disabled',
-        'status': 'PASS' if mode_not_disabled else 'FAIL',
-        'details': f'SELinux mode: {selinux_mode or "unknown"}'
-    })
-    
-    # 1.3.1.5 - Ensure SELinux mode is enforcing
-    mode_enforcing = selinux_mode and selinux_mode.lower() == 'enforcing'
-    results.append({
-        'rule_id': '1.3.1.5',
-        'title': 'Ensure the SELinux mode is enforcing',
-        'status': 'PASS' if mode_enforcing else 'FAIL',
-        'details': f'SELinux mode: {selinux_mode or "unknown"}'
-    })
-    
-    # 1.3.1.6 - Ensure no unconfined services exist (Manual)
-    results.append({
-        'rule_id': '1.3.1.6',
-        'title': 'Ensure no unconfined services exist',
-        'status': 'MANUAL',
-        'details': 'Manual review required - check for unconfined services with: ps -eZ | grep unconfined'
-    })
-    
-    # 1.3.1.7 - Ensure MCS Translation Service is not installed
-    mcstrans_check = run_command(['rpm', '-q', 'mcstrans'])
-    mcstrans_not_installed = mcstrans_check and 'not installed' in mcstrans_check
-    results.append({
-        'rule_id': '1.3.1.7',
-        'title': 'Ensure the MCS Translation Service (mcstrans) is not installed',
-        'status': 'PASS' if mcstrans_not_installed else 'FAIL',
-        'details': f'mcstrans package: {mcstrans_check or "unknown"}'
-    })
-    
-    # 1.3.1.8 - Ensure SETroubleshoot is not installed
-    setroubleshoot_check = run_command(['rpm', '-q', 'setroubleshoot'])
-    setroubleshoot_not_installed = setroubleshoot_check and 'not installed' in setroubleshoot_check
-    results.append({
-        'rule_id': '1.3.1.8',
-        'title': 'Ensure SETroubleshoot is not installed',
-        'status': 'PASS' if setroubleshoot_not_installed else 'FAIL',
-        'details': f'setroubleshoot package: {setroubleshoot_check or "unknown"}'
-    })
-    
-    return results
-
-def check_selinux_offline(data_dir):
-    """Check SELinux configuration - offline"""
-    results = []
-    
-    # 1.3.1.1 - SELinux installed
-    packages_file = Path(data_dir) / 'packages' / 'installed_packages.txt'
-    if packages_file.exists():
-        packages_content = packages_file.read_text()
-        selinux_installed = 'libselinux' in packages_content
-        results.append({
-            'rule_id': '1.3.1.1',
-            'title': 'Ensure SELinux is installed',
-            'status': 'PASS' if selinux_installed else 'FAIL',
-            'details': f'SELinux package: {"installed" if selinux_installed else "not installed"}'
-        })
-        
-        # Check other packages while we have the file
-        mcstrans_not_installed = 'mcstrans' not in packages_content
-        results.append({
-            'rule_id': '1.3.1.7',
-            'title': 'Ensure the MCS Translation Service (mcstrans) is not installed',
-            'status': 'PASS' if mcstrans_not_installed else 'FAIL',
-            'details': f'mcstrans package: {"not installed" if mcstrans_not_installed else "installed"}'
-        })
-        
-        setroubleshoot_not_installed = 'setroubleshoot' not in packages_content
-        results.append({
-            'rule_id': '1.3.1.8',
-            'title': 'Ensure SETroubleshoot is not installed',
-            'status': 'PASS' if setroubleshoot_not_installed else 'FAIL',
-            'details': f'setroubleshoot package: {"not installed" if setroubleshoot_not_installed else "installed"}'
-        })
-    else:
-        # If packages file doesn't exist, mark as FAIL
-        results.append({
-            'rule_id': '1.3.1.1',
-            'title': 'Ensure SELinux is installed',
-            'status': 'FAIL',
-            'details': 'Package information not available'
-        })
-        
-        results.append({
-            'rule_id': '1.3.1.7',
-            'title': 'Ensure the MCS Translation Service (mcstrans) is not installed',
-            'status': 'FAIL',
-            'details': 'Package information not available'
-        })
-        
-        results.append({
-            'rule_id': '1.3.1.8',
-            'title': 'Ensure SETroubleshoot is not installed',
-            'status': 'FAIL',
-            'details': 'Package information not available'
-        })
-    
-    # 1.3.1.2 - Bootloader configuration
-    cmdline_file = Path(data_dir) / 'system' / 'cmdline.txt'
-    if cmdline_file.exists():
-        cmdline = cmdline_file.read_text()
-        selinux_not_disabled = 'selinux=0' not in cmdline and 'enforcing=0' not in cmdline
-        results.append({
-            'rule_id': '1.3.1.2',
-            'title': 'Ensure SELinux is not disabled in bootloader configuration',
-            'status': 'PASS' if selinux_not_disabled else 'FAIL',
-            'details': f'SELinux bootloader status: {"not disabled" if selinux_not_disabled else "disabled"}'
-        })
-    else:
-        results.append({
-            'rule_id': '1.3.1.2',
-            'title': 'Ensure SELinux is not disabled in bootloader configuration',
-            'status': 'FAIL',
-            'details': 'Bootloader cmdline information not available'
-        })
-    
-    # 1.3.1.3 - SELinux policy
-    sestatus_file = Path(data_dir) / 'selinux' / 'sestatus.txt'
-    if sestatus_file.exists():
-        sestatus_content = sestatus_file.read_text()
-        policy_configured = 'targeted' in sestatus_content or 'mls' in sestatus_content
-        results.append({
-            'rule_id': '1.3.1.3',
-            'title': 'Ensure SELinux policy is configured',
-            'status': 'PASS' if policy_configured else 'FAIL',
-            'details': f'SELinux policy: {"configured" if policy_configured else "not configured"}'
-        })
-    else:
-        results.append({
-            'rule_id': '1.3.1.3',
-            'title': 'Ensure SELinux policy is configured',
-            'status': 'FAIL',
-            'details': 'SELinux status information not available'
-        })
-    
-    # 1.3.1.4 & 1.3.1.5 - SELinux mode
-    selinux_mode_file = Path(data_dir) / 'selinux' / 'selinux_mode.txt'
-    if selinux_mode_file.exists():
-        content = selinux_mode_file.read_text()
-        # Extract actual mode from collected data
-        lines = content.split('\n')
-        selinux_mode = None
-        for line in lines:
-            if not line.startswith('#') and not line.startswith('Command:') and not line.startswith('Return Code:') and not line.startswith('---'):
-                if line.strip():
-                    selinux_mode = line.strip().lower()
-                    break
-        
-        if selinux_mode:
-            # 1.3.1.4 - Mode not disabled
-            mode_not_disabled = selinux_mode != 'disabled'
-            results.append({
-                'rule_id': '1.3.1.4',
-                'title': 'Ensure the SELinux mode is not disabled',
-                'status': 'PASS' if mode_not_disabled else 'FAIL',
-                'details': f'SELinux mode: {selinux_mode}'
+                'rule_id': '1.2.1',
+                'title': 'Ensure GPG keys are configured',
+                'status': 'FAIL',
+                'details': 'No GPG key data available'
             })
             
-            # 1.3.1.5 - Mode is enforcing
-            mode_enforcing = selinux_mode == 'enforcing'
+    except Exception as e:
+        results.append({
+            'rule_id': '1.2.1',
+            'title': 'Ensure GPG keys are configured',
+            'status': 'FAIL',
+            'details': f'Error checking GPG keys: {str(e)}'
+        })
+    
+    # 1.2.2 - Ensure gpgcheck is globally activated
+    try:
+        yum_conf_file = Path(data_dir) / "config" / "yum.conf"
+        dnf_conf_file = Path(data_dir) / "config" / "dnf.conf"
+        
+        gpgcheck_enabled = False
+        
+        for conf_file in [yum_conf_file, dnf_conf_file]:
+            if conf_file.exists():
+                content = conf_file.read_text()
+                if re.search(r'^\s*gpgcheck\s*=\s*1', content, re.MULTILINE):
+                    gpgcheck_enabled = True
+                    break
+        
+        if gpgcheck_enabled:
             results.append({
-                'rule_id': '1.3.1.5',
-                'title': 'Ensure the SELinux mode is enforcing',
-                'status': 'PASS' if mode_enforcing else 'FAIL',
-                'details': f'SELinux mode: {selinux_mode}'
+                'rule_id': '1.2.2',
+                'title': 'Ensure gpgcheck is globally activated',
+                'status': 'PASS',
+                'details': 'gpgcheck is globally activated'
             })
         else:
             results.append({
-                'rule_id': '1.3.1.4',
-                'title': 'Ensure the SELinux mode is not disabled',
+                'rule_id': '1.2.2',
+                'title': 'Ensure gpgcheck is globally activated',
                 'status': 'FAIL',
-                'details': 'SELinux mode could not be determined'
+                'details': 'gpgcheck is not globally activated'
             })
             
-            results.append({
-                'rule_id': '1.3.1.5',
-                'title': 'Ensure the SELinux mode is enforcing',
-                'status': 'FAIL',
-                'details': 'SELinux mode could not be determined'
-            })
-    else:
+    except Exception as e:
         results.append({
-            'rule_id': '1.3.1.4',
-            'title': 'Ensure the SELinux mode is not disabled',
+            'rule_id': '1.2.2',
+            'title': 'Ensure gpgcheck is globally activated',
             'status': 'FAIL',
-            'details': 'SELinux mode information not available'
+            'details': f'Error checking gpgcheck configuration: {str(e)}'
         })
+    
+    return results
+
+# 1.3 Filesystem Integrity Checking
+def check_filesystem_integrity_online():
+    """Check filesystem integrity checking configuration"""
+    results = []
+    
+    # 1.3.1 - Ensure AIDE is installed
+    try:
+        result = subprocess.run("rpm -q aide", shell=True, capture_output=True, text=True)
         
+        if result.returncode == 0:
+            results.append({
+                'rule_id': '1.3.1',
+                'title': 'Ensure AIDE is installed',
+                'status': 'PASS',
+                'details': f'AIDE is installed: {result.stdout.strip()}'
+            })
+        else:
+            results.append({
+                'rule_id': '1.3.1',
+                'title': 'Ensure AIDE is installed',
+                'status': 'FAIL',
+                'details': 'AIDE is not installed'
+            })
+            
+    except Exception as e:
         results.append({
-            'rule_id': '1.3.1.5',
-            'title': 'Ensure the SELinux mode is enforcing',
+            'rule_id': '1.3.1',
+            'title': 'Ensure AIDE is installed',
             'status': 'FAIL',
-            'details': 'SELinux mode information not available'
+            'details': f'Error checking AIDE installation: {str(e)}'
         })
     
-    # 1.3.1.6 - Unconfined services (Manual)
-    results.append({
-        'rule_id': '1.3.1.6',
-        'title': 'Ensure no unconfined services exist',
-        'status': 'MANUAL',
-        'details': 'Manual review required - check for unconfined services'
-    })
+    # 1.3.2 - Ensure filesystem integrity is regularly checked
+    try:
+        # Check for AIDE cron job
+        cron_files = ['/etc/crontab', '/etc/cron.d/*', '/var/spool/cron/*']
+        aide_scheduled = False
+        
+        # Check system crontab
+        if os.path.exists('/etc/crontab'):
+            with open('/etc/crontab', 'r') as f:
+                if 'aide' in f.read().lower():
+                    aide_scheduled = True
+        
+        # Check cron.d directory
+        if not aide_scheduled and os.path.exists('/etc/cron.d'):
+            for cron_file in os.listdir('/etc/cron.d'):
+                try:
+                    with open(f'/etc/cron.d/{cron_file}', 'r') as f:
+                        if 'aide' in f.read().lower():
+                            aide_scheduled = True
+                            break
+                except:
+                    continue
+        
+        if aide_scheduled:
+            results.append({
+                'rule_id': '1.3.2',
+                'title': 'Ensure filesystem integrity is regularly checked',
+                'status': 'PASS',
+                'details': 'AIDE is scheduled to run regularly'
+            })
+        else:
+            results.append({
+                'rule_id': '1.3.2',
+                'title': 'Ensure filesystem integrity is regularly checked',
+                'status': 'FAIL',
+                'details': 'AIDE is not scheduled to run regularly'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.3.2',
+            'title': 'Ensure filesystem integrity is regularly checked',
+            'status': 'FAIL',
+            'details': f'Error checking AIDE scheduling: {str(e)}'
+        })
     
     return results
 
-# 1.4 Configure Bootloader
-def check_bootloader_online():
-    """Check bootloader configuration - online"""
+def check_filesystem_integrity_offline(data_dir):
+    """Check filesystem integrity checking configuration offline"""
     results = []
     
-    # 1.4.1 - Bootloader password
-    grub_cfg_files = ['/boot/grub2/grub.cfg', '/boot/efi/EFI/redhat/grub.cfg']
-    password_set = False
+    # 1.3.1 - Ensure AIDE is installed
+    try:
+        packages_file = Path(data_dir) / "packages" / "installed_packages.txt"
+        
+        if packages_file.exists():
+            content = packages_file.read_text()
+            if 'aide' in content.lower():
+                results.append({
+                    'rule_id': '1.3.1',
+                    'title': 'Ensure AIDE is installed',
+                    'status': 'PASS',
+                    'details': 'AIDE is installed'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.3.1',
+                    'title': 'Ensure AIDE is installed',
+                    'status': 'FAIL',
+                    'details': 'AIDE is not installed'
+                })
+        else:
+            results.append({
+                'rule_id': '1.3.1',
+                'title': 'Ensure AIDE is installed',
+                'status': 'FAIL',
+                'details': 'No package data available'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.3.1',
+            'title': 'Ensure AIDE is installed',
+            'status': 'FAIL',
+            'details': f'Error checking AIDE installation: {str(e)}'
+        })
     
-    for grub_file in grub_cfg_files:
-        try:
-            with open(grub_file, 'r') as f:
-                content = f.read()
-                if 'password' in content:
-                    password_set = True
-                    break
-        except:
-            continue
-    
-    results.append({
-        'rule_id': '1.4.1',
-        'title': 'Ensure bootloader password is set',
-        'status': 'PASS' if password_set else 'FAIL',
-        'details': f'Bootloader password: {"set" if password_set else "not set"}'
-    })
-    
-    # 1.4.2 - Bootloader config permissions
-    grub_permissions_ok = True
-    for grub_file in grub_cfg_files:
-        try:
-            stat_result = run_command(['stat', '-c', '%a %U %G', grub_file])
-            if stat_result:
-                perms, owner, group = stat_result.split()
-                if perms != '600' or owner != 'root' or group != 'root':
-                    grub_permissions_ok = False
-                    break
-        except:
-            continue
-    
-    results.append({
-        'rule_id': '1.4.2',
-        'title': 'Ensure access to bootloader config is configured',
-        'status': 'PASS' if grub_permissions_ok else 'FAIL',
-        'details': f'Bootloader config permissions: {"correct" if grub_permissions_ok else "incorrect"}'
-    })
+    # 1.3.2 - Ensure filesystem integrity is regularly checked
+    try:
+        crontab_file = Path(data_dir) / "config" / "crontab.txt"
+        cron_d_file = Path(data_dir) / "config" / "cron_d.txt"
+        
+        aide_scheduled = False
+        
+        # Check crontab
+        if crontab_file.exists():
+            content = crontab_file.read_text()
+            if 'aide' in content.lower():
+                aide_scheduled = True
+        
+        # Check cron.d
+        if not aide_scheduled and cron_d_file.exists():
+            content = cron_d_file.read_text()
+            if 'aide' in content.lower():
+                aide_scheduled = True
+        
+        if aide_scheduled:
+            results.append({
+                'rule_id': '1.3.2',
+                'title': 'Ensure filesystem integrity is regularly checked',
+                'status': 'PASS',
+                'details': 'AIDE is scheduled to run regularly'
+            })
+        else:
+            results.append({
+                'rule_id': '1.3.2',
+                'title': 'Ensure filesystem integrity is regularly checked',
+                'status': 'FAIL',
+                'details': 'AIDE is not scheduled to run regularly'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.3.2',
+            'title': 'Ensure filesystem integrity is regularly checked',
+            'status': 'FAIL',
+            'details': f'Error checking AIDE scheduling: {str(e)}'
+        })
     
     return results
 
-def check_bootloader_offline(data_dir):
-    """Check bootloader configuration - offline"""
+# 1.4 Secure Boot Settings
+def check_secure_boot_online():
+    """Check secure boot settings"""
     results = []
     
-    # 1.4.1 - Bootloader password
-    grub_files = ['grub.cfg', 'grub_efi.cfg']
-    password_set = False
-    
-    for grub_file in grub_files:
-        grub_path = Path(data_dir) / 'bootloader' / grub_file
-        if grub_path.exists():
-            content = grub_path.read_text()
-            if 'password' in content:
-                password_set = True
-                break
-    
-    results.append({
-        'rule_id': '1.4.1',
-        'title': 'Ensure bootloader password is set',
-        'status': 'PASS' if password_set else 'FAIL',
-        'details': f'Bootloader password: {"set" if password_set else "not set"}'
-    })
-    
-    # 1.4.2 - Bootloader permissions
-    permissions_file = Path(data_dir) / 'system_files' / 'bootloader_permissions.txt'
-    if permissions_file.exists():
-        content = permissions_file.read_text()
-        # Check if permissions are 600 root:root
-        permissions_ok = '600 root root' in content
+    # 1.4.1 - Ensure bootloader password is set
+    try:
+        grub_files = ['/boot/grub2/grub.cfg', '/boot/efi/EFI/redhat/grub.cfg']
+        password_set = False
+        
+        for grub_file in grub_files:
+            if os.path.exists(grub_file):
+                with open(grub_file, 'r') as f:
+                    content = f.read()
+                    if 'password_pbkdf2' in content or 'password' in content:
+                        password_set = True
+                        break
+        
+        if password_set:
+            results.append({
+                'rule_id': '1.4.1',
+                'title': 'Ensure bootloader password is set',
+                'status': 'PASS',
+                'details': 'Bootloader password is configured'
+            })
+        else:
+            results.append({
+                'rule_id': '1.4.1',
+                'title': 'Ensure bootloader password is set',
+                'status': 'FAIL',
+                'details': 'Bootloader password is not set'
+            })
+            
+    except Exception as e:
         results.append({
-            'rule_id': '1.4.2',
-            'title': 'Ensure access to bootloader config is configured',
-            'status': 'PASS' if permissions_ok else 'FAIL',
-            'details': f'Bootloader config permissions: {"correct" if permissions_ok else "incorrect"}'
-        })
-    else:
-        results.append({
-            'rule_id': '1.4.2',
-            'title': 'Ensure access to bootloader config is configured',
+            'rule_id': '1.4.1',
+            'title': 'Ensure bootloader password is set',
             'status': 'FAIL',
-            'details': 'Bootloader permissions information not available'
+            'details': f'Error checking bootloader password: {str(e)}'
+        })
+    
+    # 1.4.2 - Ensure permissions on bootloader config are configured
+    try:
+        grub_files = ['/boot/grub2/grub.cfg', '/boot/efi/EFI/redhat/grub.cfg']
+        permissions_ok = True
+        details_list = []
+        
+        for grub_file in grub_files:
+            if os.path.exists(grub_file):
+                stat_info = os.stat(grub_file)
+                mode = oct(stat_info.st_mode)[-3:]
+                
+                if mode == '600':
+                    details_list.append(f'{grub_file}: {mode} (OK)')
+                else:
+                    permissions_ok = False
+                    details_list.append(f'{grub_file}: {mode} (should be 600)')
+        
+        if permissions_ok and details_list:
+            results.append({
+                'rule_id': '1.4.2',
+                'title': 'Ensure permissions on bootloader config are configured',
+                'status': 'PASS',
+                'details': '; '.join(details_list)
+            })
+        else:
+            results.append({
+                'rule_id': '1.4.2',
+                'title': 'Ensure permissions on bootloader config are configured',
+                'status': 'FAIL',
+                'details': '; '.join(details_list) if details_list else 'No bootloader config files found'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.4.2',
+            'title': 'Ensure permissions on bootloader config are configured',
+            'status': 'FAIL',
+            'details': f'Error checking bootloader permissions: {str(e)}'
+        })
+    
+    # 1.4.3 - Ensure authentication required for single user mode
+    try:
+        # Check if root password is set
+        shadow_result = subprocess.run("getent shadow root", shell=True, capture_output=True, text=True)
+        
+        if shadow_result.returncode == 0:
+            shadow_entry = shadow_result.stdout.strip()
+            password_field = shadow_entry.split(':')[1] if ':' in shadow_entry else ''
+            
+            if password_field and password_field not in ['*', '!', '!!']:
+                results.append({
+                    'rule_id': '1.4.3',
+                    'title': 'Ensure authentication required for single user mode',
+                    'status': 'PASS',
+                    'details': 'Root password is set for single user mode'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.4.3',
+                    'title': 'Ensure authentication required for single user mode',
+                    'status': 'FAIL',
+                    'details': 'Root password is not set'
+                })
+        else:
+            results.append({
+                'rule_id': '1.4.3',
+                'title': 'Ensure authentication required for single user mode',
+                'status': 'FAIL',
+                'details': 'Cannot check root password'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.4.3',
+            'title': 'Ensure authentication required for single user mode',
+            'status': 'FAIL',
+            'details': f'Error checking single user mode authentication: {str(e)}'
         })
     
     return results
 
-# 1.5 Configure Additional Process Hardening
+def check_secure_boot_offline(data_dir):
+    """Check secure boot settings offline"""
+    results = []
+    
+    # 1.4.1 - Ensure bootloader password is set
+    try:
+        grub_file = Path(data_dir) / "config" / "grub.cfg"
+        
+        if grub_file.exists():
+            content = grub_file.read_text()
+            if 'password_pbkdf2' in content or 'password' in content:
+                results.append({
+                    'rule_id': '1.4.1',
+                    'title': 'Ensure bootloader password is set',
+                    'status': 'PASS',
+                    'details': 'Bootloader password is configured'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.4.1',
+                    'title': 'Ensure bootloader password is set',
+                    'status': 'FAIL',
+                    'details': 'Bootloader password is not set'
+                })
+        else:
+            results.append({
+                'rule_id': '1.4.1',
+                'title': 'Ensure bootloader password is set',
+                'status': 'FAIL',
+                'details': 'No bootloader config data available'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.4.1',
+            'title': 'Ensure bootloader password is set',
+            'status': 'FAIL',
+            'details': f'Error checking bootloader password: {str(e)}'
+        })
+    
+    # 1.4.2 - Ensure permissions on bootloader config are configured
+    try:
+        perms_file = Path(data_dir) / "config" / "grub_permissions.txt"
+        
+        if perms_file.exists():
+            content = perms_file.read_text().strip()
+            if '600' in content:
+                results.append({
+                    'rule_id': '1.4.2',
+                    'title': 'Ensure permissions on bootloader config are configured',
+                    'status': 'PASS',
+                    'details': f'Bootloader permissions: {content}'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.4.2',
+                    'title': 'Ensure permissions on bootloader config are configured',
+                    'status': 'FAIL',
+                    'details': f'Incorrect bootloader permissions: {content}'
+                })
+        else:
+            results.append({
+                'rule_id': '1.4.2',
+                'title': 'Ensure permissions on bootloader config are configured',
+                'status': 'FAIL',
+                'details': 'No bootloader permission data available'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.4.2',
+            'title': 'Ensure permissions on bootloader config are configured',
+            'status': 'FAIL',
+            'details': f'Error checking bootloader permissions: {str(e)}'
+        })
+    
+    # 1.4.3 - Ensure authentication required for single user mode
+    try:
+        shadow_file = Path(data_dir) / "config" / "shadow_root.txt"
+        
+        if shadow_file.exists():
+            content = shadow_file.read_text().strip()
+            if content and not content.startswith("ERROR"):
+                password_field = content.split(':')[1] if ':' in content else ''
+                
+                if password_field and password_field not in ['*', '!', '!!']:
+                    results.append({
+                        'rule_id': '1.4.3',
+                        'title': 'Ensure authentication required for single user mode',
+                        'status': 'PASS',
+                        'details': 'Root password is set for single user mode'
+                    })
+                else:
+                    results.append({
+                        'rule_id': '1.4.3',
+                        'title': 'Ensure authentication required for single user mode',
+                        'status': 'FAIL',
+                        'details': 'Root password is not set'
+                    })
+            else:
+                results.append({
+                    'rule_id': '1.4.3',
+                    'title': 'Ensure authentication required for single user mode',
+                    'status': 'FAIL',
+                    'details': 'Cannot check root password'
+                })
+        else:
+            results.append({
+                'rule_id': '1.4.3',
+                'title': 'Ensure authentication required for single user mode',
+                'status': 'FAIL',
+                'details': 'No shadow data available'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.4.3',
+            'title': 'Ensure authentication required for single user mode',
+            'status': 'FAIL',
+            'details': f'Error checking single user mode authentication: {str(e)}'
+        })
+    
+    return results
+
+# 1.5 Additional Process Hardening
 def check_process_hardening_online():
-    """Check process hardening configuration - online"""
+    """Check additional process hardening"""
     results = []
     
-    # 1.5.1 - Address space layout randomization
-    aslr_check = run_command(['sysctl', 'kernel.randomize_va_space'])
-    aslr_enabled = aslr_check and 'kernel.randomize_va_space = 2' in aslr_check
+    # 1.5.1 - Ensure core dumps are restricted
+    try:
+        # Check limits.conf
+        limits_configured = False
+        if os.path.exists('/etc/security/limits.conf'):
+            with open('/etc/security/limits.conf', 'r') as f:
+                content = f.read()
+                if re.search(r'^\s*\*\s+hard\s+core\s+0', content, re.MULTILINE):
+                    limits_configured = True
+        
+        # Check sysctl
+        sysctl_result = subprocess.run("sysctl fs.suid_dumpable", shell=True, capture_output=True, text=True)
+        sysctl_configured = False
+        if sysctl_result.returncode == 0 and "fs.suid_dumpable = 0" in sysctl_result.stdout:
+            sysctl_configured = True
+        
+        if limits_configured and sysctl_configured:
+            results.append({
+                'rule_id': '1.5.1',
+                'title': 'Ensure core dumps are restricted',
+                'status': 'PASS',
+                'details': 'Core dumps are properly restricted'
+            })
+        else:
+            details = []
+            if not limits_configured:
+                details.append('limits.conf not configured')
+            if not sysctl_configured:
+                details.append('sysctl fs.suid_dumpable not set to 0')
+            
+            results.append({
+                'rule_id': '1.5.1',
+                'title': 'Ensure core dumps are restricted',
+                'status': 'FAIL',
+                'details': '; '.join(details)
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.5.1',
+            'title': 'Ensure core dumps are restricted',
+            'status': 'FAIL',
+            'details': f'Error checking core dump restrictions: {str(e)}'
+        })
     
-    results.append({
-        'rule_id': '1.5.1',
-        'title': 'Ensure address space layout randomization is enabled',
-        'status': 'PASS' if aslr_enabled else 'FAIL',
-        'details': f'ASLR setting: {aslr_check or "unknown"}'
-    })
+    # 1.5.2 - Ensure XD/NX support is enabled
+    try:
+        # Check if NX bit is supported and enabled
+        result = subprocess.run("dmesg | grep -i nx", shell=True, capture_output=True, text=True)
+        
+        if result.returncode == 0 and result.stdout.strip():
+            results.append({
+                'rule_id': '1.5.2',
+                'title': 'Ensure XD/NX support is enabled',
+                'status': 'PASS',
+                'details': 'NX/XD support is enabled'
+            })
+        else:
+            results.append({
+                'rule_id': '1.5.2',
+                'title': 'Ensure XD/NX support is enabled',
+                'status': 'FAIL',
+                'details': 'NX/XD support status unclear'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.5.2',
+            'title': 'Ensure XD/NX support is enabled',
+            'status': 'FAIL',
+            'details': f'Error checking NX/XD support: {str(e)}'
+        })
     
-    # 1.5.2 - ptrace_scope restriction
-    ptrace_check = run_command(['sysctl', 'kernel.yama.ptrace_scope'])
-    ptrace_restricted = ptrace_check and 'kernel.yama.ptrace_scope = 1' in ptrace_check
+    # 1.5.3 - Ensure address space layout randomization (ASLR) is enabled
+    try:
+        result = subprocess.run("sysctl kernel.randomize_va_space", shell=True, capture_output=True, text=True)
+        
+        if result.returncode == 0 and "kernel.randomize_va_space = 2" in result.stdout:
+            results.append({
+                'rule_id': '1.5.3',
+                'title': 'Ensure address space layout randomization (ASLR) is enabled',
+                'status': 'PASS',
+                'details': 'ASLR is enabled (kernel.randomize_va_space = 2)'
+            })
+        else:
+            results.append({
+                'rule_id': '1.5.3',
+                'title': 'Ensure address space layout randomization (ASLR) is enabled',
+                'status': 'FAIL',
+                'details': f'ASLR not properly configured: {result.stdout.strip()}'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.5.3',
+            'title': 'Ensure address space layout randomization (ASLR) is enabled',
+            'status': 'FAIL',
+            'details': f'Error checking ASLR: {str(e)}'
+        })
     
-    results.append({
-        'rule_id': '1.5.2',
-        'title': 'Ensure ptrace_scope is restricted',
-        'status': 'PASS' if ptrace_restricted else 'FAIL',
-        'details': f'ptrace_scope setting: {ptrace_check or "unknown"}'
-    })
-    
-    # 1.5.3 - Core dump backtraces disabled
-    coredump_check = run_command(['systemctl', 'is-enabled', 'systemd-coredump.socket'])
-    coredump_disabled = coredump_check and 'masked' in coredump_check
-    
-    results.append({
-        'rule_id': '1.5.3',
-        'title': 'Ensure core dump backtraces are disabled',
-        'status': 'PASS' if coredump_disabled else 'FAIL',
-        'details': f'systemd-coredump.socket: {coredump_check or "unknown"}'
-    })
-    
-    # 1.5.4 - Core dump storage disabled
-    storage_check = run_command(['systemctl', 'is-enabled', 'systemd-coredump'])
-    storage_disabled = storage_check and 'masked' in storage_check
-    
-    results.append({
-        'rule_id': '1.5.4',
-        'title': 'Ensure core dump storage is disabled',
-        'status': 'PASS' if storage_disabled else 'FAIL',
-        'details': f'systemd-coredump service: {storage_check or "unknown"}'
-    })
+    # 1.5.4 - Ensure prelink is not installed
+    try:
+        result = subprocess.run("rpm -q prelink", shell=True, capture_output=True, text=True)
+        
+        if result.returncode != 0:
+            results.append({
+                'rule_id': '1.5.4',
+                'title': 'Ensure prelink is not installed',
+                'status': 'PASS',
+                'details': 'prelink is not installed'
+            })
+        else:
+            results.append({
+                'rule_id': '1.5.4',
+                'title': 'Ensure prelink is not installed',
+                'status': 'FAIL',
+                'details': f'prelink is installed: {result.stdout.strip()}'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.5.4',
+            'title': 'Ensure prelink is not installed',
+            'status': 'FAIL',
+            'details': f'Error checking prelink: {str(e)}'
+        })
     
     return results
 
 def check_process_hardening_offline(data_dir):
-    """Check process hardening configuration - offline"""
+    """Check additional process hardening offline"""
     results = []
     
-    # Check sysctl settings
-    sysctl_file = Path(data_dir) / 'system' / 'sysctl_all.txt'
-    if sysctl_file.exists():
-        sysctl_content = sysctl_file.read_text()
+    # 1.5.1 - Ensure core dumps are restricted
+    try:
+        limits_file = Path(data_dir) / "config" / "limits.conf"
+        sysctl_file = Path(data_dir) / "config" / "sysctl.txt"
         
-        # 1.5.1 - ASLR
-        aslr_enabled = 'kernel.randomize_va_space = 2' in sysctl_content
-        results.append({
-            'rule_id': '1.5.1',
-            'title': 'Ensure address space layout randomization is enabled',
-            'status': 'PASS' if aslr_enabled else 'FAIL',
-            'details': f'ASLR: {"enabled" if aslr_enabled else "not properly configured"}'
-        })
+        limits_configured = False
+        sysctl_configured = False
         
-        # 1.5.2 - ptrace_scope
-        ptrace_restricted = 'kernel.yama.ptrace_scope = 1' in sysctl_content
-        results.append({
-            'rule_id': '1.5.2',
-            'title': 'Ensure ptrace_scope is restricted',
-            'status': 'PASS' if ptrace_restricted else 'FAIL',
-            'details': f'ptrace_scope: {"restricted" if ptrace_restricted else "not restricted"}'
-        })
-    else:
-        # If sysctl file doesn't exist, mark as FAIL
-        results.append({
-            'rule_id': '1.5.1',
-            'title': 'Ensure address space layout randomization is enabled',
-            'status': 'FAIL',
-            'details': 'System configuration information not available'
-        })
+        # Check limits.conf
+        if limits_file.exists():
+            content = limits_file.read_text()
+            if re.search(r'^\s*\*\s+hard\s+core\s+0', content, re.MULTILINE):
+                limits_configured = True
         
-        results.append({
-            'rule_id': '1.5.2',
-            'title': 'Ensure ptrace_scope is restricted',
-            'status': 'FAIL',
-            'details': 'System configuration information not available'
-        })
-    
-    # Check systemd services
-    services_file = Path(data_dir) / 'services' / 'systemctl_list_unit_files.txt'
-    if services_file.exists():
-        services_content = services_file.read_text()
+        # Check sysctl
+        if sysctl_file.exists():
+            content = sysctl_file.read_text()
+            if "fs.suid_dumpable = 0" in content:
+                sysctl_configured = True
         
-        # 1.5.3 - Core dump backtraces
-        coredump_disabled = 'systemd-coredump.socket' in services_content and 'masked' in services_content
-        results.append({
-            'rule_id': '1.5.3',
-            'title': 'Ensure core dump backtraces are disabled',
-            'status': 'PASS' if coredump_disabled else 'FAIL',
-            'details': f'systemd-coredump.socket: {"masked" if coredump_disabled else "not masked"}'
-        })
-        
-        # 1.5.4 - Core dump storage
-        storage_disabled = 'systemd-coredump.service' in services_content and 'masked' in services_content
-        results.append({
-            'rule_id': '1.5.4',
-            'title': 'Ensure core dump storage is disabled',
-            'status': 'PASS' if storage_disabled else 'FAIL',
-            'details': f'systemd-coredump service: {"masked" if storage_disabled else "not masked"}'
-        })
-    else:
-        # If services file doesn't exist, mark as FAIL
-        results.append({
-            'rule_id': '1.5.3',
-            'title': 'Ensure core dump backtraces are disabled',
-            'status': 'FAIL',
-            'details': 'Service information not available'
-        })
-        
-        results.append({
-            'rule_id': '1.5.4',
-            'title': 'Ensure core dump storage is disabled',
-            'status': 'FAIL',
-            'details': 'Service information not available'
-        })
-    
-    return results
-
-# 1.6 Configure system wide crypto policy
-def check_crypto_policy_online():
-    """Check system-wide crypto policy - online"""
-    results = []
-    
-    # 1.6.1 - Crypto policy not set to legacy
-    crypto_policy = run_command(['update-crypto-policies', '--show'])
-    policy_not_legacy = crypto_policy and crypto_policy.upper() != 'LEGACY'
-    
-    results.append({
-        'rule_id': '1.6.1',
-        'title': 'Ensure system wide crypto policy is not set to legacy',
-        'status': 'PASS' if policy_not_legacy else 'FAIL',
-        'details': f'Crypto policy: {crypto_policy or "unknown"}'
-    })
-    
-    # 1.6.2 - Crypto policy not set in sshd config
-    sshd_crypto_check = run_command(['grep', '-i', 'crypto_policy', '/etc/ssh/sshd_config'])
-    sshd_crypto_not_set = not sshd_crypto_check
-    
-    results.append({
-        'rule_id': '1.6.2',
-        'title': 'Ensure system wide crypto policy is not set in sshd configuration',
-        'status': 'PASS' if sshd_crypto_not_set else 'FAIL',
-        'details': f'SSHD crypto policy override: {"not found" if sshd_crypto_not_set else "found"}'
-    })
-    
-    # 1.6.3 - SHA1 hash and signature support
-    crypto_sha1_check = run_command(['grep', '-i', 'sha1', '/etc/crypto-policies/back-ends/openssh.config'])
-    sha1_disabled = not crypto_sha1_check or 'sha1' not in crypto_sha1_check.lower()
-    
-    results.append({
-        'rule_id': '1.6.3',
-        'title': 'Ensure system wide crypto policy disables sha1 hash and signature support',
-        'status': 'PASS' if sha1_disabled else 'FAIL',
-        'details': f'SHA1 support: {"disabled" if sha1_disabled else "enabled"}'
-    })
-    
-    # 1.6.4 - MACs less than 128 bits
-    mac_check = run_command(['grep', '-E', 'umac-64|hmac-sha1-96', '/etc/crypto-policies/back-ends/openssh.config'])
-    weak_macs_disabled = not mac_check
-    
-    results.append({
-        'rule_id': '1.6.4',
-        'title': 'Ensure system wide crypto policy disables macs less than 128 bits',
-        'status': 'PASS' if weak_macs_disabled else 'FAIL',
-        'details': f'Weak MACs: {"disabled" if weak_macs_disabled else "enabled"}'
-    })
-    
-    # 1.6.5 - CBC for SSH
-    cbc_check = run_command(['grep', 'cbc', '/etc/crypto-policies/back-ends/openssh.config'])
-    cbc_disabled = not cbc_check
-    
-    results.append({
-        'rule_id': '1.6.5',
-        'title': 'Ensure system wide crypto policy disables cbc for ssh',
-        'status': 'PASS' if cbc_disabled else 'FAIL',
-        'details': f'CBC ciphers: {"disabled" if cbc_disabled else "enabled"}'
-    })
-    
-    # 1.6.6 - chacha20-poly1305 for SSH (Manual)
-    results.append({
-        'rule_id': '1.6.6',
-        'title': 'Ensure system wide crypto policy disables chacha20-poly1305 for ssh',
-        'status': 'MANUAL',
-        'details': 'Manual review required - check chacha20-poly1305 cipher configuration'
-    })
-    
-    # 1.6.7 - EtM for SSH (Manual)
-    results.append({
-        'rule_id': '1.6.7',
-        'title': 'Ensure system wide crypto policy disables EtM for ssh',
-        'status': 'MANUAL',
-        'details': 'Manual review required - check Encrypt-then-MAC configuration'
-    })
-    
-    return results
-
-def check_crypto_policy_offline(data_dir):
-    """Check system-wide crypto policy - offline"""
-    results = []
-    
-    # 1.6.1 - Check crypto policy
-    crypto_policy_file = Path(data_dir) / 'crypto' / 'crypto_policy.txt'
-    if crypto_policy_file.exists():
-        policy = crypto_policy_file.read_text().strip()
-        policy_not_legacy = policy.upper() != 'LEGACY'
-        results.append({
-            'rule_id': '1.6.1',
-            'title': 'Ensure system wide crypto policy is not set to legacy',
-            'status': 'PASS' if policy_not_legacy else 'FAIL',
-            'details': f'Crypto policy: {policy}'
-        })
-    else:
-        results.append({
-            'rule_id': '1.6.1',
-            'title': 'Ensure system wide crypto policy is not set to legacy',
-            'status': 'FAIL',
-            'details': 'Crypto policy information not available'
-        })
-    
-    # 1.6.2 - Check sshd config
-    sshd_config_file = Path(data_dir) / 'ssh' / 'sshd_config'
-    if sshd_config_file.exists():
-        sshd_content = sshd_config_file.read_text()
-        sshd_crypto_not_set = 'crypto_policy' not in sshd_content.lower()
-        results.append({
-            'rule_id': '1.6.2',
-            'title': 'Ensure system wide crypto policy is not set in sshd configuration',
-            'status': 'PASS' if sshd_crypto_not_set else 'FAIL',
-            'details': f'SSHD crypto policy override: {"not found" if sshd_crypto_not_set else "found"}'
-        })
-    else:
-        results.append({
-            'rule_id': '1.6.2',
-            'title': 'Ensure system wide crypto policy is not set in sshd configuration',
-            'status': 'FAIL',
-            'details': 'SSHD configuration not available'
-        })
-    
-    # Check crypto policy backend files
-    openssh_config_file = Path(data_dir) / 'crypto' / 'openssh.config'
-    if openssh_config_file.exists():
-        openssh_content = openssh_config_file.read_text()
-        
-        # 1.6.3 - SHA1 disabled
-        sha1_disabled = 'sha1' not in openssh_content.lower()
-        results.append({
-            'rule_id': '1.6.3',
-            'title': 'Ensure system wide crypto policy disables sha1 hash and signature support',
-            'status': 'PASS' if sha1_disabled else 'FAIL',
-            'details': f'SHA1 support: {"disabled" if sha1_disabled else "enabled"}'
-        })
-        
-        # 1.6.4 - Weak MACs disabled
-        weak_macs_disabled = not any(mac in openssh_content for mac in ['umac-64', 'hmac-sha1-96'])
-        results.append({
-            'rule_id': '1.6.4',
-            'title': 'Ensure system wide crypto policy disables macs less than 128 bits',
-            'status': 'PASS' if weak_macs_disabled else 'FAIL',
-            'details': f'Weak MACs: {"disabled" if weak_macs_disabled else "enabled"}'
-        })
-        
-        # 1.6.5 - CBC disabled
-        cbc_disabled = 'cbc' not in openssh_content
-        results.append({
-            'rule_id': '1.6.5',
-            'title': 'Ensure system wide crypto policy disables cbc for ssh',
-            'status': 'PASS' if cbc_disabled else 'FAIL',
-            'details': f'CBC ciphers: {"disabled" if cbc_disabled else "enabled"}'
-        })
-    else:
-        # If openssh config doesn't exist, mark crypto checks as FAIL
-        results.append({
-            'rule_id': '1.6.3',
-            'title': 'Ensure system wide crypto policy disables sha1 hash and signature support',
-            'status': 'FAIL',
-            'details': 'Crypto policy backend configuration not available'
-        })
-        
-        results.append({
-            'rule_id': '1.6.4',
-            'title': 'Ensure system wide crypto policy disables macs less than 128 bits',
-            'status': 'FAIL',
-            'details': 'Crypto policy backend configuration not available'
-        })
-        
-        results.append({
-            'rule_id': '1.6.5',
-            'title': 'Ensure system wide crypto policy disables cbc for ssh',
-            'status': 'FAIL',
-            'details': 'Crypto policy backend configuration not available'
-        })
-    
-    # Manual checks
-    results.append({
-        'rule_id': '1.6.6',
-        'title': 'Ensure system wide crypto policy disables chacha20-poly1305 for ssh',
-        'status': 'MANUAL',
-        'details': 'Manual review required - check chacha20-poly1305 cipher configuration'
-    })
-    
-    results.append({
-        'rule_id': '1.6.7',
-        'title': 'Ensure system wide crypto policy disables EtM for ssh',
-        'status': 'MANUAL',
-        'details': 'Manual review required - check Encrypt-then-MAC configuration'
-    })
-    
-    return results
-
-# 1.7 Configure Command Line Warning Banners
-def check_warning_banners_online():
-    """Check warning banners configuration - online"""
-    results = []
-    
-    banner_files = [
-        ('/etc/motd', '1.7.1', 'message of the day'),
-        ('/etc/issue', '1.7.2', 'local login warning banner'),
-        ('/etc/issue.net', '1.7.3', 'remote login warning banner')
-    ]
-    
-    for file_path, rule_id, description in banner_files:
-        try:
-            with open(file_path, 'r') as f:
-                content = f.read().strip()
-                # Check if banner contains system information that should be removed
-                has_system_info = any(info in content.lower() for info in ['\\r', '\\m', '\\s', '\\v'])
-                banner_configured = len(content) > 0 and not has_system_info
-                
-                results.append({
-                    'rule_id': rule_id,
-                    'title': f'Ensure {description} is configured properly',
-                    'status': 'PASS' if banner_configured else 'FAIL',
-                    'details': f'{description}: {"properly configured" if banner_configured else "not properly configured"}'
-                })
-        except:
+        if limits_configured and sysctl_configured:
             results.append({
-                'rule_id': rule_id,
-                'title': f'Ensure {description} is configured properly',
-                'status': 'FAIL',
-                'details': f'{file_path} not accessible'
-            })
-    
-    # Check file permissions
-    permission_files = [
-        ('/etc/motd', '1.7.4'),
-        ('/etc/issue', '1.7.5'),
-        ('/etc/issue.net', '1.7.6')
-    ]
-    
-    for file_path, rule_id in permission_files:
-        stat_result = run_command(['stat', '-c', '%a %U %G', file_path])
-        if stat_result:
-            perms, owner, group = stat_result.split()
-            permissions_ok = perms == '644' and owner == 'root' and group == 'root'
-            results.append({
-                'rule_id': rule_id,
-                'title': f'Ensure access to {file_path} is configured',
-                'status': 'PASS' if permissions_ok else 'FAIL',
-                'details': f'{file_path} permissions: {perms} {owner}:{group}'
+                'rule_id': '1.5.1',
+                'title': 'Ensure core dumps are restricted',
+                'status': 'PASS',
+                'details': 'Core dumps are properly restricted'
             })
         else:
-            results.append({
-                'rule_id': rule_id,
-                'title': f'Ensure access to {file_path} is configured',
-                'status': 'FAIL',
-                'details': f'Could not check permissions for {file_path}'
-            })
-    
-    return results
-
-def check_warning_banners_offline(data_dir):
-    """Check warning banners configuration - offline"""
-    results = []
-    
-    banner_files = [
-        ('motd', '1.7.1', 'message of the day'),
-        ('issue', '1.7.2', 'local login warning banner'),
-        ('issue.net', '1.7.3', 'remote login warning banner')
-    ]
-    
-    banners_dir = Path(data_dir) / 'banners'
-    
-    for filename, rule_id, description in banner_files:
-        banner_file = banners_dir / filename
-        if banner_file.exists():
-            content = banner_file.read_text().strip()
-            has_system_info = any(info in content.lower() for info in ['\\r', '\\m', '\\s', '\\v'])
-            banner_configured = len(content) > 0 and not has_system_info
+            details = []
+            if not limits_configured:
+                details.append('limits.conf not configured')
+            if not sysctl_configured:
+                details.append('sysctl fs.suid_dumpable not set to 0')
             
             results.append({
-                'rule_id': rule_id,
-                'title': f'Ensure {description} is configured properly',
-                'status': 'PASS' if banner_configured else 'FAIL',
-                'details': f'{description}: {"properly configured" if banner_configured else "not properly configured"}'
-            })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': f'Ensure {description} is configured properly',
+                'rule_id': '1.5.1',
+                'title': 'Ensure core dumps are restricted',
                 'status': 'FAIL',
-                'details': f'{filename} file not found'
+                'details': '; '.join(details)
             })
-    
-    # Check file permissions
-    permissions_files = [
-        ('motd', '1.7.4'),
-        ('issue', '1.7.5'),
-        ('issue.net', '1.7.6')
-    ]
-    
-    permissions_dir = Path(data_dir) / 'system_files'
-    
-    for filename, rule_id in permissions_files:
-        permissions_file = permissions_dir / f'{filename}_permissions.txt'
-        if permissions_file.exists():
-            content = permissions_file.read_text()
-            permissions_ok = '644 root root' in content
-            results.append({
-                'rule_id': rule_id,
-                'title': f'Ensure access to /etc/{filename} is configured',
-                'status': 'PASS' if permissions_ok else 'FAIL',
-                'details': f'/etc/{filename} permissions: {"correct" if permissions_ok else "incorrect"}'
-            })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': f'Ensure access to /etc/{filename} is configured',
-                'status': 'FAIL',
-                'details': f'Permission information for /etc/{filename} not available'
-            })
-    
-    return results
-
-# 1.8 Configure GNOME Display Manager
-def check_gnome_display_manager_online():
-    """Check GNOME Display Manager configuration - online"""
-    results = []
-    
-    # 1.8.1 - Ensure GNOME Display Manager is removed
-    gdm_check = run_command(['rpm', '-q', 'gdm'])
-    gdm_removed = gdm_check and 'not installed' in gdm_check
-    
-    results.append({
-        'rule_id': '1.8.1',
-        'title': 'Ensure GNOME Display Manager is removed',
-        'status': 'PASS' if gdm_removed else 'FAIL',
-        'details': f'GDM package: {gdm_check or "unknown"}'
-    })
-    
-    # If GDM is installed, check its configuration
-    if not gdm_removed:
-        # 1.8.2 - GDM login banner
-        gdm_banner_file = '/etc/dconf/db/gdm.d/01-banner-message'
-        try:
-            with open(gdm_banner_file, 'r') as f:
-                banner_content = f.read()
-                banner_configured = 'banner-message-enable=true' in banner_content
-                results.append({
-                    'rule_id': '1.8.2',
-                    'title': 'Ensure GDM login banner is configured',
-                    'status': 'PASS' if banner_configured else 'FAIL',
-                    'details': f'GDM banner: {"configured" if banner_configured else "not configured"}'
-                })
-        except:
-            results.append({
-                'rule_id': '1.8.2',
-                'title': 'Ensure GDM login banner is configured',
-                'status': 'FAIL',
-                'details': 'GDM banner configuration file not found'
-            })
-        
-        # 1.8.3 - GDM disable-user-list
-        gdm_user_list_file = '/etc/dconf/db/gdm.d/00-login-screen'
-        try:
-            with open(gdm_user_list_file, 'r') as f:
-                user_list_content = f.read()
-                user_list_disabled = 'disable-user-list=true' in user_list_content
-                results.append({
-                    'rule_id': '1.8.3',
-                    'title': 'Ensure GDM disable-user-list option is enabled',
-                    'status': 'PASS' if user_list_disabled else 'FAIL',
-                    'details': f'GDM user list: {"disabled" if user_list_disabled else "not disabled"}'
-                })
-        except:
-            results.append({
-                'rule_id': '1.8.3',
-                'title': 'Ensure GDM disable-user-list option is enabled',
-                'status': 'FAIL',
-                'details': 'GDM login screen configuration file not found'
-            })
-        
-        # 1.8.4 - GDM screen locks when user is idle
-        gdm_idle_file = '/etc/dconf/db/local.d/00-screensaver'
-        try:
-            with open(gdm_idle_file, 'r') as f:
-                idle_content = f.read()
-                idle_configured = 'idle-delay' in idle_content and 'lock-enabled=true' in idle_content
-                results.append({
-                    'rule_id': '1.8.4',
-                    'title': 'Ensure GDM screen locks when the user is idle',
-                    'status': 'PASS' if idle_configured else 'FAIL',
-                    'details': f'GDM idle lock: {"configured" if idle_configured else "not configured"}'
-                })
-        except:
-            results.append({
-                'rule_id': '1.8.4',
-                'title': 'Ensure GDM screen locks when the user is idle',
-                'status': 'FAIL',
-                'details': 'GDM screensaver configuration file not found'
-            })
-        
-        # 1.8.5 - GDM screen locks cannot be overridden
-        gdm_lock_file = '/etc/dconf/db/local.d/locks/00-screensaver'
-        try:
-            with open(gdm_lock_file, 'r') as f:
-                lock_content = f.read()
-                lock_configured = '/org/gnome/desktop/screensaver/lock-enabled' in lock_content
-                results.append({
-                    'rule_id': '1.8.5',
-                    'title': 'Ensure GDM screen locks cannot be overridden',
-                    'status': 'PASS' if lock_configured else 'FAIL',
-                    'details': f'GDM lock override: {"prevented" if lock_configured else "not prevented"}'
-                })
-        except:
-            results.append({
-                'rule_id': '1.8.5',
-                'title': 'Ensure GDM screen locks cannot be overridden',
-                'status': 'FAIL',
-                'details': 'GDM lock configuration file not found'
-            })
-        
-        # 1.8.6 - GDM automatic mounting of removable media is disabled
-        gdm_media_file = '/etc/dconf/db/local.d/00-media-autorun'
-        try:
-            with open(gdm_media_file, 'r') as f:
-                media_content = f.read()
-                media_disabled = 'automount=false' in media_content and 'automount-open=false' in media_content
-                results.append({
-                    'rule_id': '1.8.6',
-                    'title': 'Ensure GDM automatic mounting of removable media is disabled',
-                    'status': 'PASS' if media_disabled else 'FAIL',
-                    'details': f'GDM automount: {"disabled" if media_disabled else "not disabled"}'
-                })
-        except:
-            results.append({
-                'rule_id': '1.8.6',
-                'title': 'Ensure GDM automatic mounting of removable media is disabled',
-                'status': 'FAIL',
-                'details': 'GDM media autorun configuration file not found'
-            })
-        
-        # 1.8.7 - GDM disabling automatic mounting is not overridden
-        gdm_media_lock_file = '/etc/dconf/db/local.d/locks/00-media-autorun'
-        try:
-            with open(gdm_media_lock_file, 'r') as f:
-                media_lock_content = f.read()
-                media_lock_configured = '/org/gnome/desktop/media-handling/automount' in media_lock_content
-                results.append({
-                    'rule_id': '1.8.7',
-                    'title': 'Ensure GDM disabling automatic mounting of removable media is not overridden',
-                    'status': 'PASS' if media_lock_configured else 'FAIL',
-                    'details': f'GDM automount override: {"prevented" if media_lock_configured else "not prevented"}'
-                })
-        except:
-            results.append({
-                'rule_id': '1.8.7',
-                'title': 'Ensure GDM disabling automatic mounting of removable media is not overridden',
-                'status': 'FAIL',
-                'details': 'GDM media autorun lock configuration file not found'
-            })
-        
-        # 1.8.8 - GDM autorun-never is enabled
-        gdm_autorun_file = '/etc/dconf/db/local.d/00-media-autorun'
-        try:
-            with open(gdm_autorun_file, 'r') as f:
-                autorun_content = f.read()
-                autorun_disabled = 'autorun-never=true' in autorun_content
-                results.append({
-                    'rule_id': '1.8.8',
-                    'title': 'Ensure GDM autorun-never is enabled',
-                    'status': 'PASS' if autorun_disabled else 'FAIL',
-                    'details': f'GDM autorun-never: {"enabled" if autorun_disabled else "not enabled"}'
-                })
-        except:
-            results.append({
-                'rule_id': '1.8.8',
-                'title': 'Ensure GDM autorun-never is enabled',
-                'status': 'FAIL',
-                'details': 'GDM autorun configuration file not found'
-            })
-        
-        # 1.8.9 - GDM autorun-never is not overridden
-        gdm_autorun_lock_file = '/etc/dconf/db/local.d/locks/00-media-autorun'
-        try:
-            with open(gdm_autorun_lock_file, 'r') as f:
-                autorun_lock_content = f.read()
-                autorun_lock_configured = '/org/gnome/desktop/media-handling/autorun-never' in autorun_lock_content
-                results.append({
-                    'rule_id': '1.8.9',
-                    'title': 'Ensure GDM autorun-never is not overridden',
-                    'status': 'PASS' if autorun_lock_configured else 'FAIL',
-                    'details': f'GDM autorun-never override: {"prevented" if autorun_lock_configured else "not prevented"}'
-                })
-        except:
-            results.append({
-                'rule_id': '1.8.9',
-                'title': 'Ensure GDM autorun-never is not overridden',
-                'status': 'FAIL',
-                'details': 'GDM autorun lock configuration file not found'
-            })
-    else:
-        # If GDM is not installed, mark GDM-specific checks as PASS
-        gdm_rules = ['1.8.2', '1.8.3', '1.8.4', '1.8.5', '1.8.6', '1.8.7', '1.8.8', '1.8.9']
-        gdm_titles = [
-            'Ensure GDM login banner is configured',
-            'Ensure GDM disable-user-list option is enabled',
-            'Ensure GDM screen locks when the user is idle',
-            'Ensure GDM screen locks cannot be overridden',
-            'Ensure GDM automatic mounting of removable media is disabled',
-            'Ensure GDM disabling automatic mounting of removable media is not overridden',
-            'Ensure GDM autorun-never is enabled',
-            'Ensure GDM autorun-never is not overridden'
-        ]
-        
-        for rule_id, title in zip(gdm_rules, gdm_titles):
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'PASS',
-                'details': 'GDM is not installed - check not applicable'
-            })
-    
-    return results
-
-def check_gnome_display_manager_offline(data_dir):
-    """Check GNOME Display Manager configuration - offline"""
-    results = []
-    
-    # 1.8.1 - Check if GDM is installed
-    packages_file = Path(data_dir) / 'packages' / 'installed_packages.txt'
-    gdm_installed = False
-    
-    if packages_file.exists():
-        packages_content = packages_file.read_text()
-        gdm_installed = 'gdm' in packages_content
-        
+            
+    except Exception as e:
         results.append({
-            'rule_id': '1.8.1',
-            'title': 'Ensure GNOME Display Manager is removed',
-            'status': 'PASS' if not gdm_installed else 'FAIL',
-            'details': f'GDM package: {"installed" if gdm_installed else "not installed"}'
-        })
-    else:
-        results.append({
-            'rule_id': '1.8.1',
-            'title': 'Ensure GNOME Display Manager is removed',
+            'rule_id': '1.5.1',
+            'title': 'Ensure core dumps are restricted',
             'status': 'FAIL',
-            'details': 'Package information not available'
+            'details': f'Error checking core dump restrictions: {str(e)}'
         })
     
-    # If GDM is installed, check its configuration
-    if gdm_installed:
-        gdm_dir = Path(data_dir) / 'gdm'
+    # 1.5.2 - Ensure XD/NX support is enabled
+    try:
+        dmesg_file = Path(data_dir) / "system" / "dmesg.txt"
         
-        # 1.8.2 - GDM login banner
-        banner_file = gdm_dir / '01-banner-message'
-        if banner_file.exists():
-            banner_content = banner_file.read_text()
-            banner_configured = 'banner-message-enable=true' in banner_content
-            results.append({
-                'rule_id': '1.8.2',
-                'title': 'Ensure GDM login banner is configured',
-                'status': 'PASS' if banner_configured else 'FAIL',
-                'details': f'GDM banner: {"configured" if banner_configured else "not configured"}'
-            })
+        if dmesg_file.exists():
+            content = dmesg_file.read_text()
+            if 'nx' in content.lower():
+                results.append({
+                    'rule_id': '1.5.2',
+                    'title': 'Ensure XD/NX support is enabled',
+                    'status': 'PASS',
+                    'details': 'NX/XD support is enabled'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.5.2',
+                    'title': 'Ensure XD/NX support is enabled',
+                    'status': 'FAIL',
+                    'details': 'NX/XD support status unclear'
+                })
         else:
             results.append({
-                'rule_id': '1.8.2',
-                'title': 'Ensure GDM login banner is configured',
+                'rule_id': '1.5.2',
+                'title': 'Ensure XD/NX support is enabled',
                 'status': 'FAIL',
-                'details': 'GDM banner configuration not found'
+                'details': 'No dmesg data available'
             })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.5.2',
+            'title': 'Ensure XD/NX support is enabled',
+            'status': 'FAIL',
+            'details': f'Error checking NX/XD support: {str(e)}'
+        })
+    
+    # 1.5.3 - Ensure address space layout randomization (ASLR) is enabled
+    try:
+        sysctl_file = Path(data_dir) / "config" / "sysctl.txt"
         
-        # 1.8.3 - GDM disable-user-list
-        user_list_file = gdm_dir / '00-login-screen'
-        if user_list_file.exists():
-            user_list_content = user_list_file.read_text()
-            user_list_disabled = 'disable-user-list=true' in user_list_content
-            results.append({
-                'rule_id': '1.8.3',
-                'title': 'Ensure GDM disable-user-list option is enabled',
-                'status': 'PASS' if user_list_disabled else 'FAIL',
-                'details': f'GDM user list: {"disabled" if user_list_disabled else "not disabled"}'
-            })
+        if sysctl_file.exists():
+            content = sysctl_file.read_text()
+            if "kernel.randomize_va_space = 2" in content:
+                results.append({
+                    'rule_id': '1.5.3',
+                    'title': 'Ensure address space layout randomization (ASLR) is enabled',
+                    'status': 'PASS',
+                    'details': 'ASLR is enabled (kernel.randomize_va_space = 2)'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.5.3',
+                    'title': 'Ensure address space layout randomization (ASLR) is enabled',
+                    'status': 'FAIL',
+                    'details': 'ASLR not properly configured'
+                })
         else:
             results.append({
-                'rule_id': '1.8.3',
-                'title': 'Ensure GDM disable-user-list option is enabled',
+                'rule_id': '1.5.3',
+                'title': 'Ensure address space layout randomization (ASLR) is enabled',
                 'status': 'FAIL',
-                'details': 'GDM login screen configuration not found'
+                'details': 'No sysctl data available'
             })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.5.3',
+            'title': 'Ensure address space layout randomization (ASLR) is enabled',
+            'status': 'FAIL',
+            'details': f'Error checking ASLR: {str(e)}'
+        })
+    
+    # 1.5.4 - Ensure prelink is not installed
+    try:
+        packages_file = Path(data_dir) / "packages" / "installed_packages.txt"
         
-        # 1.8.4 - GDM screen locks when user is idle
-        screensaver_file = gdm_dir / '00-screensaver'
-        if screensaver_file.exists():
-            screensaver_content = screensaver_file.read_text()
-            idle_configured = 'idle-delay' in screensaver_content and 'lock-enabled=true' in screensaver_content
-            results.append({
-                'rule_id': '1.8.4',
-                'title': 'Ensure GDM screen locks when the user is idle',
-                'status': 'PASS' if idle_configured else 'FAIL',
-                'details': f'GDM idle lock: {"configured" if idle_configured else "not configured"}'
-            })
+        if packages_file.exists():
+            content = packages_file.read_text()
+            if 'prelink' in content.lower():
+                results.append({
+                    'rule_id': '1.5.4',
+                    'title': 'Ensure prelink is not installed',
+                    'status': 'FAIL',
+                    'details': 'prelink is installed'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.5.4',
+                    'title': 'Ensure prelink is not installed',
+                    'status': 'PASS',
+                    'details': 'prelink is not installed'
+                })
         else:
             results.append({
-                'rule_id': '1.8.4',
-                'title': 'Ensure GDM screen locks when the user is idle',
+                'rule_id': '1.5.4',
+                'title': 'Ensure prelink is not installed',
                 'status': 'FAIL',
-                'details': 'GDM screensaver configuration not found'
+                'details': 'No package data available'
             })
-        
-        # 1.8.5 - GDM screen locks cannot be overridden
-        screensaver_lock_file = gdm_dir / '00-screensaver-lock'
-        if screensaver_lock_file.exists():
-            lock_content = screensaver_lock_file.read_text()
-            lock_configured = '/org/gnome/desktop/screensaver/lock-enabled' in lock_content
-            results.append({
-                'rule_id': '1.8.5',
-                'title': 'Ensure GDM screen locks cannot be overridden',
-                'status': 'PASS' if lock_configured else 'FAIL',
-                'details': f'GDM lock override: {"prevented" if lock_configured else "not prevented"}'
-            })
-        else:
-            results.append({
-                'rule_id': '1.8.5',
-                'title': 'Ensure GDM screen locks cannot be overridden',
-                'status': 'FAIL',
-                'details': 'GDM lock configuration not found'
-            })
-        
-        # 1.8.6 - GDM automatic mounting of removable media is disabled
-        media_file = gdm_dir / '00-media-autorun'
-        if media_file.exists():
-            media_content = media_file.read_text()
-            media_disabled = 'automount=false' in media_content and 'automount-open=false' in media_content
-            results.append({
-                'rule_id': '1.8.6',
-                'title': 'Ensure GDM automatic mounting of removable media is disabled',
-                'status': 'PASS' if media_disabled else 'FAIL',
-                'details': f'GDM automount: {"disabled" if media_disabled else "not disabled"}'
-            })
-        else:
-            results.append({
-                'rule_id': '1.8.6',
-                'title': 'Ensure GDM automatic mounting of removable media is disabled',
-                'status': 'FAIL',
-                'details': 'GDM media autorun configuration not found'
-            })
-        
-        # 1.8.7 - GDM disabling automatic mounting is not overridden
-        media_lock_file = gdm_dir / '00-media-autorun-lock'
-        if media_lock_file.exists():
-            media_lock_content = media_lock_file.read_text()
-            media_lock_configured = '/org/gnome/desktop/media-handling/automount' in media_lock_content
-            results.append({
-                'rule_id': '1.8.7',
-                'title': 'Ensure GDM disabling automatic mounting of removable media is not overridden',
-                'status': 'PASS' if media_lock_configured else 'FAIL',
-                'details': f'GDM automount override: {"prevented" if media_lock_configured else "not prevented"}'
-            })
-        else:
-            results.append({
-                'rule_id': '1.8.7',
-                'title': 'Ensure GDM disabling automatic mounting of removable media is not overridden',
-                'status': 'FAIL',
-                'details': 'GDM media autorun lock configuration not found'
-            })
-        
-        # 1.8.8 - GDM autorun-never is enabled
-        if media_file.exists():
-            media_content = media_file.read_text()
-            autorun_disabled = 'autorun-never=true' in media_content
-            results.append({
-                'rule_id': '1.8.8',
-                'title': 'Ensure GDM autorun-never is enabled',
-                'status': 'PASS' if autorun_disabled else 'FAIL',
-                'details': f'GDM autorun-never: {"enabled" if autorun_disabled else "not enabled"}'
-            })
-        else:
-            results.append({
-                'rule_id': '1.8.8',
-                'title': 'Ensure GDM autorun-never is enabled',
-                'status': 'FAIL',
-                'details': 'GDM autorun configuration not found'
-            })
-        
-        # 1.8.9 - GDM autorun-never is not overridden
-        if media_lock_file.exists():
-            media_lock_content = media_lock_file.read_text()
-            autorun_lock_configured = '/org/gnome/desktop/media-handling/autorun-never' in media_lock_content
-            results.append({
-                'rule_id': '1.8.9',
-                'title': 'Ensure GDM autorun-never is not overridden',
-                'status': 'PASS' if autorun_lock_configured else 'FAIL',
-                'details': f'GDM autorun-never override: {"prevented" if autorun_lock_configured else "not prevented"}'
-            })
-        else:
-            results.append({
-                'rule_id': '1.8.9',
-                'title': 'Ensure GDM autorun-never is not overridden',
-                'status': 'FAIL',
-                'details': 'GDM autorun lock configuration not found'
-            })
-    else:
-        # If GDM is not installed, mark GDM-specific checks as PASS
-        gdm_rules = ['1.8.2', '1.8.3', '1.8.4', '1.8.5', '1.8.6', '1.8.7', '1.8.8', '1.8.9']
-        gdm_titles = [
-            'Ensure GDM login banner is configured',
-            'Ensure GDM disable-user-list option is enabled',
-            'Ensure GDM screen locks when the user is idle',
-            'Ensure GDM screen locks cannot be overridden',
-            'Ensure GDM automatic mounting of removable media is disabled',
-            'Ensure GDM disabling automatic mounting of removable media is not overridden',
-            'Ensure GDM autorun-never is enabled',
-            'Ensure GDM autorun-never is not overridden'
-        ]
-        
-        for rule_id, title in zip(gdm_rules, gdm_titles):
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'PASS',
-                'details': 'GDM is not installed - check not applicable'
-            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.5.4',
+            'title': 'Ensure prelink is not installed',
+            'status': 'FAIL',
+            'details': f'Error checking prelink: {str(e)}'
+        })
     
     return results
+
+# 1.6 Mandatory Access Controls - SELinux
+def check_selinux_online():
+    """Check SELinux configuration"""
+    results = []
+    
+    # 1.6.1.1 - Ensure SELinux is installed
+    try:
+        result = subprocess.run("rpm -q libselinux", shell=True, capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            results.append({
+                'rule_id': '1.6.1.1',
+                'title': 'Ensure SELinux is installed',
+                'status': 'PASS',
+                'details': f'SELinux is installed: {result.stdout.strip()}'
+            })
+        else:
+            results.append({
+                'rule_id': '1.6.1.1',
+                'title': 'Ensure SELinux is installed',
+                'status': 'FAIL',
+                'details': 'SELinux is not installed'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.6.1.1',
+            'title': 'Ensure SELinux is installed',
+            'status': 'FAIL',
+            'details': f'Error checking SELinux installation: {str(e)}'
+        })
+    
+    # 1.6.1.2 - Ensure SELinux is not disabled in bootloader configuration
+    try:
+        grub_files = ['/boot/grub2/grub.cfg', '/boot/efi/EFI/redhat/grub.cfg']
+        selinux_disabled = False
+        
+        for grub_file in grub_files:
+            if os.path.exists(grub_file):
+                with open(grub_file, 'r') as f:
+                    content = f.read()
+                    if 'selinux=0' in content or 'enforcing=0' in content:
+                        selinux_disabled = True
+                        break
+        
+        if not selinux_disabled:
+            results.append({
+                'rule_id': '1.6.1.2',
+                'title': 'Ensure SELinux is not disabled in bootloader configuration',
+                'status': 'PASS',
+                'details': 'SELinux is not disabled in bootloader'
+            })
+        else:
+            results.append({
+                'rule_id': '1.6.1.2',
+                'title': 'Ensure SELinux is not disabled in bootloader configuration',
+                'status': 'FAIL',
+                'details': 'SELinux is disabled in bootloader configuration'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.6.1.2',
+            'title': 'Ensure SELinux is not disabled in bootloader configuration',
+            'status': 'FAIL',
+            'details': f'Error checking bootloader SELinux configuration: {str(e)}'
+        })
+    
+    # 1.6.1.3 - Ensure SELinux policy is configured
+    try:
+        result = subprocess.run("sestatus", shell=True, capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            if 'targeted' in result.stdout or 'mls' in result.stdout:
+                results.append({
+                    'rule_id': '1.6.1.3',
+                    'title': 'Ensure SELinux policy is configured',
+                    'status': 'PASS',
+                    'details': 'SELinux policy is configured'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.6.1.3',
+                    'title': 'Ensure SELinux policy is configured',
+                    'status': 'FAIL',
+                    'details': 'SELinux policy is not properly configured'
+                })
+        else:
+            results.append({
+                'rule_id': '1.6.1.3',
+                'title': 'Ensure SELinux policy is configured',
+                'status': 'FAIL',
+                'details': 'Cannot determine SELinux policy status'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.6.1.3',
+            'title': 'Ensure SELinux policy is configured',
+            'status': 'FAIL',
+            'details': f'Error checking SELinux policy: {str(e)}'
+        })
+    
+    # 1.6.1.4 - Ensure the SELinux mode is enforcing
+    try:
+        result = subprocess.run("getenforce", shell=True, capture_output=True, text=True)
+        
+        if result.returncode == 0 and result.stdout.strip() == 'Enforcing':
+            results.append({
+                'rule_id': '1.6.1.4',
+                'title': 'Ensure the SELinux mode is enforcing',
+                'status': 'PASS',
+                'details': 'SELinux is in enforcing mode'
+            })
+        else:
+            results.append({
+                'rule_id': '1.6.1.4',
+                'title': 'Ensure the SELinux mode is enforcing',
+                'status': 'FAIL',
+                'details': f'SELinux mode: {result.stdout.strip()}'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.6.1.4',
+            'title': 'Ensure the SELinux mode is enforcing',
+            'status': 'FAIL',
+            'details': f'Error checking SELinux mode: {str(e)}'
+        })
+    
+    # 1.6.1.5 - Ensure the SELinux mode is not disabled
+    try:
+        # Check current mode
+        current_result = subprocess.run("getenforce", shell=True, capture_output=True, text=True)
+        
+        # Check config file
+        config_disabled = False
+        if os.path.exists('/etc/selinux/config'):
+            with open('/etc/selinux/config', 'r') as f:
+                content = f.read()
+                if re.search(r'^\s*SELINUX\s*=\s*disabled', content, re.MULTILINE):
+                    config_disabled = True
+        
+        if current_result.returncode == 0 and current_result.stdout.strip() != 'Disabled' and not config_disabled:
+            results.append({
+                'rule_id': '1.6.1.5',
+                'title': 'Ensure the SELinux mode is not disabled',
+                'status': 'PASS',
+                'details': 'SELinux is not disabled'
+            })
+        else:
+            results.append({
+                'rule_id': '1.6.1.5',
+                'title': 'Ensure the SELinux mode is not disabled',
+                'status': 'FAIL',
+                'details': 'SELinux is disabled'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.6.1.5',
+            'title': 'Ensure the SELinux mode is not disabled',
+            'status': 'FAIL',
+            'details': f'Error checking SELinux disabled status: {str(e)}'
+        })
+    
+    # 1.6.1.6 - Ensure no unconfined services exist
+    try:
+        result = subprocess.run("ps -eZ | grep unconfined_service_t", shell=True, capture_output=True, text=True)
+        
+        if result.returncode != 0 or not result.stdout.strip():
+            results.append({
+                'rule_id': '1.6.1.6',
+                'title': 'Ensure no unconfined services exist',
+                'status': 'PASS',
+                'details': 'No unconfined services found'
+            })
+        else:
+            results.append({
+                'rule_id': '1.6.1.6',
+                'title': 'Ensure no unconfined services exist',
+                'status': 'FAIL',
+                'details': f'Unconfined services found: {len(result.stdout.strip().split())}'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.6.1.6',
+            'title': 'Ensure no unconfined services exist',
+            'status': 'FAIL',
+            'details': f'Error checking unconfined services: {str(e)}'
+        })
+    
+    # 1.6.1.7 - Ensure SETroubleshoot is not installed
+    try:
+        result = subprocess.run("rpm -q setroubleshoot", shell=True, capture_output=True, text=True)
+        
+        if result.returncode != 0:
+            results.append({
+                'rule_id': '1.6.1.7',
+                'title': 'Ensure SETroubleshoot is not installed',
+                'status': 'PASS',
+                'details': 'SETroubleshoot is not installed'
+            })
+        else:
+            results.append({
+                'rule_id': '1.6.1.7',
+                'title': 'Ensure SETroubleshoot is not installed',
+                'status': 'FAIL',
+                'details': f'SETroubleshoot is installed: {result.stdout.strip()}'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.6.1.7',
+            'title': 'Ensure SETroubleshoot is not installed',
+            'status': 'FAIL',
+            'details': f'Error checking SETroubleshoot: {str(e)}'
+        })
+    
+    # 1.6.1.8 - Ensure the MCS Translation Service (mcstrans) is not installed
+    try:
+        result = subprocess.run("rpm -q mcstrans", shell=True, capture_output=True, text=True)
+        
+        if result.returncode != 0:
+            results.append({
+                'rule_id': '1.6.1.8',
+                'title': 'Ensure the MCS Translation Service (mcstrans) is not installed',
+                'status': 'PASS',
+                'details': 'mcstrans is not installed'
+            })
+        else:
+            results.append({
+                'rule_id': '1.6.1.8',
+                'title': 'Ensure the MCS Translation Service (mcstrans) is not installed',
+                'status': 'FAIL',
+                'details': f'mcstrans is installed: {result.stdout.strip()}'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.6.1.8',
+            'title': 'Ensure the MCS Translation Service (mcstrans) is not installed',
+            'status': 'FAIL',
+            'details': f'Error checking mcstrans: {str(e)}'
+        })
+    
+    return results
+
+def check_selinux_offline(data_dir):
+    """Check SELinux configuration offline"""
+    results = []
+    
+    # 1.6.1.1 - Ensure SELinux is installed
+    try:
+        packages_file = Path(data_dir) / "packages" / "installed_packages.txt"
+        
+        if packages_file.exists():
+            content = packages_file.read_text()
+            if 'libselinux' in content:
+                results.append({
+                    'rule_id': '1.6.1.1',
+                    'title': 'Ensure SELinux is installed',
+                    'status': 'PASS',
+                    'details': 'SELinux is installed'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.6.1.1',
+                    'title': 'Ensure SELinux is installed',
+                    'status': 'FAIL',
+                    'details': 'SELinux is not installed'
+                })
+        else:
+            results.append({
+                'rule_id': '1.6.1.1',
+                'title': 'Ensure SELinux is installed',
+                'status': 'FAIL',
+                'details': 'No package data available'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.6.1.1',
+            'title': 'Ensure SELinux is installed',
+            'status': 'FAIL',
+            'details': f'Error checking SELinux installation: {str(e)}'
+        })
+    
+    # 1.6.1.2 - Ensure SELinux is not disabled in bootloader configuration
+    try:
+        grub_file = Path(data_dir) / "config" / "grub.cfg"
+        
+        if grub_file.exists():
+            content = grub_file.read_text()
+            if 'selinux=0' in content or 'enforcing=0' in content:
+                results.append({
+                    'rule_id': '1.6.1.2',
+                    'title': 'Ensure SELinux is not disabled in bootloader configuration',
+                    'status': 'FAIL',
+                    'details': 'SELinux is disabled in bootloader configuration'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.6.1.2',
+                    'title': 'Ensure SELinux is not disabled in bootloader configuration',
+                    'status': 'PASS',
+                    'details': 'SELinux is not disabled in bootloader'
+                })
+        else:
+            results.append({
+                'rule_id': '1.6.1.2',
+                'title': 'Ensure SELinux is not disabled in bootloader configuration',
+                'status': 'FAIL',
+                'details': 'No bootloader config data available'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.6.1.2',
+            'title': 'Ensure SELinux is not disabled in bootloader configuration',
+            'status': 'FAIL',
+            'details': f'Error checking bootloader SELinux configuration: {str(e)}'
+        })
+    
+    # 1.6.1.3 - Ensure SELinux policy is configured
+    try:
+        sestatus_file = Path(data_dir) / "selinux" / "sestatus.txt"
+        
+        if sestatus_file.exists():
+            content = sestatus_file.read_text()
+            if 'targeted' in content or 'mls' in content:
+                results.append({
+                    'rule_id': '1.6.1.3',
+                    'title': 'Ensure SELinux policy is configured',
+                    'status': 'PASS',
+                    'details': 'SELinux policy is configured'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.6.1.3',
+                    'title': 'Ensure SELinux policy is configured',
+                    'status': 'FAIL',
+                    'details': 'SELinux policy is not properly configured'
+                })
+        else:
+            results.append({
+                'rule_id': '1.6.1.3',
+                'title': 'Ensure SELinux policy is configured',
+                'status': 'FAIL',
+                'details': 'No SELinux status data available'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.6.1.3',
+            'title': 'Ensure SELinux policy is configured',
+            'status': 'FAIL',
+            'details': f'Error checking SELinux policy: {str(e)}'
+        })
+    
+    # 1.6.1.4 - Ensure the SELinux mode is enforcing
+    try:
+        getenforce_file = Path(data_dir) / "selinux" / "getenforce.txt"
+        
+        if getenforce_file.exists():
+            content = getenforce_file.read_text().strip()
+            if content == 'Enforcing':
+                results.append({
+                    'rule_id': '1.6.1.4',
+                    'title': 'Ensure the SELinux mode is enforcing',
+                    'status': 'PASS',
+                    'details': 'SELinux is in enforcing mode'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.6.1.4',
+                    'title': 'Ensure the SELinux mode is enforcing',
+                    'status': 'FAIL',
+                    'details': f'SELinux mode: {content}'
+                })
+        else:
+            results.append({
+                'rule_id': '1.6.1.4',
+                'title': 'Ensure the SELinux mode is enforcing',
+                'status': 'FAIL',
+                'details': 'No SELinux mode data available'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.6.1.4',
+            'title': 'Ensure the SELinux mode is enforcing',
+            'status': 'FAIL',
+            'details': f'Error checking SELinux mode: {str(e)}'
+        })
+    
+    # 1.6.1.5 - Ensure the SELinux mode is not disabled
+    try:
+        getenforce_file = Path(data_dir) / "selinux" / "getenforce.txt"
+        config_file = Path(data_dir) / "selinux" / "config"
+        
+        current_disabled = False
+        config_disabled = False
+        
+        if getenforce_file.exists():
+            content = getenforce_file.read_text().strip()
+            if content == 'Disabled':
+                current_disabled = True
+        
+        if config_file.exists():
+            content = config_file.read_text()
+            if re.search(r'^\s*SELINUX\s*=\s*disabled', content, re.MULTILINE):
+                config_disabled = True
+        
+        if not current_disabled and not config_disabled:
+            results.append({
+                'rule_id': '1.6.1.5',
+                'title': 'Ensure the SELinux mode is not disabled',
+                'status': 'PASS',
+                'details': 'SELinux is not disabled'
+            })
+        else:
+            results.append({
+                'rule_id': '1.6.1.5',
+                'title': 'Ensure the SELinux mode is not disabled',
+                'status': 'FAIL',
+                'details': 'SELinux is disabled'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.6.1.5',
+            'title': 'Ensure the SELinux mode is not disabled',
+            'status': 'FAIL',
+            'details': f'Error checking SELinux disabled status: {str(e)}'
+        })
+    
+    # 1.6.1.6 - Ensure no unconfined services exist
+    try:
+        ps_file = Path(data_dir) / "processes" / "ps_selinux.txt"
+        
+        if ps_file.exists():
+            content = ps_file.read_text()
+            if 'unconfined_service_t' in content:
+                unconfined_count = content.count('unconfined_service_t')
+                results.append({
+                    'rule_id': '1.6.1.6',
+                    'title': 'Ensure no unconfined services exist',
+                    'status': 'FAIL',
+                    'details': f'Unconfined services found: {unconfined_count}'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.6.1.6',
+                    'title': 'Ensure no unconfined services exist',
+                    'status': 'PASS',
+                    'details': 'No unconfined services found'
+                })
+        else:
+            results.append({
+                'rule_id': '1.6.1.6',
+                'title': 'Ensure no unconfined services exist',
+                'status': 'FAIL',
+                'details': 'No process SELinux data available'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.6.1.6',
+            'title': 'Ensure no unconfined services exist',
+            'status': 'FAIL',
+            'details': f'Error checking unconfined services: {str(e)}'
+        })
+    
+    # 1.6.1.7 - Ensure SETroubleshoot is not installed
+    try:
+        packages_file = Path(data_dir) / "packages" / "installed_packages.txt"
+        
+        if packages_file.exists():
+            content = packages_file.read_text()
+            if 'setroubleshoot' in content:
+                results.append({
+                    'rule_id': '1.6.1.7',
+                    'title': 'Ensure SETroubleshoot is not installed',
+                    'status': 'FAIL',
+                    'details': 'SETroubleshoot is installed'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.6.1.7',
+                    'title': 'Ensure SETroubleshoot is not installed',
+                    'status': 'PASS',
+                    'details': 'SETroubleshoot is not installed'
+                })
+        else:
+            results.append({
+                'rule_id': '1.6.1.7',
+                'title': 'Ensure SETroubleshoot is not installed',
+                'status': 'FAIL',
+                'details': 'No package data available'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.6.1.7',
+            'title': 'Ensure SETroubleshoot is not installed',
+            'status': 'FAIL',
+            'details': f'Error checking SETroubleshoot: {str(e)}'
+        })
+    
+    # 1.6.1.8 - Ensure the MCS Translation Service (mcstrans) is not installed
+    try:
+        packages_file = Path(data_dir) / "packages" / "installed_packages.txt"
+        
+        if packages_file.exists():
+            content = packages_file.read_text()
+            if 'mcstrans' in content:
+                results.append({
+                    'rule_id': '1.6.1.8',
+                    'title': 'Ensure the MCS Translation Service (mcstrans) is not installed',
+                    'status': 'FAIL',
+                    'details': 'mcstrans is installed'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.6.1.8',
+                    'title': 'Ensure the MCS Translation Service (mcstrans) is not installed',
+                    'status': 'PASS',
+                    'details': 'mcstrans is not installed'
+                })
+        else:
+            results.append({
+                'rule_id': '1.6.1.8',
+                'title': 'Ensure the MCS Translation Service (mcstrans) is not installed',
+                'status': 'FAIL',
+                'details': 'No package data available'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.6.1.8',
+            'title': 'Ensure the MCS Translation Service (mcstrans) is not installed',
+            'status': 'FAIL',
+            'details': f'Error checking mcstrans: {str(e)}'
+        })
+    
+    return results
+
+# 1.7 Command Line Warning Banners
+def check_warning_banners_online():
+    """Check command line warning banners"""
+    results = []
+    
+    # 1.7.1 - Ensure message of the day is configured properly
+    try:
+        motd_files = ['/etc/motd']
+        motd_configured = False
+        
+        for motd_file in motd_files:
+            if os.path.exists(motd_file):
+                with open(motd_file, 'r') as f:
+                    content = f.read().strip()
+                    # Check if MOTD contains appropriate warning content or is empty (which is acceptable)
+                    if content == "" or any(word in content.lower() for word in ['authorized', 'warning', 'notice', 'legal']):
+                        motd_configured = True
+                        break
+        
+        if motd_configured:
+            results.append({
+                'rule_id': '1.7.1',
+                'title': 'Ensure message of the day is configured properly',
+                'status': 'PASS',
+                'details': 'MOTD is properly configured'
+            })
+        else:
+            results.append({
+                'rule_id': '1.7.1',
+                'title': 'Ensure message of the day is configured properly',
+                'status': 'FAIL',
+                'details': 'MOTD contains inappropriate content'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.7.1',
+            'title': 'Ensure message of the day is configured properly',
+            'status': 'FAIL',
+            'details': f'Error checking MOTD: {str(e)}'
+        })
+    
+    # 1.7.2 - Ensure local login warning banner is configured properly
+    try:
+        if os.path.exists('/etc/issue'):
+            with open('/etc/issue', 'r') as f:
+                content = f.read().strip()
+                # Check if issue contains appropriate warning content or is empty (which is acceptable)
+                if content == "" or any(word in content.lower() for word in ['authorized', 'warning', 'notice', 'legal']):
+                    results.append({
+                        'rule_id': '1.7.2',
+                        'title': 'Ensure local login warning banner is configured properly',
+                        'status': 'PASS',
+                        'details': 'Local login banner is properly configured'
+                    })
+                else:
+                    results.append({
+                        'rule_id': '1.7.2',
+                        'title': 'Ensure local login warning banner is configured properly',
+                        'status': 'FAIL',
+                        'details': 'Local login banner contains inappropriate content'
+                    })
+        else:
+            results.append({
+                'rule_id': '1.7.2',
+                'title': 'Ensure local login warning banner is configured properly',
+                'status': 'FAIL',
+                'details': '/etc/issue file does not exist'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.7.2',
+            'title': 'Ensure local login warning banner is configured properly',
+            'status': 'FAIL',
+            'details': f'Error checking local login banner: {str(e)}'
+        })
+    
+    # 1.7.3 - Ensure remote login warning banner is configured properly
+    try:
+        if os.path.exists('/etc/issue.net'):
+            with open('/etc/issue.net', 'r') as f:
+                content = f.read().strip()
+                # Check if issue.net contains appropriate warning content or is empty (which is acceptable)
+                if content == "" or any(word in content.lower() for word in ['authorized', 'warning', 'notice', 'legal']):
+                    results.append({
+                        'rule_id': '1.7.3',
+                        'title': 'Ensure remote login warning banner is configured properly',
+                        'status': 'PASS',
+                        'details': 'Remote login banner is properly configured'
+                    })
+                else:
+                    results.append({
+                        'rule_id': '1.7.3',
+                        'title': 'Ensure remote login warning banner is configured properly',
+                        'status': 'FAIL',
+                        'details': 'Remote login banner contains inappropriate content'
+                    })
+        else:
+            results.append({
+                'rule_id': '1.7.3',
+                'title': 'Ensure remote login warning banner is configured properly',
+                'status': 'FAIL',
+                'details': '/etc/issue.net file does not exist'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.7.3',
+            'title': 'Ensure remote login warning banner is configured properly',
+            'status': 'FAIL',
+            'details': f'Error checking remote login banner: {str(e)}'
+        })
+    
+    # 1.7.4 - Ensure permissions on /etc/motd are configured
+    try:
+        if os.path.exists('/etc/motd'):
+            stat_info = os.stat('/etc/motd')
+            mode = oct(stat_info.st_mode)[-3:]
+            
+            if mode == '644':
+                results.append({
+                    'rule_id': '1.7.4',
+                    'title': 'Ensure permissions on /etc/motd are configured',
+                    'status': 'PASS',
+                    'details': f'/etc/motd permissions: {mode}'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.7.4',
+                    'title': 'Ensure permissions on /etc/motd are configured',
+                    'status': 'FAIL',
+                    'details': f'/etc/motd permissions: {mode} (should be 644)'
+                })
+        else:
+            results.append({
+                'rule_id': '1.7.4',
+                'title': 'Ensure permissions on /etc/motd are configured',
+                'status': 'PASS',
+                'details': '/etc/motd does not exist (acceptable)'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.7.4',
+            'title': 'Ensure permissions on /etc/motd are configured',
+            'status': 'FAIL',
+            'details': f'Error checking /etc/motd permissions: {str(e)}'
+        })
+    
+    # 1.7.5 - Ensure permissions on /etc/issue are configured
+    try:
+        if os.path.exists('/etc/issue'):
+            stat_info = os.stat('/etc/issue')
+            mode = oct(stat_info.st_mode)[-3:]
+            
+            if mode == '644':
+                results.append({
+                    'rule_id': '1.7.5',
+                    'title': 'Ensure permissions on /etc/issue are configured',
+                    'status': 'PASS',
+                    'details': f'/etc/issue permissions: {mode}'
+                })
+            else:
+                results.append({
+                    'rule_id': '1.7.5',
+                    'title': 'Ensure permissions on /etc/issue are configured',
+                    'status': 'FAIL',
+                    'details': f'/etc/issue permissions: {mode} (should be 644)'
+                })
+        else:
+            results.append({
+                'rule_id': '1.7.5',
+                'title': 'Ensure permissions on /etc/issue are configured',
+                'status': 'FAIL',
+                'details': '/etc/issue does not exist'
+            })
+            
+    except Exception as e:
+        results.append({
+            'rule_id': '1.7.5',
+            'title': 'Ensure permissions on /etc/issue are configured',
+            'status': 'FAIL',
+            'details': f'Error checking /etc/issue permissions: {str(e)}'
+        })
+    
+    # 1
