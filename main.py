@@ -265,7 +265,7 @@ Available sections:
         'initial_setup': ('1', 'Initial Setup', 'checks.initial_setup_check'),
         'services': ('2', 'Services', 'checks.services_check'),
         'network': ('3', 'Network Configuration', 'checks.network_check'),
-        'firewall': ('4', 'Host Based Firewall', 'checks.firewall_check'),
+        'firewall': ('4', 'Host Based Firewall', 'checks.host_firewall_check'),
         'access_control': ('5', 'Access Control', 'checks.access_control_check'),
         'logging': ('6', 'Logging and Auditing', 'checks.logging_check'),
         'system_maintenance': ('7', 'System Maintenance', 'checks.system_maintenance_check')
