@@ -1,0 +1,77 @@
+# RHEL 9 CIS Audit Tool Configuration
+
+# General Settings
+general:
+  version: "1.0.0"
+  target_os: "RHEL 9"
+  cis_benchmark_version: "1.0.0"
+  
+# Audit Settings
+audit:
+  # Default sections to audit (1-6, or 'all')
+  default_sections: "all"
+  
+  # Default severity levels to include
+  severity_levels: ["low", "medium", "high", "critical"]
+  
+  # Skip rules that require reboot
+  skip_reboot_required: false
+  
+  # Timeout for individual checks (seconds)
+  check_timeout: 60
+  
+  # Maximum parallel checks
+  max_parallel_checks: 5
+
+# Collection Settings  
+collection:
+  # Default output directory
+  default_output_dir: "./collected_data"
+  
+  # Compress collected data
+  compress_data: true
+  
+  # Include sensitive files (shadow, etc.)
+  include_sensitive: true
+  
+  # Collection timeout (seconds)
+  collection_timeout: 300
+
+# Reporting Settings
+reporting:
+  # Default report formats
+  default_formats: ["html", "json"]
+  
+  # Include executive summary
+  include_executive_summary: true
+  
+  # Include remediation suggestions
+  include_remediation: true
+  
+  # Report output directory
+  output_directory: "./reports"
+
+# Logging Settings
+logging:
+  # Log level (DEBUG, INFO, WARNING, ERROR)
+  level: "INFO"
+  
+  # Log file location
+  file: "./logs/cis_audit.log"
+  
+  # Maximum log file size (MB)
+  max_size: 10
+  
+  # Number of backup log files
+  backup_count: 5
+
+# Remediation Settings
+remediation:
+  # Generate remediation scripts
+  generate_scripts: true
+  
+  # Backup before applying fixes
+  backup_before_fix: true
+  
+  # Require confirmation for high-risk fixes
+  confirm_high_risk: true
