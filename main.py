@@ -42,7 +42,7 @@ def print_results(results, verbose=False, failed_only=False):
     print(f"Total Checks: {total}")
     print(f"✅ Passed: {passed} ({passed/total*100:.1f}%)")
     print(f"❌ Failed: {failed} ({failed/total*100:.1f}%)")
-    if skipped > 0:
+    if skipped >= 0:
         print(f"⏭️  Skipped: {skipped} ({skipped/total*100:.1f}%)")
     print("=" * 50)
     
