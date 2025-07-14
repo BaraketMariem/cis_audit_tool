@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-# cis_audit_tool
-Automatisation des audits de configuration système pour RHEL 9 selon le CIS Benchmark Translation: Automation of system configuration audits for RHEL 9 according to the CIS Benchmark
-=======
 # RHEL 9 CIS Audit Tool - Clean Version
 
 A comprehensive tool for auditing RHEL 9 systems against CIS (Center for Internet Security) benchmarks.
@@ -92,4 +88,3 @@ The tool provides:
 - **Detailed logging** (error logs and collection status)
 
 This is a clean, production-ready version of the RHEL 9 CIS audit tool with all duplicates removed and code properly organized.
->>>>>>> c016cc109ecbdd6793329419498597ed36872bbc
