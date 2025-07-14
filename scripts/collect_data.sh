@@ -9,6 +9,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 DATA_DIR="$PROJECT_ROOT/data"
+
+# Ensure the base data directory exists before defining LOG_FILE
+mkdir -p "$DATA_DIR" 2>/dev/null || { echo "Error: Failed to create base data directory $DATA_DIR. Check permissions or disk space." >&2; exit 1; }
+
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 LOG_FILE="$DATA_DIR/collection_${TIMESTAMP}.log"
 
@@ -27,16 +31,6 @@ log() {
 # Create data directory structure
 create_directories() {
     log "${BLUE}📁 Creating data directory structure...${NC}"
-    
-    # Create main data directory
-    mkdir -p "$PROJECT_ROOT" 2>/dev/null
-    mkdir -p "$DATA_DIR" 2>/dev/null
-    
-    # Check if the directories were created successfully
-    if [ ! -d "$DATA_DIR" ]; then
-        log "${RED}❌ Failed to create $DATA_DIR. Check permissions or disk space.${NC}"
-        exit 1
-    fi
     
     # Create subdirectories matching offline check expectations
     mkdir -p "$DATA_DIR"/{system,network,services,security,logging,auditing,filesystem} 2>/dev/null
@@ -306,13 +300,15 @@ collect_time_sync_info() {
 
 # Main execution
 main() {
-    # Create directory structure first - THIS MUST BE THE FIRST CALL
-    create_directories
-
+    # The base data directory is now created at the very top of the script.
+    # Now we can safely log and create subdirectories.
     log "${GREEN}🔴 Starting enhanced CIS RHEL 9 data collection...${NC}"
     log "${BLUE}📅 Timestamp: $TIMESTAMP${NC}"
     log "${BLUE}📁 Data directory: $DATA_DIR${NC}"
     log "${BLUE}📝 Log file: $LOG_FILE${NC}"
+    
+    # Create detailed directory structure
+    create_directories
     
     # Collect all data
     collect_system_info
