@@ -306,13 +306,13 @@ collect_time_sync_info() {
 
 # Main execution
 main() {
+    # Create directory structure first - THIS MUST BE THE FIRST CALL
+    create_directories
+
     log "${GREEN}🔴 Starting enhanced CIS RHEL 9 data collection...${NC}"
     log "${BLUE}📅 Timestamp: $TIMESTAMP${NC}"
     log "${BLUE}📁 Data directory: $DATA_DIR${NC}"
     log "${BLUE}📝 Log file: $LOG_FILE${NC}"
-    
-    # Create directory structure first
-    create_directories
     
     # Collect all data
     collect_system_info
