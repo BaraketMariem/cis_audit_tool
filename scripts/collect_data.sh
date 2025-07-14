@@ -29,22 +29,29 @@ create_directories() {
     log "${BLUE}📁 Creating data directory structure...${NC}"
     
     # Create main data directory
-    mkdir -p "$DATA_DIR"
+    mkdir -p "$PROJECT_ROOT" 2>/dev/null
+    mkdir -p "$DATA_DIR" 2>/dev/null
+    
+    # Check if the directories were created successfully
+    if [ ! -d "$DATA_DIR" ]; then
+        log "${RED}❌ Failed to create $DATA_DIR. Check permissions or disk space.${NC}"
+        exit 1
+    fi
     
     # Create subdirectories matching offline check expectations
-    mkdir -p "$DATA_DIR"/{system,network,services,security,logging,auditing,filesystem}
+    mkdir -p "$DATA_DIR"/{system,network,services,security,logging,auditing,filesystem} 2>/dev/null
     
     # Security subdirectories
-    mkdir -p "$DATA_DIR"/security/{ssh,pam,sudoers,selinux,firewall}
+    mkdir -p "$DATA_DIR"/security/{ssh,pam,sudoers,selinux,firewall} 2>/dev/null
     
     # Logging subdirectories  
-    mkdir -p "$DATA_DIR"/logging/{rsyslog,journald,audit}
+    mkdir -p "$DATA_DIR"/logging/{rsyslog,journald,audit} 2>/dev/null
     
     # System subdirectories
-    mkdir -p "$DATA_DIR"/system/{packages,services,kernel,boot}
+    mkdir -p "$DATA_DIR"/system/{packages,services,kernel,boot} 2>/dev/null
     
     # Network subdirectories
-    mkdir -p "$DATA_DIR"/network/{interfaces,firewall,routing}
+    mkdir -p "$DATA_DIR"/network/{interfaces,firewall,routing} 2>/dev/null
     
     log "${GREEN}✅ Directory structure created${NC}"
 }
@@ -130,19 +137,19 @@ collect_security_info() {
     log "${BLUE}🔒 Collecting security configuration...${NC}"
     
     # SSH Configuration (Section 5.1)
-    mkdir -p "$DATA_DIR/security/ssh"
+    mkdir -p "$DATA_DIR/security/ssh" 2>/dev/null
     cp /etc/ssh/sshd_config "$DATA_DIR/security/ssh/" 2>/dev/null || echo "sshd_config not found" > "$DATA_DIR/security/ssh/sshd_config"
     cp -r /etc/ssh/ssh_host_*_key* "$DATA_DIR/security/ssh/" 2>/dev/null || echo "SSH host keys not accessible"
     ls -la /etc/ssh/ > "$DATA_DIR/security/ssh/ssh-permissions.txt" 2>/dev/null || echo "SSH dir listing failed" > "$DATA_DIR/security/ssh/ssh-permissions.txt"
     
     # PAM Configuration (Section 5.3)
-    mkdir -p "$DATA_DIR/security/pam"
+    mkdir -p "$DATA_DIR/security/pam" 2>/dev/null
     cp -r /etc/pam.d/* "$DATA_DIR/security/pam/" 2>/dev/null || echo "PAM config not accessible"
     cp /etc/security/pwquality.conf "$DATA_DIR/security/pam/" 2>/dev/null || echo "pwquality.conf not found" > "$DATA_DIR/security/pam/pwquality.conf"
     cp /etc/security/faillock.conf "$DATA_DIR/security/pam/" 2>/dev/null || echo "faillock.conf not found" > "$DATA_DIR/security/pam/faillock.conf"
     
     # Sudo Configuration (Section 5.2)
-    mkdir -p "$DATA_DIR/security/sudoers"
+    mkdir -p "$DATA_DIR/security/sudoers" 2>/dev/null
     cp /etc/sudoers "$DATA_DIR/security/sudoers/" 2>/dev/null || echo "sudoers not accessible" > "$DATA_DIR/security/sudoers/sudoers"
     cp -r /etc/sudoers.d/* "$DATA_DIR/security/sudoers/" 2>/dev/null || echo "sudoers.d not accessible"
     ls -la /etc/sudoers* > "$DATA_DIR/security/sudoers/sudoers-permissions.txt" 2>/dev/null || echo "sudoers listing failed" > "$DATA_DIR/security/sudoers/sudoers-permissions.txt"
@@ -160,13 +167,13 @@ collect_security_info() {
     ls -la /etc/passwd /etc/shadow /etc/group /etc/gshadow /etc/shells > "$DATA_DIR/security/file-permissions.txt" 2>/dev/null || echo "permission check failed" > "$DATA_DIR/security/file-permissions.txt"
     
     # SELinux
-    mkdir -p "$DATA_DIR/security/selinux"
+    mkdir -p "$DATA_DIR/security/selinux" 2>/dev/null
     getenforce > "$DATA_DIR/security/selinux/getenforce.txt" 2>/dev/null || echo "getenforce failed" > "$DATA_DIR/security/selinux/getenforce.txt"
     sestatus > "$DATA_DIR/security/selinux/sestatus.txt" 2>/dev/null || echo "sestatus failed" > "$DATA_DIR/security/selinux/sestatus.txt"
     cp /etc/selinux/config "$DATA_DIR/security/selinux/" 2>/dev/null || echo "selinux config not found" > "$DATA_DIR/security/selinux/config"
     
     # Firewall Configuration
-    mkdir -p "$DATA_DIR/security/firewall"
+    mkdir -p "$DATA_DIR/security/firewall" 2>/dev/null
     systemctl is-active firewalld > "$DATA_DIR/security/firewall/firewalld-active.txt" 2>/dev/null || echo "firewalld status failed" > "$DATA_DIR/security/firewall/firewalld-active.txt"
     systemctl is-enabled firewalld > "$DATA_DIR/security/firewall/firewalld-enabled.txt" 2>/dev/null || echo "firewalld enabled failed" > "$DATA_DIR/security/firewall/firewalld-enabled.txt"
     firewall-cmd --get-default-zone > "$DATA_DIR/security/firewall/default-zone.txt" 2>/dev/null || echo "firewall default zone failed" > "$DATA_DIR/security/firewall/default-zone.txt"
@@ -184,13 +191,13 @@ collect_logging_auditing_info() {
     log "${BLUE}📋 Collecting logging and auditing configuration...${NC}"
     
     # Journald Configuration (Section 6.2.1 & 6.2.2)
-    mkdir -p "$DATA_DIR/logging/journald"
+    mkdir -p "$DATA_DIR/logging/journald" 2>/dev/null
     cp /etc/systemd/journald.conf "$DATA_DIR/logging/journald.conf" 2>/dev/null || echo "journald.conf not found" > "$DATA_DIR/logging/journald.conf"
     cp -r /etc/systemd/journald.conf.d/* "$DATA_DIR/logging/journald/" 2>/dev/null || echo "journald.conf.d not found"
     ls -la /var/log/journal/ > "$DATA_DIR/logging/journal-permissions.txt" 2>/dev/null || echo "journal dir not found" > "$DATA_DIR/logging/journal-permissions.txt"
     
     # Rsyslog Configuration (Section 6.2.3)
-    mkdir -p "$DATA_DIR/logging/rsyslog"
+    mkdir -p "$DATA_DIR/logging/rsyslog" 2>/dev/null
     cp /etc/rsyslog.conf "$DATA_DIR/logging/rsyslog.conf" 2>/dev/null || echo "rsyslog.conf not found" > "$DATA_DIR/logging/rsyslog.conf"
     cp -r /etc/rsyslog.d/* "$DATA_DIR/logging/rsyslog/" 2>/dev/null || echo "rsyslog.d not found"
     
@@ -199,7 +206,7 @@ collect_logging_auditing_info() {
     cp -r /etc/logrotate.d/* "$DATA_DIR/logging/" 2>/dev/null || echo "logrotate.d not found"
     
     # Audit Configuration (Section 6.3)
-    mkdir -p "$DATA_DIR/auditing"
+    mkdir -p "$DATA_DIR/auditing" 2>/dev/null
     cp /etc/audit/auditd.conf "$DATA_DIR/auditing/" 2>/dev/null || echo "auditd.conf not found" > "$DATA_DIR/auditing/auditd.conf"
     cp /etc/audit/audit.rules "$DATA_DIR/auditing/" 2>/dev/null || echo "audit.rules not found" > "$DATA_DIR/auditing/audit.rules"
     cp -r /etc/audit/rules.d/* "$DATA_DIR/auditing/" 2>/dev/null || echo "audit rules.d not found"
