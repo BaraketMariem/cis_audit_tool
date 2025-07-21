@@ -2019,7 +2019,6 @@ def check_auditd_authentication_rules_offline(data_dir: str) -> Dict[str, Any]:
             'details': f'Missing authentication rules in collected data: {missing_rules}',
             'found_value': f'Missing rules: {missing_rules}',
             'expected_value': 'Authentication rules configured',
-            'remediation': f"Add the following rules to /etc/audit/rules.d/audit.rules: {' '.join(missing_rules)}",
             'section': 'auditing'
         }
 
@@ -2082,16 +2081,7 @@ def check_auditd_authorization_rules_offline(data_dir: str) -> Dict[str, Any]:
         }
     missing_rules = []
     for rule in audit_rules:
-        found = False
-        for audit_file in audit_rules_dir.glob("*.rules"):
-            try:
-                content = audit_file.read_text()
-                if rule in content:
-                    found = True
-                    break
-            except Exception as e:
-                logging.warning(f"Could not read audit file {audit_file}: {e}")
-        if not found:
+        if rule not in auditctl_output:
             missing_rules.append(rule)
     if not missing_rules:
         return {
@@ -2466,73 +2456,6 @@ def check_auditd_system_integrity_rules() -> Dict[str, Any]:
             'section': 'auditing'
         }
 
-def check_auditd_system_integrity_rules_offline(data_dir: str) -> Dict[str, Any]:
-    """4.4.10 - Create system integrity event logging (offline)"""
-    rule_id = "4.4.10"
-    title = "Ensure system integrity event logging"
-    audit_rules = [
-        "-w /usr/bin/sha1sum -p x -k integrity",
-        "-w /usr/bin/sha224sum -p x -k integrity",
-        "-w /usr/bin/sha256sum -p x -k integrity",
-        "-w /usr/bin/sha384sum -p x -k integrity",
-        "-w /usr/bin/sha512sum -p x -k integrity",
-        "-w /usr/bin/md5sum -p x -k integrity",
-        "-w /usr/sbin/aide -p x -k integrity",
-        "-w /usr/bin/rpm -p x -k integrity",
-        "-w /usr/bin/tripwire -p x -k integrity",
-        "-w /usr/sbin/tripwire -p x -k integrity",
-        "-w /usr/local/bin/tripwire -p x -k integrity",
-        "-w /usr/local/sbin/tripwire -p x -k integrity"
-    ]
-    audit_rules_dir = Path(data_dir) / "security" / "audit" / "rules.d"
-    if not audit_rules_dir.exists():
-        return {
-            'rule_id': rule_id,
-            'title': title,
-            'status': Status.SKIPPED,
-            'severity': Severity.HIGH,
-            'details': 'Offline audit rules directory not found, cannot check system integrity rules.',
-            'found_value': 'N/A',
-            'expected_value': 'System integrity rules configured',
-            'section': 'auditing'
-        }
-    missing_rules = []
-    for rule in audit_rules:
-        found = False
-        for audit_file in audit_rules_dir.glob("*.rules"):
-            try:
-                content = audit_file.read_text()
-                if rule in content:
-                    found = True
-                    break
-            except Exception as e:
-                logging.warning(f"Could not read audit file {audit_file}: {e}")
-        if not found:
-            missing_rules.append(rule)
-    if not missing_rules:
-        return {
-            'rule_id': rule_id,
-            'title': title,
-            'status': Status.PASS,
-            'severity': Severity.HIGH,
-            'details': 'System integrity rules are configured based on collected data',
-            'found_value': 'System integrity rules configured',
-            'expected_value': 'System integrity rules configured',
-            'section': 'auditing'
-        }
-    else:
-        return {
-            'rule_id': rule_id,
-            'title': title,
-            'status': Status.FAIL,
-            'severity': Severity.HIGH,
-            'details': f'Missing system integrity rules in collected data: {missing_rules}',
-            'found_value': f'Missing rules: {missing_rules}',
-            'expected_value': 'System integrity rules configured',
-            'remediation': f"Add the following rules to /etc/audit/rules.d/audit.rules: {' '.join(missing_rules)}",
-            'section': 'auditing'
-        }
-
 def check_auditd_kernel_module_loading_rules() -> Dict[str, Any]:
     """4.4.11 - Create kernel module loading event logging"""
     rule_id = "4.4.11"
@@ -2584,7 +2507,7 @@ def check_auditd_kernel_module_loading_rules_offline(data_dir: str) -> Dict[str,
             'rule_id': rule_id,
             'title': title,
             'status': Status.SKIPPED,
-            'severity': Severity.HIGH,
+            'severity': Severity.MEDIUM,
             'details': 'Offline audit rules directory not found, cannot check kernel module loading rules.',
             'found_value': 'N/A',
             'expected_value': 'Kernel module loading rules configured',
@@ -2608,7 +2531,7 @@ def check_auditd_kernel_module_loading_rules_offline(data_dir: str) -> Dict[str,
             'rule_id': rule_id,
             'title': title,
             'status': Status.PASS,
-            'severity': Severity.HIGH,
+            'severity': Severity.MEDIUM,
             'details': 'Kernel module loading rules are configured based on collected data',
             'found_value': 'Kernel module loading rules configured',
             'expected_value': 'Kernel module loading rules configured',
@@ -2619,7 +2542,7 @@ def check_auditd_kernel_module_loading_rules_offline(data_dir: str) -> Dict[str,
             'rule_id': rule_id,
             'title': title,
             'status': Status.FAIL,
-            'severity': Severity.HIGH,
+            'severity': Severity.MEDIUM,
             'details': f'Missing kernel module loading rules in collected data: {missing_rules}',
             'found_value': f'Missing rules: {missing_rules}',
             'expected_value': 'Kernel module loading rules configured',
@@ -3016,8 +2939,8 @@ def check_auditd_system_call_rules() -> Dict[str, Any]:
     rule_id = "4.4.16"
     title = "Ensure system call event logging"
     audit_rules = [
-        "-a always,exit -F arch=b64 -S execve -k execve",
-        "-a always,exit -F arch=b32 -S execve -k execve"
+        "-a always,exit -F arch=b64 -S execve -k system_calls",
+        "-a always,exit -F arch=b32 -S execve -k system_calls"
     ]
     auditctl_output = _run_command("auditctl -l")
     missing_rules = []
@@ -3053,8 +2976,8 @@ def check_auditd_system_call_rules_offline(data_dir: str) -> Dict[str, Any]:
     rule_id = "4.4.16"
     title = "Ensure system call event logging"
     audit_rules = [
-        "-a always,exit -F arch=b64 -S execve -k execve",
-        "-a always,exit -F arch=b32 -S execve -k execve"
+        "-a always,exit -F arch=b64 -S execve -k system_calls",
+        "-a always,exit -F arch=b32 -S execve -k system_calls"
     ]
     audit_rules_dir = Path(data_dir) / "security" / "audit" / "rules.d"
     if not audit_rules_dir.exists():
@@ -3147,152 +3070,4 @@ def check_auditd_successful_file_access_rules_offline(data_dir: str) -> Dict[str
     rule_id = "4.4.17"
     title = "Ensure successful file access event logging"
     audit_rules = [
-        "-a always,exit -F arch=b64 -S open,truncate,ftruncate,creat,openat,truncateat,ftruncateat -F exit=0 -F auid>=1000 -F auid!=4294967295 -k successful-access",
-        "-a always,exit -F arch=b32 -S open,truncate,ftruncate,creat,openat,truncateat,ftruncateat -F exit=0 -F auid>=1000 -F auid!=4294967295 -k successful-access"
-    ]
-    audit_rules_dir = Path(data_dir) / "security" / "audit" / "rules.d"
-    if not audit_rules_dir.exists():
-        return {
-            'rule_id': rule_id,
-            'title': title,
-            'status': Status.SKIPPED,
-            'severity': Severity.MEDIUM,
-            'details': 'Offline audit rules directory not found, cannot check successful file access rules.',
-            'found_value': 'N/A',
-            'expected_value': 'Successful file access rules configured',
-            'section': 'auditing'
-        }
-    missing_rules = []
-    for rule in audit_rules:
-        found = False
-        for audit_file in audit_rules_dir.glob("*.rules"):
-            try:
-                content = audit_file.read_text()
-                if rule in content:
-                    found = True
-                    break
-            except Exception as e:
-                logging.warning(f"Could not read audit file {audit_file}: {e}")
-        if not found:
-            missing_rules.append(rule)
-    if not missing_rules:
-        return {
-            'rule_id': rule_id,
-            'title': title,
-            'status': Status.PASS,
-            'severity': Severity.MEDIUM,
-            'details': 'Successful file access rules are configured based on collected data',
-            'found_value': 'Successful file access rules configured',
-            'expected_value': 'Successful file access rules configured',
-            'section': 'auditing'
-        }
-    else:
-        return {
-            'rule_id': rule_id,
-            'title': title,
-            'status': Status.FAIL,
-            'severity': Severity.MEDIUM,
-            'details': f'Missing successful file access rules in collected data: {missing_rules}',
-            'found_value': f'Missing rules: {missing_rules}',
-            'expected_value': 'Successful file access rules configured',
-            'remediation': f"Add the following rules to /etc/audit/rules.d/audit.rules: {' '.join(missing_rules)}",
-            'section': 'auditing'
-        }
-
-def check_auditd_unsuccessful_file_access_rules() -> Dict[str, Any]:
-    """4.4.18 - Create unsuccessful file access event logging"""
-    rule_id = "4.4.18"
-    title = "Ensure unsuccessful file access event logging"
-    audit_rules = [
-        "-a always,exit -F arch=b64 -S open,truncate,ftruncate,creat,openat,truncateat,ftruncateat -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -k unsuccessful-access",
-        "-a always,exit -F arch=b32 -S open,truncate,ftruncate,creat,openat,truncateat,ftruncateat -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -k unsuccessful-access",
-        "-a always,exit -F arch=b64 -S open,truncate,ftruncate,creat,openat,truncateat,ftruncateat -F exit=-EPERM -F auid>=1000 -F auid!=4294967295 -k unsuccessful-access",
-        "-a always,exit -F arch=b32 -S open,truncate,ftruncate,creat,openat,truncateat,ftruncateat -F exit=-EPERM -F auid>=1000 -F auid!=4294967295 -k unsuccessful-access"
-    ]
-    auditctl_output = _run_command("auditctl -l")
-    missing_rules = []
-    for rule in audit_rules:
-        if rule not in auditctl_output:
-            missing_rules.append(rule)
-    if not missing_rules:
-        return {
-            'rule_id': rule_id,
-            'title': title,
-            'status': Status.PASS,
-            'severity': Severity.MEDIUM,
-            'details': 'Unsuccessful file access rules are configured',
-            'found_value': 'Unsuccessful file access rules configured',
-            'expected_value': 'Unsuccessful file access rules configured',
-            'section': 'auditing'
-        }
-    else:
-        return {
-            'rule_id': rule_id,
-            'title': title,
-            'status': Status.FAIL,
-            'severity': Severity.MEDIUM,
-            'details': f'Missing unsuccessful file access rules: {missing_rules}',
-            'found_value': f'Missing rules: {missing_rules}',
-            'expected_value': 'Unsuccessful file access rules configured',
-            'remediation': f"Add the following rules to /etc/audit/rules.d/audit.rules: {' '.join(missing_rules)}",
-            'section': 'auditing'
-        }
-
-def check_auditd_unsuccessful_file_access_rules_offline(data_dir: str) -> Dict[str, Any]:
-    """4.4.18 - Create unsuccessful file access event logging (offline)"""
-    rule_id = "4.4.18"
-    title = "Ensure unsuccessful file access event logging"
-    audit_rules = [
-        "-a always,exit -F arch=b64 -S open,truncate,ftruncate,creat,openat,truncateat,ftruncateat -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -k unsuccessful-access",
-        "-a always,exit -F arch=b32 -S open,truncate,ftruncate,creat,openat,truncateat,ftruncateat -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -k unsuccessful-access",
-        "-a always,exit -F arch=b64 -S open,truncate,ftruncate,creat,openat,truncateat,ftruncateat -F exit=-EPERM -F auid>=1000 -F auid!=4294967295 -k unsuccessful-access",
-        "-a always,exit -F arch=b32 -S open,truncate,ftruncate,creat,openat,truncateat,ftruncateat -F exit=-EPERM -F auid>=1000 -F auid!=4294967295 -k unsuccessful-access"
-    ]
-    audit_rules_dir = Path(data_dir) / "security" / "audit" / "rules.d"
-    if not audit_rules_dir.exists():
-        return {
-            'rule_id': rule_id,
-            'title': title,
-            'status': Status.SKIPPED,
-            'severity': Severity.MEDIUM,
-            'details': 'Offline audit rules directory not found, cannot check unsuccessful file access rules.',
-            'found_value': 'N/A',
-            'expected_value': 'Unsuccessful file access rules configured',
-            'section': 'auditing'
-        }
-    missing_rules = []
-    for rule in audit_rules:
-        found = False
-        for audit_file in audit_rules_dir.glob("*.rules"):
-            try:
-                content = audit_file.read_text()
-                if rule in content:
-                    found = True
-                    break
-            except Exception as e:
-                logging.warning(f"Could not read audit file {audit_file}: {e}")
-        if not found:
-            missing_rules.append(rule)
-    if not missing_rules:
-        return {
-            'rule_id': rule_id,
-            'title': title,
-            'status': Status.PASS,
-            'severity': Severity.MEDIUM,
-            'details': 'Unsuccessful file access rules are configured based on collected data',
-            'found_value': 'Unsuccessful file access rules configured',
-            'expected_value': 'Unsuccessful file access rules configured',
-            'section': 'auditing'
-        }
-    else:
-        return {
-            'rule_id': rule_id,
-            'title': title,
-            'status': Status.FAIL,
-            'severity': Severity.MEDIUM,
-            'details': f'Missing unsuccessful file access rules in collected data: {missing_rules}',
-            'found_value': f'Missing rules: {missing_rules}',
-            'expected_value': 'Unsuccessful file access rules configured',
-            'remediation': f"Add the following rules to /etc/audit/rules.d/audit.rules: {' '.join(missing_rules)}",
-            'section': 'auditing'
-        }
+        "-a always,exit -F arch=b64 -S open,truncate,ftruncate,creat,openat,truncateat,ftruncateat -F exit=0 -F auid>=1000 -F auid

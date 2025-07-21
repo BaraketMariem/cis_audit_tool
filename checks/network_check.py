@@ -112,4 +112,3 @@ def _check_ipv6_disabled_offline(data_dir: str) -> Dict[str, Any]:
         details = f"Error processing sysctl configuration: {e}"
 
     return {"status": status, "details": details}
-

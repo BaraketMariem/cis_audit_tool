@@ -136,4 +136,3 @@ def _check_cron_jobs_offline(data_dir: str) -> Tuple[Status, str]:
                 status = Status.SKIPPED
 
     return status, details
-

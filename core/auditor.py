@@ -1,6 +1,4 @@
-"""
-Core Auditor - Base class for all CIS checks
-"""
+"""Core Auditor - Base class for all CIS checks"""
 from abc import ABC, abstractmethod
 from enum import Enum
 from dataclasses import dataclass

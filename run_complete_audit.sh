@@ -1,46 +1,38 @@
 #!/bin/bash
-# Complete RHEL 9 CIS Audit Script
 
-echo "🛡️  RHEL 9 CIS Benchmark Audit Tool"
-echo "=================================="
+# Script to perform a complete RHEL 9 CIS audit workflow:
+# 1. Collect data
+# 2. Run the audit in offline mode using collected data
+# 3. Generate reports
 
-# Check if running as root
-if [[ $EUID -ne 0 ]]; then
-   echo "⚠️  This script should be run as root for complete audit"
-   echo "Usage: sudo ./run_complete_audit.sh"
-   exit 1
-fi
+# Set the project root directory (assuming this script is in the root)
+PROJECT_ROOT="$(dirname "$(readlink -f "$0")")"
+cd "$PROJECT_ROOT" || { echo "Error: Could not change to project directory."; exit 1; }
 
-# Create timestamp for unique directory
-TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-AUDIT_DIR="./rhel9_cis_audit_$TIMESTAMP"
+echo "Starting complete RHEL 9 CIS Audit workflow..."
 
-echo "📁 Audit directory: $AUDIT_DIR"
+# Step 1: Collect data
+echo "--- Step 1: Collecting system data ---"
+./scripts/collect_data_final.sh
+COLLECTION_STATUS=$?
 
-# Step 1: Collect system data
-echo ""
-echo "🔍 Step 1: Collecting system configuration data..."
-python3 src/main.py --mode offline --phase collect --output-dir "$AUDIT_DIR"
-
-if [ $? -ne 0 ]; then
-    echo "❌ Data collection failed!"
+if [ $COLLECTION_STATUS -ne 0 ]; then
+    echo "Error: Data collection failed. Aborting audit."
     exit 1
 fi
 
-# Step 2: Analyze collected data
-echo ""
-echo "🔍 Step 2: Analyzing collected data against CIS benchmarks..."
-python3 src/main.py --mode offline --phase analyze --data-dir "$AUDIT_DIR" --format html,json
+DATA_DIR="$PROJECT_ROOT/data" # Ensure this matches the collect_data script's output
 
-if [ $? -ne 0 ]; then
-    echo "❌ Analysis failed!"
+# Step 2: Run the audit in offline mode
+echo "--- Step 2: Running audit in offline mode ---"
+python3 main.py --config config/default_config.yaml --offline --data-dir "$DATA_DIR"
+AUDIT_STATUS=$?
+
+if [ $AUDIT_STATUS -ne 0 ]; then
+    echo "Error: Audit failed. Please check the logs for errors."
     exit 1
 fi
 
-echo ""
-echo "🎉 Audit Complete!"
-echo "📊 Reports generated in: $AUDIT_DIR"
-echo "📋 Open $AUDIT_DIR/audit_report.html in your browser"
-echo ""
-echo "📂 Files created:"
-ls -la "$AUDIT_DIR"/*.html "$AUDIT_DIR"/*.json 2>/dev/null || echo "No report files found"
+echo "Complete audit workflow finished successfully."
+echo "Collected data is in: $DATA_DIR"
+echo "Reports are generated in the 'reports/' directory."

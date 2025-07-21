@@ -3,6 +3,7 @@ import logging
 import os
 import sys
 import yaml
+import json
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any, Optional
@@ -21,7 +22,7 @@ class Status:
     ERROR = "ERROR"
     MANUAL = "MANUAL"
     INFO = "INFO"
-    SKIPPED = "SKIPPED" # Added SKIPPED status
+    SKIPPED = "SKIPPED"
 
 class Severity:
     CRITICAL = "CRITICAL"
@@ -34,7 +35,7 @@ class AuditResult:
     def __init__(self, rule_id: str, title: str, status: str, severity: str,
                  details: str, remediation: Optional[str] = None,
                  found_value: Optional[str] = None, expected_value: Optional[str] = None,
-                 section: Optional[str] = None):
+                 section: Optional[str] = None, timestamp: Optional[str] = None):
         self.rule_id = rule_id
         self.title = title
         self.status = status
@@ -44,6 +45,7 @@ class AuditResult:
         self.found_value = found_value
         self.expected_value = expected_value
         self.section = section
+        self.timestamp = timestamp or datetime.now().isoformat()
 
     def to_dict(self):
         return {
@@ -55,7 +57,8 @@ class AuditResult:
             "remediation": self.remediation,
             "found_value": self.found_value,
             "expected_value": self.expected_value,
-            "section": self.section
+            "section": self.section,
+            "timestamp": self.timestamp
         }
 
 def setup_logging(level: str, log_file: str):
@@ -64,7 +67,7 @@ def setup_logging(level: str, log_file: str):
     """
     log_dir = os.path.dirname(log_file)
     if log_dir and not os.path.exists(log_dir):
-        os.makedirs(log_dir) # Create logs directory if it doesn't exist
+        os.makedirs(log_dir)
 
     numeric_level = getattr(logging, level.upper(), None)
     if not isinstance(numeric_level, int):
@@ -190,7 +193,7 @@ def generate_report(results: List[AuditResult], output_format: str, output_dir: 
         html_output_path = os.path.join(output_dir, f"audit_report_{timestamp}.html")
         try:
             from reports import html_generator
-            html_generator.generate_html_report(results, html_output_path, cis_rules)
+            html_generator.generate_html_report(results, html_output_path)
             logging.info(f"HTML report generated: {html_output_path}")
         except Exception as e:
             logging.error(f"Error generating HTML report: {e}", exc_info=True)
@@ -199,61 +202,167 @@ def generate_report(results: List[AuditResult], output_format: str, output_dir: 
         json_output_path = os.path.join(output_dir, f"audit_report_{timestamp}.json")
         try:
             from reports import json_generator
-            json_generator.generate_json_report(results, json_output_path, cis_rules)
+            json_generator.generate_json_report(results, json_output_path)
             logging.info(f"JSON report generated: {json_output_path}")
         except Exception as e:
             logging.error(f"Error generating JSON report: {e}", exc_info=True)
 
+def get_status_explanation(result: AuditResult) -> str:
+    """
+    Provides a clear explanation of why a test passed, failed, or was skipped.
+    """
+    status = result.status
+    found = result.found_value
+    expected = result.expected_value
+    
+    if status == Status.PASS:
+        if found and expected:
+            if found == expected:
+                return f"✓ PASSED: Found value '{found}' matches expected value '{expected}'"
+            else:
+                return f"✓ PASSED: Found value '{found}' meets requirement (expected: {expected})"
+        elif found:
+            return f"✓ PASSED: Found value '{found}' meets security requirements"
+        else:
+            return "✓ PASSED: Configuration meets security requirements"
+    
+    elif status == Status.FAIL:
+        if found and expected:
+            if found != expected:
+                return f"✗ FAILED: Found value '{found}' does not match expected value '{expected}'"
+            else:
+                return f"✗ FAILED: Found value '{found}' does not meet security requirements"
+        elif found:
+            return f"✗ FAILED: Found value '{found}' does not meet security requirements"
+        elif expected:
+            return f"✗ FAILED: Expected value '{expected}' not found or configured"
+        else:
+            return "✗ FAILED: Configuration does not meet security requirements"
+    
+    elif status == Status.SKIPPED:
+        return "⊘ SKIPPED: Unable to verify due to missing data or inapplicable system configuration"
+    
+    elif status == Status.MANUAL:
+        return "⚠ MANUAL REVIEW REQUIRED: This check requires human verification"
+    
+    elif status == Status.ERROR:
+        return "⚠ ERROR: Unable to complete check due to system error"
+    
+    elif status == Status.INFO:
+        return "ℹ INFO: Informational check completed"
+    
+    else:
+        return f"? UNKNOWN STATUS: {status}"
+
 def print_summary(results: List[AuditResult], verbose: bool, failed_only: bool):
     """
-    Prints a summary of the audit results to the console.
+    Prints a comprehensive summary of the audit results to the console.
     """
+    # Calculate statistics
     total_checks = len(results)
     passed_checks = sum(1 for r in results if r.status == Status.PASS)
     failed_checks = sum(1 for r in results if r.status == Status.FAIL)
     error_checks = sum(1 for r in results if r.status == Status.ERROR)
     manual_checks = sum(1 for r in results if r.status == Status.MANUAL)
-    skipped_checks = sum(1 for r in results if r.status == Status.SKIPPED) # Count skipped
+    skipped_checks = sum(1 for r in results if r.status == Status.SKIPPED)
+    info_checks = sum(1 for r in results if r.status == Status.INFO)
 
-    print("\n--- Audit Summary ---")
-    print(f"Total Checks: {total_checks}")
-    print(f"Passed: {passed_checks}")
-    print(f"Failed: {failed_checks}")
-    print(f"Errors: {error_checks}")
-    print(f"Manual Review: {manual_checks}")
-    print(f"Skipped: {skipped_checks}") # Display skipped count
-    print("-" * 20)
+    # Calculate compliance percentage (passed / (total - skipped - info))
+    actionable_checks = total_checks - skipped_checks - info_checks
+    compliance_percentage = (passed_checks / actionable_checks * 100) if actionable_checks > 0 else 0
 
+    print("\n" + "="*80)
+    print("                           CIS AUDIT SUMMARY")
+    print("="*80)
+    print(f"Total Checks Executed:     {total_checks}")
+    print(f"  ✓ Passed:               {passed_checks}")
+    print(f"  ✗ Failed:               {failed_checks}")
+    print(f"  ⚠ Errors:               {error_checks}")
+    print(f"  ⚠ Manual Review:        {manual_checks}")
+    print(f"  ⊘ Skipped:              {skipped_checks}")
+    print(f"  ℹ Informational:        {info_checks}")
+    print("-" * 80)
+    print(f"Compliance Rate:           {compliance_percentage:.1f}% ({passed_checks}/{actionable_checks} actionable checks)")
+    
+    # Verification that totals add up
+    calculated_total = passed_checks + failed_checks + error_checks + manual_checks + skipped_checks + info_checks
+    if calculated_total != total_checks:
+        print(f"⚠ WARNING: Check count mismatch! Sum of categories ({calculated_total}) != Total ({total_checks})")
+    
+    print("="*80)
+
+    # Group results by section for better organization
+    results_by_section = {}
+    for result in results:
+        section = result.section or "Unknown"
+        if section not in results_by_section:
+            results_by_section[section] = []
+        results_by_section[section].append(result)
+
+    # Filter results based on user preference
     if failed_only:
-        filtered_results = [r for r in results if r.status == Status.FAIL or r.status == Status.ERROR]
-    else:
+        filtered_results = [r for r in results if r.status in [Status.FAIL, Status.ERROR]]
+        print(f"\nShowing {len(filtered_results)} FAILED/ERROR checks:")
+    elif verbose:
         filtered_results = results
+        print(f"\nShowing ALL {len(filtered_results)} checks:")
+    else:
+        # Show summary by section
+        print("\nSUMMARY BY SECTION:")
+        for section, section_results in results_by_section.items():
+            section_passed = sum(1 for r in section_results if r.status == Status.PASS)
+            section_failed = sum(1 for r in section_results if r.status == Status.FAIL)
+            section_error = sum(1 for r in section_results if r.status == Status.ERROR)
+            section_manual = sum(1 for r in section_results if r.status == Status.MANUAL)
+            section_skipped = sum(1 for r in section_results if r.status == Status.SKIPPED)
+            section_total = len(section_results)
+            
+            print(f"\n{section.upper()}:")
+            print(f"  Total: {section_total} | Passed: {section_passed} | Failed: {section_failed} | Errors: {section_error} | Manual: {section_manual} | Skipped: {section_skipped}")
+        
+        print(f"\nUse --verbose to see all checks or --failed-only to see only failed checks.")
+        return
 
-    if verbose:
+    # Display detailed results
+    if verbose or failed_only:
+        print("\nDETAILED RESULTS:")
+        print("-" * 80)
+        
+        current_section = None
         for result in filtered_results:
+            # Print section header when section changes
+            if result.section != current_section:
+                current_section = result.section
+                print(f"\n[{current_section.upper() if current_section else 'UNKNOWN'}]")
+                print("-" * 40)
+            
             print(f"\nRule ID: {result.rule_id}")
             print(f"Title: {result.title}")
-            print(f"Status: {result.status}")
             print(f"Severity: {result.severity}")
-            print(f"Details: {result.details}")
-            if result.found_value is not None:
-                print(f"Found Value: {result.found_value}")
-            if result.expected_value is not None:
-                print(f"Expected Value: {result.expected_value}")
-            if result.remediation:
+            
+            # Show the status explanation
+            explanation = get_status_explanation(result)
+            print(f"Result: {explanation}")
+            
+            # Show detailed values if available
+            if result.found_value is not None or result.expected_value is not None:
+                print("Configuration Details:")
+                if result.found_value is not None:
+                    print(f"  Found:    {result.found_value}")
+                if result.expected_value is not None:
+                    print(f"  Expected: {result.expected_value}")
+            
+            # Show additional details/reason
+            if result.details:
+                print(f"Details: {result.details}")
+            
+            # Show remediation if available and status is FAIL or ERROR
+            if result.remediation and result.status in [Status.FAIL, Status.ERROR]:
                 print(f"Remediation: {result.remediation}")
-            print("-" * 20)
-    elif failed_only:
-        print("\n--- Failed/Error Checks Details ---")
-        for result in filtered_results:
-            print(f"[{result.status}] {result.rule_id}: {result.title} - {result.details}")
-            if result.found_value is not None:
-                print(f"  Found: {result.found_value}")
-            if result.expected_value is not None:
-                print(f"  Expected: {result.expected_value}")
-            if result.remediation:
-                print(f"  Remediation: {result.remediation}")
-        print("-" * 20)
+            
+            print("-" * 40)
+
+    print(f"\nAudit completed. Check the generated reports for full details.")
 
 def main():
     parser = argparse.ArgumentParser(description="CIS Audit Tool")
@@ -280,7 +389,7 @@ def main():
     parser.add_argument("--verbose", action="store_true",
                         help="Print detailed results for all checks to console.")
     parser.add_argument("--failed-only", action="store_true",
-                        help="Print only failed/error checks to console (overrides --verbose if both are set).")
+                        help="Print only failed/error checks to console.")
 
     args = parser.parse_args()
 
@@ -308,5 +417,4 @@ def main():
     logging.info("CIS Audit Tool finished.")
 
 if __name__ == "__main__":
-    import json # Moved import here to avoid circular dependency issues with reports module
     main()
