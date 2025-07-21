@@ -20,18 +20,13 @@ def run_online():
     """Run Section 4 checks in online mode"""
     results = []
     
-    print("🔥 Running CIS Section 4: Host Based Firewall (Online Mode)")
-    
     # 4.1 Configure a firewall utility
-    print("  🛡️  Section 4.1: Configure a firewall utility")
     results.extend(check_firewall_utility_online())
     
     # 4.2 Configure FirewallD
-    print("  🔧 Section 4.2: Configure FirewallD")
     results.extend(check_firewalld_online())
     
     # 4.3 Configure NFTables
-    print("  📋 Section 4.3: Configure NFTables")
     results.extend(check_nftables_online())
     
     return results
@@ -40,18 +35,13 @@ def run_offline(data_dir):
     """Run Section 4 checks in offline mode"""
     results = []
     
-    print(f"🔥 Running CIS Section 4: Host Based Firewall (Offline Mode - {data_dir})")
-    
     # 4.1 Configure a firewall utility
-    print("  🛡️  Section 4.1: Configure a firewall utility")
     results.extend(check_firewall_utility_offline(data_dir))
     
     # 4.2 Configure FirewallD
-    print("  🔧 Section 4.2: Configure FirewallD")
     results.extend(check_firewalld_offline(data_dir))
     
     # 4.3 Configure NFTables
-    print("  📋 Section 4.3: Configure NFTables")
     results.extend(check_nftables_offline(data_dir))
     
     return results

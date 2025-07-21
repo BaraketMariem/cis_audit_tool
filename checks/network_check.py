@@ -19,19 +19,14 @@ def run_network_checks(data_dir=None):
 def run_online():
     """Run Section 3 checks in online mode"""
     results = []
-    
-    print("🌐 Running CIS Section 3: Network Configuration (Online Mode)")
-    
+
     # 3.1 Configure Network Devices
-    print("  📡 Section 3.1: Configure Network Devices")
     results.extend(check_network_devices_online())
     
     # 3.2 Configure Network Kernel Modules
-    print("  🔧 Section 3.2: Configure Network Kernel Modules")
     results.extend(check_network_kernel_modules_online())
     
     # 3.3 Configure Network Kernel Parameters
-    print("  ⚙️  Section 3.3: Configure Network Kernel Parameters")
     results.extend(check_network_kernel_parameters_online())
     
     return results
@@ -40,18 +35,13 @@ def run_offline(data_dir):
     """Run Section 3 checks in offline mode"""
     results = []
     
-    print(f"🌐 Running CIS Section 3: Network Configuration (Offline Mode - {data_dir})")
-    
     # 3.1 Configure Network Devices
-    print("  📡 Section 3.1: Configure Network Devices")
     results.extend(check_network_devices_offline(data_dir))
     
     # 3.2 Configure Network Kernel Modules
-    print("  🔧 Section 3.2: Configure Network Kernel Modules")
     results.extend(check_network_kernel_modules_offline(data_dir))
     
     # 3.3 Configure Network Kernel Parameters
-    print("  ⚙️  Section 3.3: Configure Network Kernel Parameters")
     results.extend(check_network_kernel_parameters_offline(data_dir))
     
     return results
