@@ -70,7 +70,7 @@ def check_ssh_server_online():
                     'rule_id': '5.1.1',
                     'title': 'Ensure permissions on /etc/ssh/sshd_config are configured',
                     'status': 'PASS',
-                    'details': f'/etc/ssh/sshd_config has correct permissions ({mode}) and ownership (root:root)',
+                    'details': f'Checked /etc/ssh/sshd_config file: Found permissions {mode} and ownership root:root - PASS',
                     'severity': 'Medium',
                     'section': 'access_control'
                 })
@@ -79,7 +79,7 @@ def check_ssh_server_online():
                     'rule_id': '5.1.1',
                     'title': 'Ensure permissions on /etc/ssh/sshd_config are configured',
                     'status': 'FAIL',
-                    'details': f'/etc/ssh/sshd_config permissions: {mode} (expected 600), owner: {uid}:{gid} (expected 0:0)',
+                    'details': f'Checked /etc/ssh/sshd_config file: Found permissions {mode} (expected 600) and ownership {uid}:{gid} (expected 0:0) - FAIL',
                     'severity': 'Medium',
                     'section': 'access_control',
                     'remediation': 'Run: chown root:root /etc/ssh/sshd_config && chmod 600 /etc/ssh/sshd_config'
@@ -89,7 +89,7 @@ def check_ssh_server_online():
                 'rule_id': '5.1.1',
                 'title': 'Ensure permissions on /etc/ssh/sshd_config are configured',
                 'status': 'FAIL',
-                'details': '/etc/ssh/sshd_config does not exist',
+                'details': 'Checked /etc/ssh/sshd_config file: File does not exist - FAIL',
                 'severity': 'Medium',
                 'section': 'access_control'
             })
@@ -132,7 +132,7 @@ def check_ssh_server_online():
                 'rule_id': '5.1.2',
                 'title': 'Ensure permissions on SSH private host key files are configured',
                 'status': 'PASS' if all_correct else 'FAIL',
-                'details': '; '.join(details),
+                'details': f'Checked SSH private host key files: {"; ".join(details)} - {"PASS" if all_correct else "FAIL"}',
                 'severity': 'High',
                 'section': 'access_control',
                 'remediation': 'Run: find /etc/ssh -xdev -type f -name "ssh_host_*_key" -exec chown root:root {} \\; -exec chmod 600 {} \\;' if not all_correct else None
@@ -142,7 +142,7 @@ def check_ssh_server_online():
                 'rule_id': '5.1.2',
                 'title': 'Ensure permissions on SSH private host key files are configured',
                 'status': 'FAIL',
-                'details': 'No SSH private host key files found',
+                'details': 'Checked /etc/ssh directory: No SSH private host key files found - FAIL',
                 'severity': 'High',
                 'section': 'access_control'
             })
@@ -185,7 +185,7 @@ def check_ssh_server_online():
                 'rule_id': '5.1.3',
                 'title': 'Ensure permissions on SSH public host key files are configured',
                 'status': 'PASS' if all_correct else 'FAIL',
-                'details': '; '.join(details),
+                'details': f'Checked SSH public host key files: {"; ".join(details)} - {"PASS" if all_correct else "FAIL"}',
                 'severity': 'Medium',
                 'section': 'access_control',
                 'remediation': 'Run: find /etc/ssh -xdev -type f -name "ssh_host_*.pub" -exec chown root:root {} \\; -exec chmod 644 {} \\;' if not all_correct else None
@@ -195,7 +195,7 @@ def check_ssh_server_online():
                 'rule_id': '5.1.3',
                 'title': 'Ensure permissions on SSH public host key files are configured',
                 'status': 'FAIL',
-                'details': 'No SSH public host key files found',
+                'details': 'Checked /etc/ssh directory: No SSH public host key files found - FAIL',
                 'severity': 'Medium',
                 'section': 'access_control'
             })
@@ -272,7 +272,7 @@ def check_ssh_server_online():
                         'rule_id': rule_id,
                         'title': title,
                         'status': status,
-                        'details': f'{param} is set to: {current_value}',
+                        'details': f'Checked /etc/ssh/sshd_config file: Found {param} set to "{current_value}" - {status}',
                         'severity': 'Medium',
                         'section': 'access_control',
                         'remediation': f'Edit /etc/ssh/sshd_config and set: {param} {expected}' if status == 'FAIL' else None
@@ -282,7 +282,7 @@ def check_ssh_server_online():
                         'rule_id': rule_id,
                         'title': title,
                         'status': 'FAIL',
-                        'details': f'{param} is not configured',
+                        'details': f'Checked /etc/ssh/sshd_config file: {param} setting not found or not configured - FAIL',
                         'severity': 'Medium',
                         'section': 'access_control',
                         'remediation': f'Edit /etc/ssh/sshd_config and add: {param} {expected}'
@@ -293,7 +293,7 @@ def check_ssh_server_online():
                     'rule_id': rule_id,
                     'title': title,
                     'status': 'FAIL',
-                    'details': '/etc/ssh/sshd_config does not exist',
+                    'details': 'Checked /etc/ssh/sshd_config file: File does not exist - FAIL',
                     'severity': 'Medium',
                     'section': 'access_control'
                 })
@@ -327,7 +327,7 @@ def check_ssh_server_online():
                     'rule_id': '5.1.7',
                     'title': 'Ensure sshd access is configured',
                     'status': 'PASS',
-                    'details': f'SSH access controls configured: {"; ".join(access_controls)}',
+                    'details': f'Checked /etc/ssh/sshd_config file: Found SSH access controls configured: {"; ".join(access_controls)} - PASS',
                     'severity': 'Medium',
                     'section': 'access_control'
                 })
@@ -336,7 +336,7 @@ def check_ssh_server_online():
                     'rule_id': '5.1.7',
                     'title': 'Ensure sshd access is configured',
                     'status': 'MANUAL',
-                    'details': 'No SSH access controls configured - manual review required',
+                    'details': 'Checked /etc/ssh/sshd_config file: No SSH access controls configured - manual review required',
                     'severity': 'Medium',
                     'section': 'access_control',
                     'remediation': 'Configure AllowUsers, AllowGroups, DenyUsers, or DenyGroups in /etc/ssh/sshd_config'
@@ -346,7 +346,7 @@ def check_ssh_server_online():
                 'rule_id': '5.1.7',
                 'title': 'Ensure sshd access is configured',
                 'status': 'FAIL',
-                'details': '/etc/ssh/sshd_config does not exist',
+                'details': 'Checked /etc/ssh/sshd_config file: File does not exist - FAIL',
                 'severity': 'Medium',
                 'section': 'access_control'
             })
@@ -398,7 +398,7 @@ def check_ssh_server_online():
                 'rule_id': '5.1.9',
                 'title': 'Ensure sshd ClientAliveInterval and ClientAliveCountMax are configured',
                 'status': 'PASS' if (interval_ok and countmax_ok) else 'FAIL',
-                'details': '; '.join(details),
+                'details': f'Checked /etc/ssh/sshd_config file: ClientAliveInterval and ClientAliveCountMax: {"; ".join(details)} - {"PASS" if (interval_ok and countmax_ok) else "FAIL"}',
                 'severity': 'Medium',
                 'section': 'access_control',
                 'remediation': 'Edit /etc/ssh/sshd_config and set: ClientAliveInterval 300, ClientAliveCountMax 3' if not (interval_ok and countmax_ok) else None
@@ -408,7 +408,7 @@ def check_ssh_server_online():
                 'rule_id': '5.1.9',
                 'title': 'Ensure sshd ClientAliveInterval and ClientAliveCountMax are configured',
                 'status': 'FAIL',
-                'details': '/etc/ssh/sshd_config does not exist',
+                'details': 'Checked /etc/ssh/sshd_config file: File does not exist - FAIL',
                 'severity': 'Medium',
                 'section': 'access_control'
             })
@@ -463,7 +463,7 @@ def check_ssh_server_offline(data_dir):
                         'rule_id': rule_id,
                         'title': title,
                         'status': 'MANUAL',
-                        'details': f'{param} is set to: {current_value} - manual review required',
+                        'details': f'Checked /etc/ssh/sshd_config file (offline): Found {param} set to "{current_value}" - manual review required',
                         'severity': 'Medium',
                         'section': 'access_control'
                     })
@@ -472,7 +472,7 @@ def check_ssh_server_offline(data_dir):
                         'rule_id': rule_id,
                         'title': title,
                         'status': 'FAIL',
-                        'details': f'{param} is not configured',
+                        'details': f'Checked /etc/ssh/sshd_config file (offline): {param} setting not found or not configured - FAIL',
                         'severity': 'Medium',
                         'section': 'access_control'
                     })
@@ -538,7 +538,7 @@ def check_privilege_escalation_online():
                 'rule_id': '5.2.1',
                 'title': 'Ensure sudo is installed',
                 'status': 'PASS',
-                'details': f'sudo is installed: {result.stdout.strip()}',
+                'details': f'Checked installed packages: Found sudo package {result.stdout.strip()} - PASS',
                 'severity': 'High',
                 'section': 'access_control'
             })
@@ -547,7 +547,7 @@ def check_privilege_escalation_online():
                 'rule_id': '5.2.1',
                 'title': 'Ensure sudo is installed',
                 'status': 'FAIL',
-                'details': 'sudo is not installed',
+                'details': 'Checked installed packages: sudo package not found - FAIL',
                 'severity': 'High',
                 'section': 'access_control',
                 'remediation': 'Run: dnf install sudo'
@@ -573,7 +573,7 @@ def check_privilege_escalation_online():
                     'rule_id': '5.2.2',
                     'title': 'Ensure sudo commands use pty',
                     'status': 'PASS',
-                    'details': 'sudo is configured to use pty',
+                    'details': 'Checked /etc/sudoers file: Found "Defaults use_pty" setting enabled - PASS',
                     'severity': 'Medium',
                     'section': 'access_control'
                 })
@@ -582,7 +582,7 @@ def check_privilege_escalation_online():
                     'rule_id': '5.2.2',
                     'title': 'Ensure sudo commands use pty',
                     'status': 'FAIL',
-                    'details': 'sudo is not configured to use pty',
+                    'details': 'Checked /etc/sudoers file: "Defaults use_pty" setting not found or disabled - FAIL',
                     'severity': 'Medium',
                     'section': 'access_control',
                     'remediation': 'Add "Defaults use_pty" to /etc/sudoers'
@@ -592,7 +592,7 @@ def check_privilege_escalation_online():
                 'rule_id': '5.2.2',
                 'title': 'Ensure sudo commands use pty',
                 'status': 'FAIL',
-                'details': '/etc/sudoers file does not exist',
+                'details': 'Checked /etc/sudoers file: File does not exist - FAIL',
                 'severity': 'Medium',
                 'section': 'access_control'
             })
@@ -617,7 +617,7 @@ def check_privilege_escalation_online():
                     'rule_id': '5.2.3',
                     'title': 'Ensure sudo log file exists',
                     'status': 'PASS',
-                    'details': 'sudo log file is configured',
+                    'details': 'Checked /etc/sudoers file: Found sudo log file configured - PASS',
                     'severity': 'Medium',
                     'section': 'access_control'
                 })
@@ -626,7 +626,7 @@ def check_privilege_escalation_online():
                     'rule_id': '5.2.3',
                     'title': 'Ensure sudo log file exists',
                     'status': 'FAIL',
-                    'details': 'sudo log file is not configured',
+                    'details': 'Checked /etc/sudoers file: Sudo log file not configured - FAIL',
                     'severity': 'Medium',
                     'section': 'access_control',
                     'remediation': 'Add "Defaults logfile=/var/log/sudo.log" to /etc/sudoers'
@@ -636,7 +636,7 @@ def check_privilege_escalation_online():
                 'rule_id': '5.2.3',
                 'title': 'Ensure sudo log file exists',
                 'status': 'FAIL',
-                'details': '/etc/sudoers file does not exist',
+                'details': 'Checked /etc/sudoers file: File does not exist - FAIL',
                 'severity': 'Medium',
                 'section': 'access_control'
             })
@@ -660,7 +660,7 @@ def check_privilege_escalation_online():
                 'rule_id': '5.2.4',
                 'title': 'Ensure users must provide password for escalation',
                 'status': 'PASS',
-                'details': 'No NOPASSWD entries found',
+                'details': 'Checked /etc/sudoers and /etc/sudoers.d/* files: No NOPASSWD entries found - PASS',
                 'severity': 'High',
                 'section': 'access_control'
             })
@@ -669,7 +669,7 @@ def check_privilege_escalation_online():
                 'rule_id': '5.2.4',
                 'title': 'Ensure users must provide password for escalation',
                 'status': 'FAIL',
-                'details': f'NOPASSWD entries found: {result.stdout.strip()}',
+                'details': f'Checked /etc/sudoers and /etc/sudoers.d/* files: NOPASSWD entries found: {result.stdout.strip()} - FAIL',
                 'severity': 'High',
                 'section': 'access_control',
                 'remediation': 'Remove NOPASSWD entries from sudoers files'
@@ -694,7 +694,7 @@ def check_privilege_escalation_online():
                 'rule_id': '5.2.5',
                 'title': 'Ensure re-authentication for privilege escalation is not disabled globally',
                 'status': 'PASS',
-                'details': 'No global !authenticate entries found',
+                'details': 'Checked /etc/sudoers and /etc/sudoers.d/* files: No global !authenticate entries found - PASS',
                 'severity': 'Medium',
                 'section': 'access_control'
             })
@@ -703,7 +703,7 @@ def check_privilege_escalation_online():
                 'rule_id': '5.2.5',
                 'title': 'Ensure re-authentication for privilege escalation is not disabled globally',
                 'status': 'FAIL',
-                'details': f'Global !authenticate entries found: {result.stdout.strip()}',
+                'details': f'Checked /etc/sudoers and /etc/sudoers.d/* files: Global !authenticate entries found: {result.stdout.strip()} - FAIL',
                 'severity': 'Medium',
                 'section': 'access_control',
                 'remediation': 'Remove "Defaults !authenticate" entries from sudoers files'
@@ -733,7 +733,7 @@ def check_privilege_escalation_online():
                         'rule_id': '5.2.6',
                         'title': 'Ensure sudo authentication timeout is configured correctly',
                         'status': 'PASS',
-                        'details': f'sudo timeout is set to {timeout} minutes',
+                        'details': f'Checked /etc/sudoers and /etc/sudoers.d/* files: sudo timeout is set to {timeout} minutes (≤ 15) - PASS',
                         'severity': 'Medium',
                         'section': 'access_control'
                     })
@@ -742,7 +742,7 @@ def check_privilege_escalation_online():
                         'rule_id': '5.2.6',
                         'title': 'Ensure sudo authentication timeout is configured correctly',
                         'status': 'FAIL',
-                        'details': f'sudo timeout is set to {timeout} minutes (should be 15 or less)',
+                        'details': f'Checked /etc/sudoers and /etc/sudoers.d/* files: sudo timeout is set to {timeout} minutes (should be 15 or less) - FAIL',
                         'severity': 'Medium',
                         'section': 'access_control',
                         'remediation': 'Set "Defaults timestamp_timeout=15" in /etc/sudoers'
@@ -752,7 +752,7 @@ def check_privilege_escalation_online():
                     'rule_id': '5.2.6',
                     'title': 'Ensure sudo authentication timeout is configured correctly',
                     'status': 'FAIL',
-                    'details': 'sudo timeout configuration found but value not parseable',
+                    'details': 'Checked /etc/sudoers and /etc/sudoers.d/* files: sudo timeout configuration found but value not parseable - FAIL',
                     'severity': 'Medium',
                     'section': 'access_control'
                 })
@@ -761,7 +761,7 @@ def check_privilege_escalation_online():
                 'rule_id': '5.2.6',
                 'title': 'Ensure sudo authentication timeout is configured correctly',
                 'status': 'FAIL',
-                'details': 'sudo timeout is not configured',
+                'details': 'Checked /etc/sudoers and /etc/sudoers.d/* files: sudo timeout is not configured - FAIL',
                 'severity': 'Medium',
                 'section': 'access_control',
                 'remediation': 'Add "Defaults timestamp_timeout=15" to /etc/sudoers'
@@ -792,7 +792,7 @@ def check_privilege_escalation_online():
                             'rule_id': '5.2.7',
                             'title': 'Ensure access to the su command is restricted',
                             'status': 'PASS',
-                            'details': f'su access restricted to wheel group: {wheel_line}',
+                            'details': f'Checked /etc/pam.d/su file: su access restricted to wheel group: {wheel_line} - PASS',
                             'severity': 'Medium',
                             'section': 'access_control'
                         })
@@ -801,7 +801,7 @@ def check_privilege_escalation_online():
                             'rule_id': '5.2.7',
                             'title': 'Ensure access to the su command is restricted',
                             'status': 'FAIL',
-                            'details': 'su access restricted but wheel group has no members',
+                            'details': 'Checked /etc/pam.d/su file: su access restricted but wheel group has no members - FAIL',
                             'severity': 'Medium',
                             'section': 'access_control',
                             'remediation': 'Add authorized users to wheel group: usermod -aG wheel <username>'
@@ -811,7 +811,7 @@ def check_privilege_escalation_online():
                         'rule_id': '5.2.7',
                         'title': 'Ensure access to the su command is restricted',
                         'status': 'FAIL',
-                        'details': 'wheel group not found',
+                        'details': 'Checked /etc/group file: wheel group not found - FAIL',
                         'severity': 'Medium',
                         'section': 'access_control'
                     })
@@ -820,7 +820,7 @@ def check_privilege_escalation_online():
                     'rule_id': '5.2.7',
                     'title': 'Ensure access to the su command is restricted',
                     'status': 'FAIL',
-                    'details': 'su access is not restricted to wheel group',
+                    'details': 'Checked /etc/pam.d/su file: su access is not restricted to wheel group - FAIL',
                     'severity': 'Medium',
                     'section': 'access_control',
                     'remediation': 'Add "auth required pam_wheel.so use_uid" to /etc/pam.d/su'
@@ -830,7 +830,7 @@ def check_privilege_escalation_online():
                 'rule_id': '5.2.7',
                 'title': 'Ensure access to the su command is restricted',
                 'status': 'FAIL',
-                'details': '/etc/pam.d/su file does not exist',
+                'details': 'Checked /etc/pam.d/su file: File does not exist - FAIL',
                 'severity': 'Medium',
                 'section': 'access_control'
             })
@@ -861,7 +861,7 @@ def check_privilege_escalation_offline(data_dir):
                     'rule_id': '5.2.1',
                     'title': 'Ensure sudo is installed',
                     'status': 'PASS',
-                    'details': 'sudo package found in installed packages',
+                    'details': 'Checked installed packages (offline): Found sudo package - PASS',
                     'severity': 'High',
                     'section': 'access_control'
                 })
@@ -870,7 +870,7 @@ def check_privilege_escalation_offline(data_dir):
                     'rule_id': '5.2.1',
                     'title': 'Ensure sudo is installed',
                     'status': 'FAIL',
-                    'details': 'sudo package not found in installed packages',
+                    'details': 'Checked installed packages (offline): sudo package not found - FAIL',
                     'severity': 'High',
                     'section': 'access_control'
                 })
@@ -905,7 +905,7 @@ def check_privilege_escalation_offline(data_dir):
                     'rule_id': '5.2.2',
                     'title': 'Ensure sudo commands use pty',
                     'status': 'PASS',
-                    'details': 'sudo is configured to use pty',
+                    'details': 'Checked /etc/sudoers file (offline): Found "Defaults use_pty" setting enabled - PASS',
                     'severity': 'Medium',
                     'section': 'access_control'
                 })
@@ -914,7 +914,7 @@ def check_privilege_escalation_offline(data_dir):
                     'rule_id': '5.2.2',
                     'title': 'Ensure sudo commands use pty',
                     'status': 'FAIL',
-                    'details': 'sudo is not configured to use pty',
+                    'details': 'Checked /etc/sudoers file (offline): "Defaults use_pty" setting not found or disabled - FAIL',
                     'severity': 'Medium',
                     'section': 'access_control'
                 })
@@ -925,7 +925,7 @@ def check_privilege_escalation_offline(data_dir):
                     'rule_id': '5.2.3',
                     'title': 'Ensure sudo log file exists',
                     'status': 'PASS',
-                    'details': 'sudo log file is configured',
+                    'details': 'Checked /etc/sudoers file (offline): Found sudo log file configured - PASS',
                     'severity': 'Medium',
                     'section': 'access_control'
                 })
@@ -934,7 +934,7 @@ def check_privilege_escalation_offline(data_dir):
                     'rule_id': '5.2.3',
                     'title': 'Ensure sudo log file exists',
                     'status': 'FAIL',
-                    'details': 'sudo log file is not configured',
+                    'details': 'Checked /etc/sudoers file (offline): Sudo log file not configured - FAIL',
                     'severity': 'Medium',
                     'section': 'access_control'
                 })
@@ -945,7 +945,7 @@ def check_privilege_escalation_offline(data_dir):
                     'rule_id': '5.2.4',
                     'title': 'Ensure users must provide password for escalation',
                     'status': 'FAIL',
-                    'details': 'NOPASSWD entries found in sudoers',
+                    'details': 'Checked /etc/sudoers file (offline): NOPASSWD entries found - FAIL',
                     'severity': 'High',
                     'section': 'access_control'
                 })
@@ -954,7 +954,7 @@ def check_privilege_escalation_offline(data_dir):
                     'rule_id': '5.2.4',
                     'title': 'Ensure users must provide password for escalation',
                     'status': 'PASS',
-                    'details': 'No NOPASSWD entries found',
+                    'details': 'Checked /etc/sudoers file (offline): No NOPASSWD entries found - PASS',
                     'severity': 'High',
                     'section': 'access_control'
                 })
@@ -1004,7 +1004,7 @@ def check_pam_online():
                 'rule_id': '5.3.1.1',
                 'title': 'Ensure latest version of pam is installed',
                 'status': 'PASS',
-                'details': f'PAM is installed: {result.stdout.strip()}',
+                'details': f'Checked installed packages: Found PAM package {result.stdout.strip()} - PASS',
                 'severity': 'Medium',
                 'section': 'access_control'
             })
@@ -1013,7 +1013,7 @@ def check_pam_online():
                 'rule_id': '5.3.1.1',
                 'title': 'Ensure latest version of pam is installed',
                 'status': 'FAIL',
-                'details': 'PAM is not installed',
+                'details': 'Checked installed packages: PAM is not installed - FAIL',
                 'severity': 'Medium',
                 'section': 'access_control',
                 'remediation': 'Run: dnf install pam'
@@ -1036,7 +1036,7 @@ def check_pam_online():
                 'rule_id': '5.3.1.2',
                 'title': 'Ensure latest version of authselect is installed',
                 'status': 'PASS',
-                'details': f'authselect is installed: {result.stdout.strip()}',
+                'details': f'Checked installed packages: Found authselect package {result.stdout.strip()} - PASS',
                 'severity': 'Medium',
                 'section': 'access_control'
             })
@@ -1045,7 +1045,7 @@ def check_pam_online():
                 'rule_id': '5.3.1.2',
                 'title': 'Ensure latest version of authselect is installed',
                 'status': 'FAIL',
-                'details': 'authselect is not installed',
+                'details': 'Checked installed packages: authselect is not installed - FAIL',
                 'severity': 'Medium',
                 'section': 'access_control',
                 'remediation': 'Run: dnf install authselect'
@@ -1068,7 +1068,7 @@ def check_pam_online():
                 'rule_id': '5.3.1.3',
                 'title': 'Ensure latest version of libpwquality is installed',
                 'status': 'PASS',
-                'details': f'libpwquality is installed: {result.stdout.strip()}',
+                'details': f'Checked installed packages: Found libpwquality package {result.stdout.strip()} - PASS',
                 'severity': 'Medium',
                 'section': 'access_control'
             })
@@ -1077,7 +1077,7 @@ def check_pam_online():
                 'rule_id': '5.3.1.3',
                 'title': 'Ensure latest version of libpwquality is installed',
                 'status': 'FAIL',
-                'details': 'libpwquality is not installed',
+                'details': 'Checked installed packages: libpwquality is not installed - FAIL',
                 'severity': 'Medium',
                 'section': 'access_control',
                 'remediation': 'Run: dnf install libpwquality'
@@ -1141,7 +1141,7 @@ def check_pam_online():
                     'rule_id': rule_id,
                     'title': title,
                     'status': 'PASS',
-                    'details': f'{module} module is configured in PAM',
+                    'details': f'Checked /etc/pam.d/ files: Found {module} module configured - PASS',
                     'severity': 'Medium',
                     'section': 'access_control'
                 })
@@ -1150,7 +1150,7 @@ def check_pam_online():
                     'rule_id': rule_id,
                     'title': title,
                     'status': 'FAIL',
-                    'details': f'{module} module is not configured in PAM',
+                    'details': f'Checked /etc/pam.d/ files: {module} module is not configured - FAIL',
                     'severity': 'Medium',
                     'section': 'access_control',
                     'remediation': f'Configure {module} module in appropriate PAM files'
@@ -1181,7 +1181,7 @@ def check_pam_online():
                         'rule_id': rule_id,
                         'title': title,
                         'status': 'PASS',
-                        'details': 'even_deny_root is configured',
+                        'details': 'Checked /etc/security/faillock.conf and /etc/pam.d/* files: even_deny_root is configured - PASS',
                         'severity': 'Medium',
                         'section': 'access_control'
                     })
@@ -1190,7 +1190,7 @@ def check_pam_online():
                         'rule_id': rule_id,
                         'title': title,
                         'status': 'FAIL',
-                        'details': 'even_deny_root is not configured',
+                        'details': 'Checked /etc/security/faillock.conf and /etc/pam.d/* files: even_deny_root is not configured - FAIL',
                         'severity': 'Medium',
                         'section': 'access_control',
                         'remediation': 'Add even_deny_root to faillock configuration'
@@ -1207,7 +1207,7 @@ def check_pam_online():
                                 'rule_id': rule_id,
                                 'title': title,
                                 'status': 'PASS',
-                                'details': f'{param} is set to {value}',
+                                'details': f'Checked /etc/security/faillock.conf file: {param} is set to {value} - PASS',
                                 'severity': 'Medium',
                                 'section': 'access_control'
                             })
@@ -1216,7 +1216,7 @@ def check_pam_online():
                                 'rule_id': rule_id,
                                 'title': title,
                                 'status': 'FAIL',
-                                'details': f'{param} is set to {value} (expected {expected})',
+                                'details': f'Checked /etc/security/faillock.conf file: {param} is set to {value} (expected {expected}) - FAIL',
                                 'severity': 'Medium',
                                 'section': 'access_control',
                                 'remediation': f'Set {param}={expected} in /etc/security/faillock.conf'
@@ -1235,7 +1235,7 @@ def check_pam_online():
                         'rule_id': rule_id,
                         'title': title,
                         'status': 'FAIL',
-                        'details': f'{param} is not configured',
+                        'details': f'Checked /etc/security/faillock.conf file: {param} is not configured - FAIL',
                         'severity': 'Medium',
                         'section': 'access_control',
                         'remediation': f'Set {param}={expected} in /etc/security/faillock.conf'
@@ -1269,7 +1269,7 @@ def check_pam_online():
                         'rule_id': rule_id,
                         'title': title,
                         'status': 'PASS',
-                        'details': 'enforce_for_root is configured',
+                        'details': 'Checked /etc/security/pwquality.conf and /etc/pam.d/* files: enforce_for_root is configured - PASS',
                         'severity': 'Medium',
                         'section': 'access_control'
                     })
@@ -1278,7 +1278,7 @@ def check_pam_online():
                         'rule_id': rule_id,
                         'title': title,
                         'status': 'FAIL',
-                        'details': 'enforce_for_root is not configured',
+                        'details': 'Checked /etc/security/pwquality.conf and /etc/pam.d/* files: enforce_for_root is not configured - FAIL',
                         'severity': 'Medium',
                         'section': 'access_control',
                         'remediation': 'Add enforce_for_root to pwquality configuration'
@@ -1295,7 +1295,7 @@ def check_pam_online():
                                 'rule_id': rule_id,
                                 'title': title,
                                 'status': 'PASS',
-                                'details': f'{param} is set to {value}',
+                                'details': f'Checked /etc/security/pwquality.conf file: {param} is set to {value} - PASS',
                                 'severity': 'Medium',
                                 'section': 'access_control'
                             })
@@ -1304,7 +1304,7 @@ def check_pam_online():
                                 'rule_id': rule_id,
                                 'title': title,
                                 'status': 'FAIL',
-                                'details': f'{param} is set to {value} (expected >= {expected})',
+                                'details': f'Checked /etc/security/pwquality.conf file: {param} is set to {value} (expected >= {expected}) - FAIL',
                                 'severity': 'Medium',
                                 'section': 'access_control',
                                 'remediation': f'Set {param}={expected} in /etc/security/pwquality.conf'
@@ -1314,7 +1314,7 @@ def check_pam_online():
                             'rule_id': rule_id,
                             'title': title,
                             'status': 'FAIL',
-                            'details': f'{param} value not parseable',
+                            'details': f'Checked /etc/security/pwquality.conf file: {param} value not parseable - FAIL',
                             'severity': 'Medium',
                             'section': 'access_control'
                         })
@@ -1323,7 +1323,7 @@ def check_pam_online():
                         'rule_id': rule_id,
                         'title': title,
                         'status': 'FAIL',
-                        'details': f'{param} is not configured',
+                        'details': f'Checked /etc/security/pwquality.conf file: {param} is not configured - FAIL',
                         'severity': 'Medium',
                         'section': 'access_control',
                         'remediation': f'Set {param}={expected} in /etc/security/pwquality.conf'
@@ -1365,7 +1365,7 @@ def check_pam_online():
                         'rule_id': rule_id,
                         'title': title,
                         'status': 'PASS',
-                        'details': f'{param} is configured for pam_pwhistory',
+                        'details': f'Checked /etc/pam.d/* files: {param} is configured for pam_pwhistory - PASS',
                         'severity': 'Medium',
                         'section': 'access_control'
                     })
@@ -1374,7 +1374,7 @@ def check_pam_online():
                         'rule_id': rule_id,
                         'title': title,
                         'status': 'FAIL',
-                        'details': f'{param} is not configured for pam_pwhistory',
+                        'details': f'Checked /etc/pam.d/* files: {param} is not configured for pam_pwhistory - FAIL',
                         'severity': 'Medium',
                         'section': 'access_control',
                         'remediation': f'Add {param} to pam_pwhistory configuration'
@@ -1391,7 +1391,7 @@ def check_pam_online():
                                 'rule_id': rule_id,
                                 'title': title,
                                 'status': 'PASS',
-                                'details': f'remember is set to {value}',
+                                'details': f'Checked /etc/pam.d/* files: remember is set to {value} - PASS',
                                 'severity': 'Medium',
                                 'section': 'access_control'
                             })
@@ -1400,7 +1400,7 @@ def check_pam_online():
                                 'rule_id': rule_id,
                                 'title': title,
                                 'status': 'FAIL',
-                                'details': f'remember is set to {value} (expected >= {expected})',
+                                'details': f'Checked /etc/pam.d/* files: remember is set to {value} (expected >= {expected}) - FAIL',
                                 'severity': 'Medium',
                                 'section': 'access_control',
                                 'remediation': f'Set remember={expected} in pam_pwhistory configuration'
@@ -1410,7 +1410,7 @@ def check_pam_online():
                             'rule_id': rule_id,
                             'title': title,
                             'status': 'FAIL',
-                            'details': 'remember value not parseable',
+                            'details': 'Checked /etc/pam.d/* files: remember value not parseable - FAIL',
                             'severity': 'Medium',
                             'section': 'access_control'
                         })
@@ -1419,7 +1419,7 @@ def check_pam_online():
                         'rule_id': rule_id,
                         'title': title,
                         'status': 'FAIL',
-                        'details': 'remember is not configured for pam_pwhistory',
+                        'details': 'Checked /etc/pam.d/* files: remember is not configured for pam_pwhistory - FAIL',
                         'severity': 'Medium',
                         'section': 'access_control',
                         'remediation': f'Set remember={expected} in pam_pwhistory configuration'
@@ -1452,7 +1452,7 @@ def check_pam_online():
                         'rule_id': rule_id,
                         'title': title,
                         'status': 'FAIL',
-                        'details': f'{param} is configured for pam_unix (should not be)',
+                        'details': f'Checked /etc/pam.d/* files: {param} is configured for pam_unix (should not be) - FAIL',
                         'severity': 'Medium',
                         'section': 'access_control',
                         'remediation': f'Remove {param} from pam_unix configuration'
@@ -1462,7 +1462,7 @@ def check_pam_online():
                         'rule_id': rule_id,
                         'title': title,
                         'status': 'PASS',
-                        'details': f'{param} is not configured for pam_unix',
+                        'details': f'Checked /etc/pam.d/* files: {param} is not configured for pam_unix - PASS',
                         'severity': 'Medium',
                         'section': 'access_control'
                     })
@@ -1473,7 +1473,7 @@ def check_pam_online():
                         'rule_id': rule_id,
                         'title': title,
                         'status': 'PASS',
-                        'details': f'{param} is configured for pam_unix',
+                        'details': f'Checked /etc/pam.d/* files: {param} is configured for pam_unix - PASS',
                         'severity': 'Medium',
                         'section': 'access_control'
                     })
@@ -1482,7 +1482,7 @@ def check_pam_online():
                         'rule_id': rule_id,
                         'title': title,
                         'status': 'FAIL',
-                        'details': f'{param} is not configured for pam_unix',
+                        'details': f'Checked /etc/pam.d/* files: {param} is not configured for pam_unix - FAIL',
                         'severity': 'Medium',
                         'section': 'access_control',
                         'remediation': f'Add {param} to pam_unix configuration'
@@ -1521,7 +1521,7 @@ def check_pam_offline(data_dir):
                         'rule_id': rule_id,
                         'title': title,
                         'status': 'PASS',
-                        'details': f'{package} package found in installed packages',
+                        'details': f'Checked installed packages (offline): Found {package} package - PASS',
                         'severity': 'Medium',
                         'section': 'access_control'
                     })
@@ -1530,7 +1530,7 @@ def check_pam_offline(data_dir):
                         'rule_id': rule_id,
                         'title': title,
                         'status': 'FAIL',
-                        'details': f'{package} package not found in installed packages',
+                        'details': f'Checked installed packages (offline): {package} package not found - FAIL',
                         'severity': 'Medium',
                         'section': 'access_control'
                     })
@@ -1587,7 +1587,7 @@ def check_pam_offline(data_dir):
                         'rule_id': rule_id,
                         'title': title,
                         'status': 'PASS',
-                        'details': f'{module} module found in PAM configuration',
+                        'details': f'Checked PAM configuration files (offline): {module} module found - PASS',
                         'severity': 'Medium',
                         'section': 'access_control'
                     })
@@ -1596,7 +1596,7 @@ def check_pam_offline(data_dir):
                         'rule_id': rule_id,
                         'title': title,
                         'status': 'FAIL',
-                        'details': f'{module} module not found in PAM configuration',
+                        'details': f'Checked PAM configuration files (offline): {module} module not found - FAIL',
                         'severity': 'Medium',
                         'section': 'access_control'
                     })
@@ -1650,7 +1650,7 @@ def check_user_accounts_online():
                         'rule_id': '5.4.1.1',
                         'title': 'Ensure password expiration is configured',
                         'status': 'PASS',
-                        'details': f'PASS_MAX_DAYS is set to {max_days}',
+                        'details': f'Checked /etc/login.defs file: Found PASS_MAX_DAYS set to {max_days} days (≤ 365) - PASS',
                         'severity': 'Medium',
                         'section': 'access_control'
                     })
@@ -1659,7 +1659,7 @@ def check_user_accounts_online():
                         'rule_id': '5.4.1.1',
                         'title': 'Ensure password expiration is configured',
                         'status': 'FAIL',
-                        'details': f'PASS_MAX_DAYS is set to {max_days} (should be <= 365)',
+                        'details': f'Checked /etc/login.defs file: Found PASS_MAX_DAYS set to {max_days} days (should be <= 365) - FAIL',
                         'severity': 'Medium',
                         'section': 'access_control',
                         'remediation': 'Set PASS_MAX_DAYS 365 in /etc/login.defs'
@@ -1669,7 +1669,7 @@ def check_user_accounts_online():
                     'rule_id': '5.4.1.1',
                     'title': 'Ensure password expiration is configured',
                     'status': 'FAIL',
-                    'details': 'PASS_MAX_DAYS is not configured',
+                    'details': 'Checked /etc/login.defs file: PASS_MAX_DAYS is not configured - FAIL',
                     'severity': 'Medium',
                     'section': 'access_control',
                     'remediation': 'Set PASS_MAX_DAYS 365 in /etc/login.defs'
@@ -1679,7 +1679,7 @@ def check_user_accounts_online():
                 'rule_id': '5.4.1.1',
                 'title': 'Ensure password expiration is configured',
                 'status': 'FAIL',
-                'details': '/etc/login.defs does not exist',
+                'details': 'Checked /etc/login.defs file: File does not exist - FAIL',
                 'severity': 'Medium',
                 'section': 'access_control'
             })
@@ -1706,7 +1706,7 @@ def check_user_accounts_online():
                     'rule_id': '5.4.1.2',
                     'title': 'Ensure minimum password days is configured',
                     'status': 'MANUAL',
-                    'details': f'PASS_MIN_DAYS is set to {min_days} - manual review required',
+                    'details': f'Checked /etc/login.defs file: Found PASS_MIN_DAYS set to {min_days} - manual review required',
                     'severity': 'Medium',
                     'section': 'access_control'
                 })
@@ -1715,7 +1715,7 @@ def check_user_accounts_online():
                     'rule_id': '5.4.1.2',
                     'title': 'Ensure minimum password days is configured',
                     'status': 'FAIL',
-                    'details': 'PASS_MIN_DAYS is not configured',
+                    'details': 'Checked /etc/login.defs file: PASS_MIN_DAYS is not configured - FAIL',
                     'severity': 'Medium',
                     'section': 'access_control',
                     'remediation': 'Set PASS_MIN_DAYS 1 in /etc/login.defs'
@@ -1725,7 +1725,7 @@ def check_user_accounts_online():
                 'rule_id': '5.4.1.2',
                 'title': 'Ensure minimum password days is configured',
                 'status': 'FAIL',
-                'details': '/etc/login.defs does not exist',
+                'details': 'Checked /etc/login.defs file: File does not exist - FAIL',
                 'severity': 'Medium',
                 'section': 'access_control'
             })
@@ -1753,7 +1753,7 @@ def check_user_accounts_online():
                         'rule_id': '5.4.1.3',
                         'title': 'Ensure password expiration warning days is configured',
                         'status': 'PASS',
-                        'details': f'PASS_WARN_AGE is set to {warn_days}',
+                        'details': f'Checked /etc/login.defs file: Found PASS_WARN_AGE set to {warn_days} days (>= 7) - PASS',
                         'severity': 'Medium',
                         'section': 'access_control'
                     })
@@ -1762,7 +1762,7 @@ def check_user_accounts_online():
                         'rule_id': '5.4.1.3',
                         'title': 'Ensure password expiration warning days is configured',
                         'status': 'FAIL',
-                        'details': f'PASS_WARN_AGE is set to {warn_days} (should be >= 7)',
+                        'details': f'Checked /etc/login.defs file: Found PASS_WARN_AGE set to {warn_days} days (should be >= 7) - FAIL',
                         'severity': 'Medium',
                         'section': 'access_control',
                         'remediation': 'Set PASS_WARN_AGE 7 in /etc/login.defs'
@@ -1772,7 +1772,7 @@ def check_user_accounts_online():
                     'rule_id': '5.4.1.3',
                     'title': 'Ensure password expiration warning days is configured',
                     'status': 'FAIL',
-                    'details': 'PASS_WARN_AGE is not configured',
+                    'details': 'Checked /etc/login.defs file: PASS_WARN_AGE is not configured - FAIL',
                     'severity': 'Medium',
                     'section': 'access_control',
                     'remediation': 'Set PASS_WARN_AGE 7 in /etc/login.defs'
@@ -1782,7 +1782,7 @@ def check_user_accounts_online():
                 'rule_id': '5.4.1.3',
                 'title': 'Ensure password expiration warning days is configured',
                 'status': 'FAIL',
-                'details': '/etc/login.defs does not exist',
+                'details': 'Checked /etc/login.defs file: File does not exist - FAIL',
                 'severity': 'Medium',
                 'section': 'access_control'
             })
@@ -1810,7 +1810,7 @@ def check_user_accounts_online():
                         'rule_id': '5.4.1.4',
                         'title': 'Ensure strong password hashing algorithm is configured',
                         'status': 'PASS',
-                        'details': f'ENCRYPT_METHOD is set to {method}',
+                        'details': f'Checked /etc/login.defs file: Found ENCRYPT_METHOD set to {method} - PASS',
                         'severity': 'Medium',
                         'section': 'access_control'
                     })
@@ -1819,7 +1819,7 @@ def check_user_accounts_online():
                         'rule_id': '5.4.1.4',
                         'title': 'Ensure strong password hashing algorithm is configured',
                         'status': 'FAIL',
-                        'details': f'ENCRYPT_METHOD is set to {method} (should be SHA512 or yescrypt)',
+                        'details': f'Checked /etc/login.defs file: Found ENCRYPT_METHOD set to {method} (should be SHA512 or yescrypt) - FAIL',
                         'severity': 'Medium',
                         'section': 'access_control',
                         'remediation': 'Set ENCRYPT_METHOD SHA512 in /etc/login.defs'
@@ -1829,7 +1829,7 @@ def check_user_accounts_online():
                     'rule_id': '5.4.1.4',
                     'title': 'Ensure strong password hashing algorithm is configured',
                     'status': 'FAIL',
-                    'details': 'ENCRYPT_METHOD is not configured',
+                    'details': 'Checked /etc/login.defs file: ENCRYPT_METHOD is not configured - FAIL',
                     'severity': 'Medium',
                     'section': 'access_control',
                     'remediation': 'Set ENCRYPT_METHOD SHA512 in /etc/login.defs'
@@ -1839,7 +1839,7 @@ def check_user_accounts_online():
                 'rule_id': '5.4.1.4',
                 'title': 'Ensure strong password hashing algorithm is configured',
                 'status': 'FAIL',
-                'details': '/etc/login.defs does not exist',
+                'details': 'Checked /etc/login.defs file: File does not exist - FAIL',
                 'severity': 'Medium',
                 'section': 'access_control'
             })
@@ -1865,7 +1865,7 @@ def check_user_accounts_online():
                         'rule_id': '5.4.1.5',
                         'title': 'Ensure inactive password lock is configured',
                         'status': 'PASS',
-                        'details': f'INACTIVE is set to {inactive_days} days',
+                        'details': f'Checked useradd defaults: INACTIVE is set to {inactive_days} days - PASS',
                         'severity': 'Medium',
                         'section': 'access_control'
                     })
@@ -1874,7 +1874,7 @@ def check_user_accounts_online():
                         'rule_id': '5.4.1.5',
                         'title': 'Ensure inactive password lock is configured',
                         'status': 'FAIL',
-                        'details': f'INACTIVE is set to {inactive_days} days (should be 1-30)',
+                        'details': f'Checked useradd defaults: INACTIVE is set to {inactive_days} days (should be 1-30) - FAIL',
                         'severity': 'Medium',
                         'section': 'access_control',
                         'remediation': 'Run: useradd -D -f 30'
@@ -1884,7 +1884,7 @@ def check_user_accounts_online():
                     'rule_id': '5.4.1.5',
                     'title': 'Ensure inactive password lock is configured',
                     'status': 'FAIL',
-                    'details': 'INACTIVE value not found',
+                    'details': 'Checked useradd defaults: INACTIVE value not found - FAIL',
                     'severity': 'Medium',
                     'section': 'access_control',
                     'remediation': 'Run: useradd -D -f 30'
@@ -1927,7 +1927,7 @@ def check_user_accounts_online():
                     'rule_id': '5.4.1.6',
                     'title': 'Ensure all users last password change date is in the past',
                     'status': 'PASS',
-                    'details': 'All user password change dates are valid',
+                    'details': 'Checked /etc/shadow file: All user password change dates are valid - PASS',
                     'severity': 'Medium',
                     'section': 'access_control'
                 })
@@ -1936,7 +1936,7 @@ def check_user_accounts_online():
                     'rule_id': '5.4.1.6',
                     'title': 'Ensure all users last password change date is in the past',
                     'status': 'FAIL',
-                    'details': f'Users with future password change dates: {", ".join(future_dates)}',
+                    'details': f'Checked /etc/shadow file: Users with future password change dates: {", ".join(future_dates)} - FAIL',
                     'severity': 'Medium',
                     'section': 'access_control',
                     'remediation': 'Investigate and correct future password change dates'
@@ -1972,7 +1972,7 @@ def check_user_accounts_online():
                     'rule_id': '5.4.2.1',
                     'title': 'Ensure root is the only UID 0 account',
                     'status': 'PASS',
-                    'details': 'Only root has UID 0',
+                    'details': 'Checked /etc/passwd file: Found only root account with UID 0 - PASS',
                     'severity': 'High',
                     'section': 'access_control'
                 })
@@ -1981,7 +1981,7 @@ def check_user_accounts_online():
                     'rule_id': '5.4.2.1',
                     'title': 'Ensure root is the only UID 0 account',
                     'status': 'FAIL',
-                    'details': f'Users with UID 0: {", ".join(uid_0_users)}',
+                    'details': f'Checked /etc/passwd file: Found users with UID 0: {", ".join(uid_0_users)} - FAIL',
                     'severity': 'High',
                     'section': 'access_control',
                     'remediation': 'Remove or change UID for non-root accounts with UID 0'
@@ -2017,7 +2017,7 @@ def check_user_accounts_online():
                     'rule_id': '5.4.2.2',
                     'title': 'Ensure root is the only GID 0 account',
                     'status': 'PASS',
-                    'details': 'Only root has GID 0',
+                    'details': 'Checked /etc/passwd file: Found only root account with GID 0 - PASS',
                     'severity': 'High',
                     'section': 'access_control'
                 })
@@ -2026,7 +2026,7 @@ def check_user_accounts_online():
                     'rule_id': '5.4.2.2',
                     'title': 'Ensure root is the only GID 0 account',
                     'status': 'FAIL',
-                    'details': f'Users with GID 0: {", ".join(gid_0_users)}',
+                    'details': f'Checked /etc/passwd file: Found users with GID 0: {", ".join(gid_0_users)} - FAIL',
                     'severity': 'High',
                     'section': 'access_control',
                     'remediation': 'Change GID for non-root accounts with GID 0'
@@ -2062,7 +2062,7 @@ def check_user_accounts_online():
                     'rule_id': '5.4.2.3',
                     'title': 'Ensure group root is the only GID 0 group',
                     'status': 'PASS',
-                    'details': 'Only root group has GID 0',
+                    'details': 'Checked /etc/group file: Only root group has GID 0 - PASS',
                     'severity': 'High',
                     'section': 'access_control'
                 })
@@ -2071,7 +2071,7 @@ def check_user_accounts_online():
                     'rule_id': '5.4.2.3',
                     'title': 'Ensure group root is the only GID 0 group',
                     'status': 'FAIL',
-                    'details': f'Groups with GID 0: {", ".join(gid_0_groups)}',
+                    'details': f'Checked /etc/group file: Groups with GID 0: {", ".join(gid_0_groups)} - FAIL',
                     'severity': 'High',
                     'section': 'access_control',
                     'remediation': 'Change GID for non-root groups with GID 0'
@@ -2220,7 +2220,7 @@ def check_user_accounts_online():
                     'rule_id': '5.4.2.6',
                     'title': 'Ensure root user umask is configured',
                     'status': 'PASS',
-                    'details': f'Root umask is set to {umask_value}',
+                    'details': f'Checked root profile files: Root umask is set to {umask_value} - PASS',
                     'severity': 'Medium',
                     'section': 'access_control'
                 })
@@ -2229,7 +2229,7 @@ def check_user_accounts_online():
                     'rule_id': '5.4.2.6',
                     'title': 'Ensure root user umask is configured',
                     'status': 'FAIL',
-                    'details': f'Root umask is set to {umask_value} (should be 027 or 077)',
+                    'details': f'Checked root profile files: Root umask is set to {umask_value} (should be 027 or 077) - FAIL',
                     'severity': 'Medium',
                     'section': 'access_control',
                     'remediation': 'Set umask 027 in root profile files'
@@ -2239,7 +2239,7 @@ def check_user_accounts_online():
                 'rule_id': '5.4.2.6',
                 'title': 'Ensure root user umask is configured',
                 'status': 'FAIL',
-                'details': 'Root umask is not configured',
+                'details': 'Checked root profile files: Root umask is not configured - FAIL',
                 'severity': 'Medium',
                 'section': 'access_control',
                 'remediation': 'Set umask 027 in root profile files'
@@ -2265,7 +2265,7 @@ def check_user_accounts_online():
                     'rule_id': '5.4.2.7',
                     'title': 'Ensure system accounts do not have a valid login shell',
                     'status': 'PASS',
-                    'details': 'All system accounts have invalid login shells',
+                    'details': 'Checked /etc/passwd file: All system accounts have invalid login shells - PASS',
                     'severity': 'Medium',
                     'section': 'access_control'
                 })
@@ -2274,7 +2274,7 @@ def check_user_accounts_online():
                     'rule_id': '5.4.2.7',
                     'title': 'Ensure system accounts do not have a valid login shell',
                     'status': 'FAIL',
-                    'details': f'System accounts with valid shells: {invalid_shells}',
+                    'details': f'Checked /etc/passwd file: System accounts with valid shells: {invalid_shells} - FAIL',
                     'severity': 'Medium',
                     'section': 'access_control',
                     'remediation': 'Set invalid shell for system accounts: usermod -s /usr/sbin/nologin <account>'
@@ -2318,7 +2318,7 @@ def check_user_accounts_online():
                     'rule_id': '5.4.2.8',
                     'title': 'Ensure accounts without a valid login shell are locked',
                     'status': 'PASS',
-                    'details': 'All accounts without valid shells are locked',
+                    'details': 'Checked /etc/passwd and /etc/shadow files: All accounts without valid shells are locked - PASS',
                     'severity': 'Medium',
                     'section': 'access_control'
                 })
@@ -2327,7 +2327,7 @@ def check_user_accounts_online():
                     'rule_id': '5.4.2.8',
                     'title': 'Ensure accounts without a valid login shell are locked',
                     'status': 'FAIL',
-                    'details': f'Unlocked accounts without valid shells: {", ".join(unlocked_accounts)}',
+                    'details': f'Checked /etc/passwd and /etc/shadow files: Unlocked accounts without valid shells: {", ".join(unlocked_accounts)} - FAIL',
                     'severity': 'Medium',
                     'section': 'access_control',
                     'remediation': 'Lock accounts without valid shells: passwd -l <account>'
@@ -2362,7 +2362,7 @@ def check_user_accounts_online():
                     'rule_id': '5.4.3.1',
                     'title': 'Ensure nologin is not listed in /etc/shells',
                     'status': 'FAIL',
-                    'details': 'nologin is listed in /etc/shells',
+                    'details': 'Checked /etc/shells file: nologin is listed - FAIL',
                     'severity': 'Medium',
                     'section': 'access_control',
                     'remediation': 'Remove nologin entries from /etc/shells'
@@ -2372,7 +2372,7 @@ def check_user_accounts_online():
                     'rule_id': '5.4.3.1',
                     'title': 'Ensure nologin is not listed in /etc/shells',
                     'status': 'PASS',
-                    'details': 'nologin is not listed in /etc/shells',
+                    'details': 'Checked /etc/shells file: nologin is not listed - PASS',
                     'severity': 'Medium',
                     'section': 'access_control'
                 })
@@ -2434,7 +2434,7 @@ def check_user_accounts_online():
                     'rule_id': '5.4.3.2',
                     'title': 'Ensure default user shell timeout is configured',
                     'status': 'PASS',
-                    'details': f'TMOUT is set to {timeout_value} seconds',
+                    'details': f'Checked /etc/bashrc, /etc/profile, /etc/profile.d/* files: TMOUT is set to {timeout_value} seconds (<= 900) - PASS',
                     'severity': 'Medium',
                     'section': 'access_control'
                 })
@@ -2443,7 +2443,7 @@ def check_user_accounts_online():
                     'rule_id': '5.4.3.2',
                     'title': 'Ensure default user shell timeout is configured',
                     'status': 'FAIL',
-                    'details': f'TMOUT is set to {timeout_value} seconds (should be <= 900)',
+                    'details': f'Checked /etc/bashrc, /etc/profile, /etc/profile.d/* files: TMOUT is set to {timeout_value} seconds (should be <= 900) - FAIL',
                     'severity': 'Medium',
                     'section': 'access_control',
                     'remediation': 'Set TMOUT=900 in /etc/profile or /etc/bashrc'
@@ -2453,7 +2453,7 @@ def check_user_accounts_online():
                 'rule_id': '5.4.3.2',
                 'title': 'Ensure default user shell timeout is configured',
                 'status': 'FAIL',
-                'details': 'TMOUT is not configured',
+                'details': 'Checked /etc/bashrc, /etc/profile, /etc/profile.d/* files: TMOUT is not configured - FAIL',
                 'severity': 'Medium',
                 'section': 'access_control',
                 'remediation': 'Set TMOUT=900 in /etc/profile or /etc/bashrc'
@@ -2501,7 +2501,7 @@ def check_user_accounts_online():
                     'rule_id': '5.4.3.3',
                     'title': 'Ensure default user umask is configured',
                     'status': 'PASS',
-                    'details': f'Default umask configured: {"; ".join(umask_values)}',
+                    'details': f'Checked /etc/bashrc, /etc/profile, /etc/login.defs files: Default umask configured: {"; ".join(umask_values)} - PASS',
                     'severity': 'Medium',
                     'section': 'access_control'
                 })
@@ -2510,7 +2510,7 @@ def check_user_accounts_online():
                     'rule_id': '5.4.3.3',
                     'title': 'Ensure default user umask is configured',
                     'status': 'FAIL',
-                    'details': f'Default umask not restrictive enough: {"; ".join(umask_values)}',
+                    'details': f'Checked /etc/bashrc, /etc/profile, /etc/login.defs files: Default umask not restrictive enough: {"; ".join(umask_values)} - FAIL',
                     'severity': 'Medium',
                     'section': 'access_control',
                     'remediation': 'Set umask 027 in /etc/profile and /etc/bashrc'
@@ -2520,7 +2520,7 @@ def check_user_accounts_online():
                 'rule_id': '5.4.3.3',
                 'title': 'Ensure default user umask is configured',
                 'status': 'FAIL',
-                'details': 'Default umask is not configured',
+                'details': 'Checked /etc/bashrc, /etc/profile, /etc/login.defs files: Default umask is not configured - FAIL',
                 'severity': 'Medium',
                 'section': 'access_control',
                 'remediation': 'Set umask 027 in /etc/profile and /etc/bashrc'
@@ -2565,7 +2565,7 @@ def check_user_accounts_offline(data_dir):
                         'rule_id': rule_id,
                         'title': title,
                         'status': 'MANUAL',
-                        'details': f'{param} is set to: {value} - manual review required',
+                        'details': f'Checked /etc/login.defs file (offline): Found {param} set to: {value} - manual review required',
                         'severity': 'Medium',
                         'section': 'access_control'
                     })
@@ -2574,7 +2574,7 @@ def check_user_accounts_offline(data_dir):
                         'rule_id': rule_id,
                         'title': title,
                         'status': 'FAIL',
-                        'details': f'{param} is not configured',
+                        'details': f'Checked /etc/login.defs file (offline): {param} is not configured - FAIL',
                         'severity': 'Medium',
                         'section': 'access_control'
                     })
@@ -2627,7 +2627,7 @@ def check_user_accounts_offline(data_dir):
                     'rule_id': '5.4.2.1',
                     'title': 'Ensure root is the only UID 0 account',
                     'status': 'PASS',
-                    'details': 'Only root has UID 0',
+                    'details': 'Checked /etc/passwd file (offline): Only root has UID 0 - PASS',
                     'severity': 'High',
                     'section': 'access_control'
                 })
@@ -2636,7 +2636,7 @@ def check_user_accounts_offline(data_dir):
                     'rule_id': '5.4.2.1',
                     'title': 'Ensure root is the only UID 0 account',
                     'status': 'FAIL',
-                    'details': f'Users with UID 0: {", ".join(uid_0_users)}',
+                    'details': f'Checked /etc/passwd file (offline): Users with UID 0: {", ".join(uid_0_users)} - FAIL',
                     'severity': 'High',
                     'section': 'access_control'
                 })
@@ -2647,7 +2647,7 @@ def check_user_accounts_offline(data_dir):
                     'rule_id': '5.4.2.2',
                     'title': 'Ensure root is the only GID 0 account',
                     'status': 'PASS',
-                    'details': 'Only root has GID 0',
+                    'details': 'Checked /etc/passwd file (offline): Only root has GID 0 - PASS',
                     'severity': 'High',
                     'section': 'access_control'
                 })
@@ -2656,7 +2656,7 @@ def check_user_accounts_offline(data_dir):
                     'rule_id': '5.4.2.2',
                     'title': 'Ensure root is the only GID 0 account',
                     'status': 'FAIL',
-                    'details': f'Users with GID 0: {", ".join(gid_0_users)}',
+                    'details': f'Checked /etc/passwd file (offline): Users with GID 0: {", ".join(gid_0_users)} - FAIL',
                     'severity': 'High',
                     'section': 'access_control'
                 })
@@ -2682,7 +2682,7 @@ def check_user_accounts_offline(data_dir):
                     'rule_id': '5.4.2.3',
                     'title': 'Ensure group root is the only GID 0 group',
                     'status': 'PASS',
-                    'details': 'Only root group has GID 0',
+                    'details': 'Checked /etc/group file (offline): Only root group has GID 0 - PASS',
                     'severity': 'High',
                     'section': 'access_control'
                 })
@@ -2691,7 +2691,7 @@ def check_user_accounts_offline(data_dir):
                     'rule_id': '5.4.2.3',
                     'title': 'Ensure group root is the only GID 0 group',
                     'status': 'FAIL',
-                    'details': f'Groups with GID 0: {", ".join(gid_0_groups)}',
+                    'details': f'Checked /etc/group file (offline): Groups with GID 0: {", ".join(gid_0_groups)} - FAIL',
                     'severity': 'High',
                     'section': 'access_control'
                 })
