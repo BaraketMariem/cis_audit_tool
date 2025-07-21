@@ -20,13 +20,18 @@ def generate_json_report(results: List, output_path: Path):
                 'severity': getattr(result, 'severity', {}).value if hasattr(getattr(result, 'severity', {}), 'value') else 'UNKNOWN',
                 'details': getattr(result, 'details', ''),
                 'remediation': getattr(result, 'remediation', ''),
-                'timestamp': getattr(result, 'timestamp', datetime.now().isoformat())
+                'timestamp': getattr(result, 'timestamp', datetime.now().isoformat()),
+                'found_value': getattr(result, 'found_value', None), # New field
+                'expected_value': getattr(result, 'expected_value', None) # New field
             })
     
     # Calculate summary
     total = len(json_results)
     passed = len([r for r in json_results if r['status'] == 'PASS'])
     failed = len([r for r in json_results if r['status'] == 'FAIL'])
+    skipped = len([r for r in json_results if r['status'] == 'SKIPPED'])
+    manual = len([r for r in json_results if r['status'] == 'MANUAL'])
+    errors = len([r for r in json_results if r['status'] == 'ERROR'])
     
     report_data = {
         'metadata': {
@@ -38,6 +43,9 @@ def generate_json_report(results: List, output_path: Path):
             'total_checks': total,
             'passed': passed,
             'failed': failed,
+            'skipped': skipped,
+            'manual': manual,
+            'errors': errors,
             'compliance_score': (passed / total * 100) if total > 0 else 0
         },
         'results': json_results
