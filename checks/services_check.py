@@ -139,7 +139,7 @@ def check_autofs_not_in_use_online():
             'rule_id': '2.1.1',
             'title': 'Ensure autofs services are not in use',
             'status': 'PASS',
-            'details': 'autofs package is not installed',
+            'details': 'Executed "rpm -q autofs": package not installed - PASS',
             'severity': 'Medium',
             'section': 'Services',
             'section_name': 'Services'
@@ -151,7 +151,7 @@ def check_autofs_not_in_use_online():
                 'rule_id': '2.1.1',
                 'title': 'Ensure autofs services are not in use',
                 'status': 'PASS',
-                'details': 'autofs service is disabled/masked',
+                'details': f'Executed "systemctl is-enabled autofs": {svc_result} - PASS',
                 'severity': 'Medium',
                 'section': 'Services',
                 'section_name': 'Services'
@@ -161,7 +161,7 @@ def check_autofs_not_in_use_online():
                 'rule_id': '2.1.1',
                 'title': 'Ensure autofs services are not in use',
                 'status': 'FAIL',
-                'details': 'autofs service is enabled or package is installed',
+                'details': f'Executed "rpm -q autofs" and "systemctl is-enabled autofs": service enabled or package installed - FAIL',
                 'severity': 'Medium',
                 'section': 'Services',
                 'section_name': 'Services'
@@ -177,7 +177,7 @@ def check_autofs_not_in_use_offline(data_dir):
                 'rule_id': '2.1.1',
                 'title': 'Ensure autofs services are not in use',
                 'status': 'PASS',
-                'details': 'autofs package is not installed',
+                'details': f'Checked {packages_file}: autofs package not found - PASS',
                 'severity': 'Medium',
                 'section': 'Services',
                 'section_name': 'Services'
@@ -186,7 +186,7 @@ def check_autofs_not_in_use_offline(data_dir):
         'rule_id': '2.1.1',
         'title': 'Ensure autofs services are not in use',
         'status': 'FAIL',
-        'details': 'autofs package may be installed - manual verification required',
+        'details': f'Checked {packages_file}: autofs package may be installed - FAIL',
         'severity': 'Medium',
         'section': 'Services',
         'section_name': 'Services'
@@ -201,7 +201,7 @@ def check_avahi_not_in_use_online():
             'rule_id': '2.1.2',
             'title': 'Ensure avahi daemon services are not in use',
             'status': 'PASS',
-            'details': 'avahi package is not installed',
+            'details': 'Executed "rpm -q avahi": package not installed - PASS',
             'severity': 'Medium',
             'section': 'Services',
             'section_name': 'Services'
@@ -213,7 +213,7 @@ def check_avahi_not_in_use_online():
                 'rule_id': '2.1.2',
                 'title': 'Ensure avahi daemon services are not in use',
                 'status': 'PASS',
-                'details': 'avahi-daemon service is disabled/masked',
+                'details': f'Executed "systemctl is-enabled avahi-daemon": {svc_result} - PASS',
                 'severity': 'Medium',
                 'section': 'Services',
                 'section_name': 'Services'
@@ -223,7 +223,7 @@ def check_avahi_not_in_use_online():
                 'rule_id': '2.1.2',
                 'title': 'Ensure avahi daemon services are not in use',
                 'status': 'FAIL',
-                'details': 'avahi-daemon service is enabled or package is installed',
+                'details': f'Executed "rpm -q avahi" and "systemctl is-enabled avahi-daemon": service enabled or package installed - FAIL',
                 'severity': 'Medium',
                 'section': 'Services',
                 'section_name': 'Services'
@@ -239,7 +239,7 @@ def check_avahi_not_in_use_offline(data_dir):
                 'rule_id': '2.1.2',
                 'title': 'Ensure avahi daemon services are not in use',
                 'status': 'PASS',
-                'details': 'avahi package is not installed',
+                'details': f'Checked {packages_file}: avahi package not found - PASS',
                 'severity': 'Medium',
                 'section': 'Services',
                 'section_name': 'Services'
@@ -248,7 +248,7 @@ def check_avahi_not_in_use_offline(data_dir):
         'rule_id': '2.1.2',
         'title': 'Ensure avahi daemon services are not in use',
         'status': 'FAIL',
-        'details': 'avahi package may be installed - manual verification required',
+        'details': f'Checked {packages_file}: avahi package may be installed - FAIL',
         'severity': 'Medium',
         'section': 'Services',
         'section_name': 'Services'
@@ -2716,7 +2716,7 @@ def check_crontab_restricted_online():
                     'rule_id': '2.4.1.8',
                     'title': 'Ensure crontab is restricted to authorized users',
                     'status': 'PASS',
-                    'details': '/etc/cron.allow exists with correct permissions',
+                    'details': 'Checked /etc/cron.allow: exists with correct permissions (600) and ownership (root:root) - PASS',
                     'severity': 'Medium',
                     'section': 'Services',
                     'section_name': 'Services'
@@ -2726,7 +2726,7 @@ def check_crontab_restricted_online():
                     'rule_id': '2.4.1.8',
                     'title': 'Ensure crontab is restricted to authorized users',
                     'status': 'FAIL',
-                    'details': f'/etc/cron.allow permissions: {mode} (expected 600), owner: {uid}:{gid} (expected 0:0)',
+                    'details': f'Checked /etc/cron.allow: permissions {mode} (expected 600), owner {uid}:{gid} (expected 0:0) - FAIL',
                     'severity': 'Medium',
                     'section': 'Services',
                     'section_name': 'Services'
@@ -2736,7 +2736,7 @@ def check_crontab_restricted_online():
                 'rule_id': '2.4.1.8',
                 'title': 'Ensure crontab is restricted to authorized users',
                 'status': 'ERROR',
-                'details': 'Error checking /etc/cron.allow permissions',
+                'details': 'Error checking /etc/cron.allow permissions - ERROR',
                 'severity': 'Medium',
                 'section': 'Services',
                 'section_name': 'Services'
@@ -2753,7 +2753,7 @@ def check_crontab_restricted_online():
                     'rule_id': '2.4.1.8',
                     'title': 'Ensure crontab is restricted to authorized users',
                     'status': 'PASS',
-                    'details': '/etc/cron.deny exists with correct permissions',
+                    'details': 'Checked /etc/cron.deny: exists with correct permissions (600) and ownership (root:root) - PASS',
                     'severity': 'Medium',
                     'section': 'Services',
                     'section_name': 'Services'
@@ -2763,7 +2763,7 @@ def check_crontab_restricted_online():
                     'rule_id': '2.4.1.8',
                     'title': 'Ensure crontab is restricted to authorized users',
                     'status': 'FAIL',
-                    'details': f'/etc/cron.deny permissions: {mode} (expected 600), owner: {uid}:{gid} (expected 0:0)',
+                    'details': f'Checked /etc/cron.deny: permissions {mode} (expected 600), owner {uid}:{gid} (expected 0:0) - FAIL',
                     'severity': 'Medium',
                     'section': 'Services',
                     'section_name': 'Services'
@@ -2773,7 +2773,7 @@ def check_crontab_restricted_online():
                 'rule_id': '2.4.1.8',
                 'title': 'Ensure crontab is restricted to authorized users',
                 'status': 'ERROR',
-                'details': 'Error checking /etc/cron.deny permissions',
+                'details': 'Error checking /etc/cron.deny permissions - ERROR',
                 'severity': 'Medium',
                 'section': 'Services',
                 'section_name': 'Services'
@@ -2783,7 +2783,7 @@ def check_crontab_restricted_online():
             'rule_id': '2.4.1.8',
             'title': 'Ensure crontab is restricted to authorized users',
             'status': 'FAIL',
-            'details': 'Neither /etc/cron.allow nor /etc/cron.deny exists',
+            'details': 'Checked /etc/cron.allow and /etc/cron.deny: neither file exists - FAIL',
             'severity': 'Medium',
             'section': 'Services',
             'section_name': 'Services'
@@ -2802,7 +2802,7 @@ def check_crontab_restricted_offline(data_dir):
             'rule_id': '2.4.1.8',
             'title': 'Ensure crontab is restricted to authorized users',
             'status': 'PASS',
-            'details': f'Cron access control configured - allow: {cron_allow_exists}, deny: {cron_deny_exists}',
+            'details': f'Checked {cron_allow_file} and {cron_deny_file}: cron access control configured (allow: {cron_allow_exists}, deny: {cron_deny_exists}) - PASS',
             'severity': 'Medium',
             'section': 'Services',
             'section_name': 'Services'
@@ -2812,7 +2812,7 @@ def check_crontab_restricted_offline(data_dir):
             'rule_id': '2.4.1.8',
             'title': 'Ensure crontab is restricted to authorized users',
             'status': 'FAIL',
-            'details': 'Neither /etc/cron.allow nor /etc/cron.deny exists',
+            'details': f'Checked {cron_allow_file} and {cron_deny_file}: neither file exists - FAIL',
             'severity': 'Medium',
             'section': 'Services',
             'section_name': 'Services'
@@ -2836,7 +2836,7 @@ def check_at_restricted_online():
                     'rule_id': '2.4.2.1',
                     'title': 'Ensure at is restricted to authorized users',
                     'status': 'PASS',
-                    'details': '/etc/at.allow exists with correct permissions',
+                    'details': 'Checked /etc/at.allow: exists with correct permissions (600) and ownership (root:root) - PASS',
                     'severity': 'Medium',
                     'section': 'Services',
                     'section_name': 'Services'
@@ -2846,7 +2846,7 @@ def check_at_restricted_online():
                     'rule_id': '2.4.2.1',
                     'title': 'Ensure at is restricted to authorized users',
                     'status': 'FAIL',
-                    'details': f'/etc/at.allow permissions: {mode} (expected 600), owner: {uid}:{gid} (expected 0:0)',
+                    'details': f'Checked /etc/at.allow: permissions {mode} (expected 600), owner {uid}:{gid} (expected 0:0) - FAIL',
                     'severity': 'Medium',
                     'section': 'Services',
                     'section_name': 'Services'
@@ -2856,7 +2856,7 @@ def check_at_restricted_online():
                 'rule_id': '2.4.2.1',
                 'title': 'Ensure at is restricted to authorized users',
                 'status': 'ERROR',
-                'details': 'Error checking /etc/at.allow permissions',
+                'details': 'Error checking /etc/at.allow permissions - ERROR',
                 'severity': 'Medium',
                 'section': 'Services',
                 'section_name': 'Services'
@@ -2873,7 +2873,7 @@ def check_at_restricted_online():
                     'rule_id': '2.4.2.1',
                     'title': 'Ensure at is restricted to authorized users',
                     'status': 'PASS',
-                    'details': '/etc/at.deny exists with correct permissions',
+                    'details': 'Checked /etc/at.deny: exists with correct permissions (600) and ownership (root:root) - PASS',
                     'severity': 'Medium',
                     'section': 'Services',
                     'section_name': 'Services'
@@ -2883,7 +2883,7 @@ def check_at_restricted_online():
                     'rule_id': '2.4.2.1',
                     'title': 'Ensure at is restricted to authorized users',
                     'status': 'FAIL',
-                    'details': f'/etc/at.deny permissions: {mode} (expected 600), owner: {uid}:{gid} (expected 0:0)',
+                    'details': f'Checked /etc/at.deny: permissions {mode} (expected 600), owner {uid}:{gid} (expected 0:0) - FAIL',
                     'severity': 'Medium',
                     'section': 'Services',
                     'section_name': 'Services'
@@ -2893,7 +2893,7 @@ def check_at_restricted_online():
                 'rule_id': '2.4.2.1',
                 'title': 'Ensure at is restricted to authorized users',
                 'status': 'ERROR',
-                'details': 'Error checking /etc/at.deny permissions',
+                'details': 'Error checking /etc/at.deny permissions - ERROR',
                 'severity': 'Medium',
                 'section': 'Services',
                 'section_name': 'Services'
@@ -2903,7 +2903,7 @@ def check_at_restricted_online():
             'rule_id': '2.4.2.1',
             'title': 'Ensure at is restricted to authorized users',
             'status': 'FAIL',
-            'details': 'Neither /etc/at.allow nor /etc/at.deny exists',
+            'details': 'Checked /etc/at.allow and /etc/at.deny: neither file exists - FAIL',
             'severity': 'Medium',
             'section': 'Services',
             'section_name': 'Services'
@@ -2922,7 +2922,7 @@ def check_at_restricted_offline(data_dir):
             'rule_id': '2.4.2.1',
             'title': 'Ensure at is restricted to authorized users',
             'status': 'PASS',
-            'details': f'At access control configured - allow: {at_allow_exists}, deny: {at_deny_exists}',
+            'details': f'Checked {at_allow_file} and {at_deny_file}: at access control configured (allow: {at_allow_exists}, deny: {at_deny_exists}) - PASS',
             'severity': 'Medium',
             'section': 'Services',
             'section_name': 'Services'
@@ -2932,7 +2932,7 @@ def check_at_restricted_offline(data_dir):
             'rule_id': '2.4.2.1',
             'title': 'Ensure at is restricted to authorized users',
             'status': 'FAIL',
-            'details': 'Neither /etc/at.allow nor /etc/at.deny exists',
+            'details': f'Checked {at_allow_file} and {at_deny_file}: neither file exists - FAIL',
             'severity': 'Medium',
             'section': 'Services',
             'section_name': 'Services'
