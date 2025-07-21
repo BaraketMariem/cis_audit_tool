@@ -26,11 +26,20 @@ def print_banner():
     """
     print(banner)
 
-def print_results(results, verbose=False, failed_only=False):
+def print_results(results, verbose=False, failed_only=False, detailed=False, section_details=None):
     """Print audit results with summary"""
     if not results:
         print("❌ No results to display. Check for errors above.")
         return
+    
+    # Filter by section if specified
+    if section_details:
+        results = [r for r in results if r.get('section') == section_details]
+        if not results:
+            print(f"❌ No results found for section: {section_details}")
+            return
+        print(f"📋 DETAILED BREAKDOWN - {section_details.upper()} SECTION")
+        print("=" * 60)
         
     total = len(results)
     passed = len([r for r in results if r.get('status') == 'PASS'])
@@ -61,7 +70,7 @@ def print_results(results, verbose=False, failed_only=False):
                 title = result.get('title', 'Unknown Check')
                 details = result.get('details', '')
                 print(f"   ❌ {rule_id}: {title}")
-                if details and verbose:
+                if details and (detailed or verbose):
                     print(f"      Details: {details}")
         else:
             print("\n🎉 No failed checks!")
@@ -72,7 +81,10 @@ def print_results(results, verbose=False, failed_only=False):
             for result in passed_results:
                 rule_id = result.get('rule_id', 'Unknown')
                 title = result.get('title', 'Unknown Check')
+                details = result.get('details', '')
                 print(f"   ✅ {rule_id}: {title}")
+                if details and detailed:
+                    print(f"      Details: {details}")
         
         if failed_results:
             print(f"\n❌ FAILED CHECKS ({len(failed_results)}):")
@@ -81,7 +93,7 @@ def print_results(results, verbose=False, failed_only=False):
                 title = result.get('title', 'Unknown Check')
                 details = result.get('details', '')
                 print(f"   ❌ {rule_id}: {title}")
-                if details and verbose:
+                if details and (detailed or verbose):
                     print(f"      Details: {details}")
         
         if skipped_results:
@@ -91,11 +103,11 @@ def print_results(results, verbose=False, failed_only=False):
                 title = result.get('title', 'Unknown Check')
                 reason = result.get('details', 'No reason provided')
                 print(f"   ⏭️  {rule_id}: {title}")
-                if verbose:
+                if detailed or verbose:
                     print(f"      Reason: {reason}")
     
-    # Summary by section (always show if verbose)
-    if verbose:
+    # Summary by section (always show if verbose or detailed)
+    if verbose or detailed or section_details:
         print_section_summary(results)
 
 def print_section_summary(results):
@@ -217,8 +229,11 @@ Examples:
   python3 main.py --offline --data-dir ./custom_data # Use custom data directory
   python3 main.py --sections initial_setup services  # Run specific sections only
   python3 main.py --verbose                          # Show detailed output
+  python3 main.py --detailed                         # Show detailed information for all checks
+  python3 main.py --detailed --failed-only           # Show detailed information only for failed checks
+  python3 main.py --section-details firewall         # Show detailed breakdown for firewall section only
+  python3 main.py --detailed --output results.json   # Save detailed results to JSON file
   python3 main.py --failed-only                      # Show only failed checks
-  python3 main.py --output results.json              # Save results to JSON file
 
 Available sections:
   initial_setup, services, network, firewall, access_control, logging, system_maintenance
@@ -243,6 +258,13 @@ Available sections:
                        help='Save results to JSON file')
     parser.add_argument('--quiet', '-q', action='store_true',
                        help='Suppress banner and progress messages')
+    
+    parser.add_argument('--detailed', action='store_true',
+                       help='Show detailed information for all checks')
+    parser.add_argument('--section-details', 
+                       choices=['initial_setup', 'services', 'network', 'firewall', 
+                               'access_control', 'logging', 'system_maintenance'],
+                       help='Show detailed breakdown for specific section only')
     
     args = parser.parse_args()
     
@@ -332,7 +354,7 @@ Available sections:
     
     # Print results
     if not args.quiet:
-        print_results(results, args.verbose, args.failed_only)
+        print_results(results, args.verbose, args.failed_only, args.detailed, args.section_details)
     
     # Save to JSON if requested
     if args.output:
