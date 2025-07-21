@@ -261,7 +261,7 @@ Available sections:
     
     parser.add_argument('--detailed', action='store_true',
                        help='Show detailed information for all checks')
-    parser.add_argument('--section-details', 
+    parser.add_argument('--section_details', 
                        choices=['initial_setup', 'services', 'network', 'firewall', 
                                'access_control', 'logging', 'system_maintenance'],
                        help='Show detailed breakdown for specific section only')
