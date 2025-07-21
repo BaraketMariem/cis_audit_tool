@@ -1,33 +1,35 @@
 #!/bin/bash
+# Enhanced audit runner script
 
-# Script to run the RHEL 9 CIS Audit Tool
+echo "🛡️ RHEL 9 CIS Audit Tool"
+echo "========================"
 
-# Set the project root directory (assuming this script is in the root)
-PROJECT_ROOT="$(dirname "$(readlink -f "$0")")"
-cd "$PROJECT_ROOT" || { echo "Error: Could not change to project directory."; exit 1; }
+# Check if running as root for online mode
+if [[ "$1" == "online" && $EUID -ne 0 ]]; then
+   echo "⚠️  Online mode requires root privileges"
+   echo "Usage: sudo ./run_audit.sh online"
+   exit 1
+fi
 
-echo "Starting RHEL 9 CIS Audit..."
+# Set mode (default to offline if data directory exists)
+MODE=${1:-offline}
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 
-# Check for Python dependencies
-if [ -f "requirements.txt" ]; then
-    echo "Installing Python dependencies from requirements.txt..."
-    pip install -r requirements.txt
-    if [ $? -ne 0 ]; then
-        echo "Error: Failed to install Python dependencies. Please check your pip installation and network connection."
+if [ "$MODE" == "offline" ]; then
+    if [ -d "./data" ]; then
+        echo "🔍 Running offline audit with existing data..."
+        python3 main.py --mode offline --data-dir ./data --output-dir ./reports_$TIMESTAMP
+    else
+        echo "❌ No data directory found for offline mode"
+        echo "Create ./data directory with collected system data"
         exit 1
     fi
+elif [ "$MODE" == "online" ]; then
+    echo "🔴 Running online audit..."
+    python3 main.py --mode online --output-dir ./reports_$TIMESTAMP
 else
-    echo "Warning: requirements.txt not found. Assuming dependencies are already met."
-fi
-
-# Run the main audit script in online mode
-echo "Running audit in online mode..."
-python3 main.py --config config/default_config.yaml
-
-if [ $? -eq 0 ]; then
-    echo "Audit completed successfully."
-    echo "Reports are generated in the 'reports/' directory."
-else
-    echo "Audit failed. Please check the logs for errors."
+    echo "Usage: $0 [online|offline]"
     exit 1
 fi
+
+echo "✅ Audit complete! Check ./reports_$TIMESTAMP/ for results"

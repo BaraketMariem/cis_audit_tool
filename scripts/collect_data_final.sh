@@ -1,3 +1,4 @@
+
 #!/bin/bash
 
 # RHEL 9 CIS Data Collection Script - Fixed Version

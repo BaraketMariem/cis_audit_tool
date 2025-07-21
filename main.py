@@ -1,420 +1,369 @@
+#!/usr/bin/env python3
+"""
+RHEL 9 CIS Benchmark Audit Tool
+Enhanced version with comprehensive section support and improved output
+"""
+
 import argparse
-import logging
-import os
 import sys
-import yaml
+import os
 import json
-from datetime import datetime
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from datetime import datetime
 
-# Import check modules
-from checks import (
-    initial_setup_check, services_check, network_check,
-    host_firewall_check, access_control_check, logging_check,
-    system_maintenance_check
-)
-
-# Define constants for status and severity
-class Status:
-    PASS = "PASS"
-    FAIL = "FAIL"
-    ERROR = "ERROR"
-    MANUAL = "MANUAL"
-    INFO = "INFO"
-    SKIPPED = "SKIPPED"
-
-class Severity:
-    CRITICAL = "CRITICAL"
-    HIGH = "HIGH"
-    MEDIUM = "MEDIUM"
-    LOW = "LOW"
-    UNKNOWN = "UNKNOWN"
-
-class AuditResult:
-    def __init__(self, rule_id: str, title: str, status: str, severity: str,
-                 details: str, remediation: Optional[str] = None,
-                 found_value: Optional[str] = None, expected_value: Optional[str] = None,
-                 section: Optional[str] = None, timestamp: Optional[str] = None):
-        self.rule_id = rule_id
-        self.title = title
-        self.status = status
-        self.severity = severity
-        self.details = details
-        self.remediation = remediation
-        self.found_value = found_value
-        self.expected_value = expected_value
-        self.section = section
-        self.timestamp = timestamp or datetime.now().isoformat()
-
-    def to_dict(self):
-        return {
-            "rule_id": self.rule_id,
-            "title": self.title,
-            "status": self.status,
-            "severity": self.severity,
-            "details": self.details,
-            "remediation": self.remediation,
-            "found_value": self.found_value,
-            "expected_value": self.expected_value,
-            "section": self.section,
-            "timestamp": self.timestamp
-        }
-
-def setup_logging(level: str, log_file: str):
+def print_banner():
+    """Print the application banner"""
+    banner = """
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                        RHEL 9 CIS Benchmark Audit Tool                      ║
+║                                                                              ║
+║  A comprehensive security audit tool for Red Hat Enterprise Linux 9         ║
+║  based on the Center for Internet Security (CIS) Benchmark                  ║
+║                                                                              ║
+║  Sections: Initial Setup, Services, Network, Firewall, Access Control,     ║
+║           Logging, System Maintenance                                        ║
+╚══════════════════════════════════════════════════════════════════════════════╝
     """
-    Sets up logging for the application.
-    """
-    log_dir = os.path.dirname(log_file)
-    if log_dir and not os.path.exists(log_dir):
-        os.makedirs(log_dir)
+    print(banner)
 
-    numeric_level = getattr(logging, level.upper(), None)
-    if not isinstance(numeric_level, int):
-        raise ValueError(f'Invalid log level: {level}')
-
-    logging.basicConfig(
-        level=numeric_level,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.FileHandler(log_file),
-            logging.StreamHandler(sys.stdout)
-        ]
-    )
-
-def load_config(config_path: str) -> Dict[str, Any]:
-    """
-    Loads configuration from a YAML file.
-    """
-    try:
-        with open(config_path, 'r') as f:
-            config = yaml.safe_load(f)
-        logging.info(f"Configuration loaded from {config_path}")
-        return config
-    except FileNotFoundError:
-        logging.error(f"Configuration file not found: {config_path}")
-        sys.exit(1)
-    except yaml.YAMLError as e:
-        logging.error(f"Error parsing configuration file {config_path}: {e}")
-        sys.exit(1)
-
-def load_cis_rules(rules_path: str) -> Dict[str, Any]:
-    """
-    Loads CIS rules from a JSON file.
-    """
-    try:
-        with open(rules_path, 'r') as f:
-            rules = json.load(f)
-        logging.info(f"CIS rules loaded from {rules_path}")
-        return rules
-    except FileNotFoundError:
-        logging.error(f"CIS rules file not found: {rules_path}")
-        sys.exit(1)
-    except json.JSONDecodeError as e:
-        logging.error(f"Error parsing CIS rules file {rules_path}: {e}")
-        sys.exit(1)
-
-def run_audit(sections: List[str], is_offline: bool, data_dir: Optional[str]) -> List[AuditResult]:
-    """
-    Runs the audit checks for the specified sections.
-    """
-    all_results: List[AuditResult] = []
-    
-    check_modules = {
-        "initial_setup": initial_setup_check,
-        "services": services_check,
-        "network": network_check,
-        "firewall": host_firewall_check,
-        "access_control": access_control_check,
-        "logging": logging_check,
-        "system_maintenance": system_maintenance_check
-    }
-
-    for section_name in sections:
-        if section_name not in check_modules:
-            logging.warning(f"Unknown section: {section_name}. Skipping.")
-            continue
-
-        logging.info(f"Running checks for section: {section_name}")
-        module = check_modules[section_name]
-        
-        try:
-            if is_offline:
-                if not data_dir:
-                    logging.error(f"Data directory not specified for offline audit of section {section_name}.")
-                    all_results.append(AuditResult(
-                        rule_id="N/A",
-                        title=f"Offline audit for {section_name}",
-                        status=Status.ERROR,
-                        severity=Severity.CRITICAL,
-                        details=f"Offline audit requires --data-dir to be specified for section {section_name}.",
-                        section=section_name
-                    ))
-                    continue
-                section_results = module.run_offline(data_dir)
-            else:
-                section_results = module.run_online()
-            
-            # Convert raw dict results to AuditResult objects
-            for res in section_results:
-                all_results.append(AuditResult(
-                    rule_id=res.get('rule_id', 'N/A'),
-                    title=res.get('title', 'N/A'),
-                    status=res.get('status', Status.UNKNOWN),
-                    severity=res.get('severity', Severity.UNKNOWN),
-                    details=res.get('details', 'No details provided.'),
-                    remediation=res.get('remediation'),
-                    found_value=res.get('found_value'),
-                    expected_value=res.get('expected_value'),
-                    section=res.get('section')
-                ))
-        except Exception as e:
-            logging.error(f"Error running checks for section {section_name}: {e}", exc_info=True)
-            all_results.append(AuditResult(
-                rule_id="N/A",
-                title=f"Audit execution error for {section_name}",
-                status=Status.ERROR,
-                severity=Severity.CRITICAL,
-                details=f"An unexpected error occurred during audit for section {section_name}: {e}",
-                section=section_name
-            ))
-    return all_results
-
-def generate_report(results: List[AuditResult], output_format: str, output_dir: str, cis_rules: Dict[str, Any]):
-    """
-    Generates audit reports in specified formats.
-    """
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    
-    if output_format in ['html', 'all']:
-        html_output_path = os.path.join(output_dir, f"audit_report_{timestamp}.html")
-        try:
-            from reports import html_generator
-            html_generator.generate_html_report(results, html_output_path)
-            logging.info(f"HTML report generated: {html_output_path}")
-        except Exception as e:
-            logging.error(f"Error generating HTML report: {e}", exc_info=True)
-
-    if output_format in ['json', 'all']:
-        json_output_path = os.path.join(output_dir, f"audit_report_{timestamp}.json")
-        try:
-            from reports import json_generator
-            json_generator.generate_json_report(results, json_output_path)
-            logging.info(f"JSON report generated: {json_output_path}")
-        except Exception as e:
-            logging.error(f"Error generating JSON report: {e}", exc_info=True)
-
-def get_status_explanation(result: AuditResult) -> str:
-    """
-    Provides a clear explanation of why a test passed, failed, or was skipped.
-    """
-    status = result.status
-    found = result.found_value
-    expected = result.expected_value
-    
-    if status == Status.PASS:
-        if found and expected:
-            if found == expected:
-                return f"✓ PASSED: Found value '{found}' matches expected value '{expected}'"
-            else:
-                return f"✓ PASSED: Found value '{found}' meets requirement (expected: {expected})"
-        elif found:
-            return f"✓ PASSED: Found value '{found}' meets security requirements"
-        else:
-            return "✓ PASSED: Configuration meets security requirements"
-    
-    elif status == Status.FAIL:
-        if found and expected:
-            if found != expected:
-                return f"✗ FAILED: Found value '{found}' does not match expected value '{expected}'"
-            else:
-                return f"✗ FAILED: Found value '{found}' does not meet security requirements"
-        elif found:
-            return f"✗ FAILED: Found value '{found}' does not meet security requirements"
-        elif expected:
-            return f"✗ FAILED: Expected value '{expected}' not found or configured"
-        else:
-            return "✗ FAILED: Configuration does not meet security requirements"
-    
-    elif status == Status.SKIPPED:
-        return "⊘ SKIPPED: Unable to verify due to missing data or inapplicable system configuration"
-    
-    elif status == Status.MANUAL:
-        return "⚠ MANUAL REVIEW REQUIRED: This check requires human verification"
-    
-    elif status == Status.ERROR:
-        return "⚠ ERROR: Unable to complete check due to system error"
-    
-    elif status == Status.INFO:
-        return "ℹ INFO: Informational check completed"
-    
-    else:
-        return f"? UNKNOWN STATUS: {status}"
-
-def print_summary(results: List[AuditResult], verbose: bool, failed_only: bool):
-    """
-    Prints a comprehensive summary of the audit results to the console.
-    """
-    # Calculate statistics
-    total_checks = len(results)
-    passed_checks = sum(1 for r in results if r.status == Status.PASS)
-    failed_checks = sum(1 for r in results if r.status == Status.FAIL)
-    error_checks = sum(1 for r in results if r.status == Status.ERROR)
-    manual_checks = sum(1 for r in results if r.status == Status.MANUAL)
-    skipped_checks = sum(1 for r in results if r.status == Status.SKIPPED)
-    info_checks = sum(1 for r in results if r.status == Status.INFO)
-
-    # Calculate compliance percentage (passed / (total - skipped - info))
-    actionable_checks = total_checks - skipped_checks - info_checks
-    compliance_percentage = (passed_checks / actionable_checks * 100) if actionable_checks > 0 else 0
-
-    print("\n" + "="*80)
-    print("                           CIS AUDIT SUMMARY")
-    print("="*80)
-    print(f"Total Checks Executed:     {total_checks}")
-    print(f"  ✓ Passed:               {passed_checks}")
-    print(f"  ✗ Failed:               {failed_checks}")
-    print(f"  ⚠ Errors:               {error_checks}")
-    print(f"  ⚠ Manual Review:        {manual_checks}")
-    print(f"  ⊘ Skipped:              {skipped_checks}")
-    print(f"  ℹ Informational:        {info_checks}")
-    print("-" * 80)
-    print(f"Compliance Rate:           {compliance_percentage:.1f}% ({passed_checks}/{actionable_checks} actionable checks)")
-    
-    # Verification that totals add up
-    calculated_total = passed_checks + failed_checks + error_checks + manual_checks + skipped_checks + info_checks
-    if calculated_total != total_checks:
-        print(f"⚠ WARNING: Check count mismatch! Sum of categories ({calculated_total}) != Total ({total_checks})")
-    
-    print("="*80)
-
-    # Group results by section for better organization
-    results_by_section = {}
-    for result in results:
-        section = result.section or "Unknown"
-        if section not in results_by_section:
-            results_by_section[section] = []
-        results_by_section[section].append(result)
-
-    # Filter results based on user preference
-    if failed_only:
-        filtered_results = [r for r in results if r.status in [Status.FAIL, Status.ERROR]]
-        print(f"\nShowing {len(filtered_results)} FAILED/ERROR checks:")
-    elif verbose:
-        filtered_results = results
-        print(f"\nShowing ALL {len(filtered_results)} checks:")
-    else:
-        # Show summary by section
-        print("\nSUMMARY BY SECTION:")
-        for section, section_results in results_by_section.items():
-            section_passed = sum(1 for r in section_results if r.status == Status.PASS)
-            section_failed = sum(1 for r in section_results if r.status == Status.FAIL)
-            section_error = sum(1 for r in section_results if r.status == Status.ERROR)
-            section_manual = sum(1 for r in section_results if r.status == Status.MANUAL)
-            section_skipped = sum(1 for r in section_results if r.status == Status.SKIPPED)
-            section_total = len(section_results)
-            
-            print(f"\n{section.upper()}:")
-            print(f"  Total: {section_total} | Passed: {section_passed} | Failed: {section_failed} | Errors: {section_error} | Manual: {section_manual} | Skipped: {section_skipped}")
-        
-        print(f"\nUse --verbose to see all checks or --failed-only to see only failed checks.")
+def print_results(results, verbose=False, failed_only=False, detailed=False, section_details=None):
+    """Print audit results with summary"""
+    if not results:
+        print("❌ No results to display. Check for errors above.")
         return
-
-    # Display detailed results
-    if verbose or failed_only:
-        print("\nDETAILED RESULTS:")
-        print("-" * 80)
+    
+    # Filter by section if specified
+    if section_details:
+        results = [r for r in results if r.get('section') == section_details]
+        if not results:
+            print(f"❌ No results found for section: {section_details}")
+            return
+        print(f"📋 DETAILED BREAKDOWN - {section_details.upper()} SECTION")
+        print("=" * 60)
         
-        current_section = None
-        for result in filtered_results:
-            # Print section header when section changes
-            if result.section != current_section:
-                current_section = result.section
-                print(f"\n[{current_section.upper() if current_section else 'UNKNOWN'}]")
-                print("-" * 40)
-            
-            print(f"\nRule ID: {result.rule_id}")
-            print(f"Title: {result.title}")
-            print(f"Severity: {result.severity}")
-            
-            # Show the status explanation
-            explanation = get_status_explanation(result)
-            print(f"Result: {explanation}")
-            
-            # Show detailed values if available
-            if result.found_value is not None or result.expected_value is not None:
-                print("Configuration Details:")
-                if result.found_value is not None:
-                    print(f"  Found:    {result.found_value}")
-                if result.expected_value is not None:
-                    print(f"  Expected: {result.expected_value}")
-            
-            # Show additional details/reason
-            if result.details:
-                print(f"Details: {result.details}")
-            
-            # Show remediation if available and status is FAIL or ERROR
-            if result.remediation and result.status in [Status.FAIL, Status.ERROR]:
-                print(f"Remediation: {result.remediation}")
-            
-            print("-" * 40)
+    total = len(results)
+    passed = len([r for r in results if r.get('status') == 'PASS'])
+    failed = len([r for r in results if r.get('status') == 'FAIL'])
+    skipped = len([r for r in results if r.get('status') == 'ERROR'])
+    
+    print(f"\n📊 AUDIT RESULTS SUMMARY")
+    print("=" * 50)
+    print(f"Total Checks: {total}")
+    print(f"✅ Passed: {passed} ({passed/total*100:.1f}%)")
+    print(f"❌ Failed: {failed} ({failed/total*100:.1f}%)")
+    if skipped >= 0:
+        print(f"⏭️  Skipped: {skipped} ({skipped/total*100:.1f}%)")
+    print("=" * 50)
+    
+    # Group results by status
+    passed_results = [r for r in results if r.get('status') == 'PASS']
+    failed_results = [r for r in results if r.get('status') == 'FAIL']
+    skipped_results = [r for r in results if r.get('status') == 'ERROR']
+    
+    # Show results based on flags
+    if failed_only:
+        # Only show failed checks
+        if failed_results:
+            print(f"\n❌ FAILED CHECKS ({len(failed_results)}):")
+            for result in failed_results:
+                rule_id = result.get('rule_id', 'Unknown')
+                title = result.get('title', 'Unknown Check')
+                details = result.get('details', '')
+                print(f"   ❌ {rule_id}: {title}")
+                if details and (detailed or verbose):
+                    print(f"      Details: {details}")
+        else:
+            print("\n🎉 No failed checks!")
+    else:
+        # Show both passed and failed checks (default behavior)
+        if passed_results:
+            print(f"\n✅ PASSED CHECKS ({len(passed_results)}):")
+            for result in passed_results:
+                rule_id = result.get('rule_id', 'Unknown')
+                title = result.get('title', 'Unknown Check')
+                details = result.get('details', '')
+                print(f"   ✅ {rule_id}: {title}")
+                if details and detailed:
+                    print(f"      Details: {details}")
+        
+        if failed_results:
+            print(f"\n❌ FAILED CHECKS ({len(failed_results)}):")
+            for result in failed_results:
+                rule_id = result.get('rule_id', 'Unknown')
+                title = result.get('title', 'Unknown Check')
+                details = result.get('details', '')
+                print(f"   ❌ {rule_id}: {title}")
+                if details and (detailed or verbose):
+                    print(f"      Details: {details}")
+        
+        if skipped_results:
+            print(f"\n⏭️  SKIPPED CHECKS ({len(skipped_results)}):")
+            for result in skipped_results:
+                rule_id = result.get('rule_id', 'Unknown')
+                title = result.get('title', 'Unknown Check')
+                reason = result.get('details', 'No reason provided')
+                print(f"   ⏭️  {rule_id}: {title}")
+                if detailed or verbose:
+                    print(f"      Reason: {reason}")
+    
+    # Summary by section (always show if verbose or detailed)
+    if verbose or detailed or section_details:
+        print_section_summary(results)
 
-    print(f"\nAudit completed. Check the generated reports for full details.")
+def print_section_summary(results):
+    """Print summary by CIS section"""
+    sections = {}
+    for result in results:
+        rule_id = result.get('rule_id', '0.0.0')
+        section = rule_id.split('.')[0]
+        section_name = result.get('section_name', f'Section {section}')
+        
+        if section not in sections:
+            sections[section] = {
+                'name': section_name,
+                'total': 0, 
+                'passed': 0, 
+                'failed': 0, 
+                'skipped': 0
+            }
+        
+        sections[section]['total'] += 1
+        status = result.get('status', 'UNKNOWN')
+        if status == 'PASS':
+            sections[section]['passed'] += 1
+        elif status == 'FAIL':
+            sections[section]['failed'] += 1
+        elif status == 'ERROR':
+            sections[section]['skipped'] += 1
+    
+    print(f"\n📈 SECTION SUMMARY:")
+    print("-" * 60)
+    for section_id in sorted(sections.keys()):
+        if section_id == '0':  # Skip invalid section IDs
+            continue
+        section_data = sections[section_id]
+        compliance = (section_data['passed'] / section_data['total']) * 100 if section_data['total'] > 0 else 0
+        
+        print(f"Section {section_id} - {section_data['name']}:")
+        print(f"  ✅ Passed: {section_data['passed']}/{section_data['total']} ({compliance:.1f}%)")
+        if section_data['failed'] > 0:
+            print(f"  ❌ Failed: {section_data['failed']}")
+        if section_data['skipped'] > 0:
+            print(f"  ⏭️  Skipped: {section_data['skipped']}")
+        print()
+
+def save_results_json(results, output_file):
+    """Save results to JSON file"""
+    try:
+        output_data = {
+            'timestamp': datetime.now().isoformat(),
+            'total_checks': len(results),
+            'summary': {
+                'passed': len([r for r in results if r.get('status') == 'PASS']),
+                'failed': len([r for r in results if r.get('status') == 'FAIL']),
+                'skipped': len([r for r in results if r.get('status') == 'ERROR'])
+            },
+            'results': results
+        }
+        
+        with open(output_file, 'w') as f:
+            json.dump(output_data, f, indent=2)
+    except Exception as e:
+        print(f"❌ Error saving JSON: {e}")
+
+def run_online_checks(check_modules, results, verbose):
+    """Run online checks"""
+    for section_id, (section_name, module, section_key) in check_modules.items():
+        if verbose:
+            print(f"📋 Section {section_id}: {section_name}")
+        try:
+            if hasattr(module, 'run_online'):
+                section_results = module.run_online()
+                if section_results:
+                    results.extend(section_results)
+                    if verbose:
+                        print(f"   ✅ {len(section_results)} checks completed")
+                else:
+                    if verbose:
+                        print(f"   ⚠️  No results returned from {section_name}")
+            else:
+                print(f"⚠️  Warning: {section_name} module missing run_online() function")
+        except Exception as e:
+            print(f"❌ Error in {section_name}: {e}")
+            if verbose:
+                import traceback
+                traceback.print_exc()
+
+def run_offline_checks(check_modules, results, data_dir, verbose):
+    """Run offline checks"""
+    for section_id, (section_name, module, section_key) in check_modules.items():
+        if verbose:
+            print(f"📋 Section {section_id}: {section_name}")
+        try:
+            if hasattr(module, 'run_offline'):
+                section_results = module.run_offline(data_dir)
+                if section_results:
+                    results.extend(section_results)
+                    if verbose:
+                        print(f"   ✅ {len(section_results)} checks completed")
+                else:
+                    if verbose:
+                        print(f"   ⚠️  No results returned from {section_name}")
+            else:
+                print(f"⚠️  Warning: {section_name} module missing run_offline() function")
+        except Exception as e:
+            print(f"❌ Error in {section_name}: {e}")
+            if verbose:
+                import traceback
+                traceback.print_exc()
 
 def main():
-    parser = argparse.ArgumentParser(description="CIS Audit Tool")
-    parser.add_argument("--config", type=str, default="config/default_config.yaml",
-                        help="Path to the configuration file.")
-    parser.add_argument("--rules", type=str, default="config/cis_rules.json",
-                        help="Path to the CIS rules JSON file.")
-    parser.add_argument("--output-dir", type=str, default="reports",
-                        help="Directory to save audit reports.")
-    parser.add_argument("--log-file", type=str, default="logs/audit.log",
-                        help="Path to the log file.")
-    parser.add_argument("--log-level", type=str, default="INFO",
-                        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-                        help="Logging level.")
-    parser.add_argument("--offline", action="store_true",
-                        help="Run audit in offline mode using collected data.")
-    parser.add_argument("--data-dir", type=str,
-                        help="Directory containing collected data for offline mode.")
-    parser.add_argument("--sections", nargs='*', default=[],
-                        help="Specific sections to audit (e.g., initial_setup services). If empty, all sections from config will be audited.")
-    parser.add_argument("--format", type=str, default="html",
-                        choices=["html", "json", "all", "none"],
-                        help="Output report format.")
-    parser.add_argument("--verbose", action="store_true",
-                        help="Print detailed results for all checks to console.")
-    parser.add_argument("--failed-only", action="store_true",
-                        help="Print only failed/error checks to console.")
+    """Main function"""
+    parser = argparse.ArgumentParser(
+        description='RHEL 9 CIS Benchmark Audit Tool',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python3 main.py --online                           # Run online audit (all sections)
+  python3 main.py --offline                          # Run offline audit (all sections)
+  python3 main.py --offline --data-dir ./custom_data # Use custom data directory
+  python3 main.py --sections initial_setup services  # Run specific sections only
+  python3 main.py --verbose                          # Show detailed output
+  python3 main.py --detailed                         # Show detailed information for all checks
+  python3 main.py --detailed --failed-only           # Show detailed information only for failed checks
+  python3 main.py --section-details firewall         # Show detailed breakdown for firewall section only
+  python3 main.py --detailed --output results.json   # Save detailed results to JSON file
+  python3 main.py --failed-only                      # Show only failed checks
 
-    args = parser.parse_args()
-
-    setup_logging(args.log_level, args.log_file)
-    logging.info("Starting CIS Audit Tool...")
-
-    config = load_config(args.config)
-    cis_rules = load_cis_rules(args.rules)
-
-    sections_to_audit = args.sections if args.sections else config.get("audit_sections", [])
-    if not sections_to_audit:
-        logging.error("No audit sections specified in config or via --sections argument. Exiting.")
-        sys.exit(1)
-
-    if args.offline and not args.data_dir:
-        logging.error("Offline mode requires --data-dir to be specified.")
-        sys.exit(1)
-
-    results = run_audit(sections_to_audit, args.offline, args.data_dir)
+Available sections:
+  initial_setup, services, network, firewall, access_control, logging, system_maintenance
+        """
+    )
     
-    if args.format != "none":
-        generate_report(results, args.format, args.output_dir, cis_rules)
+    parser.add_argument('--online', action='store_true',
+                       help='Run audit on live system')
+    parser.add_argument('--offline', action='store_true',
+                       help='Run audit on collected data')
+    parser.add_argument('--data-dir', default='./data',
+                       help='Directory containing collected data (default: ./data)')
+    parser.add_argument('--sections', nargs='+',
+                       choices=['initial_setup', 'services', 'network', 'firewall', 
+                               'access_control', 'logging', 'system_maintenance'],
+                       help='Specific sections to audit (default: all)')
+    parser.add_argument('--verbose', '-v', action='store_true',
+                       help='Show detailed output including passed checks')
+    parser.add_argument('--failed-only', action='store_true',
+                       help='Show only failed checks')
+    parser.add_argument('--output', '-o',
+                       help='Save results to JSON file')
+    parser.add_argument('--quiet', '-q', action='store_true',
+                       help='Suppress banner and progress messages')
+    
+    parser.add_argument('--detailed', action='store_true',
+                       help='Show detailed information for all checks')
+    parser.add_argument('--section-details', 
+                       choices=['initial_setup', 'services', 'network', 'firewall', 
+                               'access_control', 'logging', 'system_maintenance'],
+                       help='Show detailed breakdown for specific section only')
+    
+    args = parser.parse_args()
+    
+    # Validate arguments
+    if not args.online and not args.offline:
+        print("❌ Error: Must specify either --online or --offline")
+        print("Usage examples:")
+        print("  python3 main.py --online --verbose")
+        print("  python3 main.py --offline --data-dir ./data")
+        sys.exit(1)
+    
+    if args.online and args.offline:
+        print("❌ Error: Cannot specify both --online and --offline")
+        sys.exit(1)
+    
+    results = []
+    
+    # Define available check modules
+    available_modules = {
+        'initial_setup': ('1', 'Initial Setup', 'checks.initial_setup_check'),
+        'services': ('2', 'Services', 'checks.services_check'),
+        'network': ('3', 'Network Configuration', 'checks.network_check'),
+        'firewall': ('4', 'Host Based Firewall', 'checks.host_firewall_check'),
+        'access_control': ('5', 'Access Control', 'checks.access_control_check'),
+        'logging': ('6', 'Logging and Auditing', 'checks.logging_check'),
+        'system_maintenance': ('7', 'System Maintenance', 'checks.system_maintenance_check')
+    }
+    
+    # Filter sections if specified
+    if args.sections:
+        selected_modules = {k: v for k, v in available_modules.items() if k in args.sections}
+        if not selected_modules:
+            print(f"❌ Error: No valid sections specified")
+            print(f"Available sections: {list(available_modules.keys())}")
+            sys.exit(1)
+        available_modules = selected_modules
+    
+    # Import and run checks
+    check_modules = {}
+    for section_key, (section_id, section_name, module_path) in available_modules.items():
+        try:
+            module = __import__(module_path, fromlist=[''])
+            check_modules[section_id] = (section_name, module, section_key)
+            if args.verbose:
+                print(f"✅ Loaded {section_name} module")
+        except ImportError as e:
+            if args.verbose:
+                print(f"⚠️  Warning: Could not import {section_name}: {e}")
+            continue
+        except Exception as e:
+            if args.verbose:
+                print(f"❌ Error loading {section_name}: {e}")
+            continue
+    
+    if not check_modules:
+        print("❌ Error: No check modules could be loaded!")
+        print("Make sure all check modules exist in the checks/ directory")
+        sys.exit(1)
+    
+    print(f"📋 Loaded {len(check_modules)} check modules")
+    
+    # Run checks
+    if args.online:
+        print("🔴 Running ONLINE audit...")
+        run_online_checks(check_modules, results, args.verbose)
+    elif args.offline:
+        print("🔍 Running OFFLINE audit...")
+        data_path = Path(args.data_dir)
+        if not data_path.exists():
+            print(f"❌ Error: Data directory {data_path} does not exist")
+            print("Run data collection first:")
+            print("  cd scripts && ./collect_focused_data.sh")
+            print("  or")
+            print("  cd scripts && ./collect_comprehensive_data.sh")
+            sys.exit(1)
+        run_offline_checks(check_modules, results, args.data_dir, args.verbose)
+    
+    # Add section information to results
+    for result in results:
+        rule_id = result.get('rule_id', '0.0.0')
+        section_num = rule_id.split('.')[0]
+        for sid, (sname, _, skey) in check_modules.items():
+            if sid == section_num:
+                result['section'] = skey
+                result['section_name'] = sname
+                break
+    
+    # Print results
+    if not args.quiet:
+        print_results(results, args.verbose, args.failed_only, args.detailed, args.section_details)
+    
+    # Save to JSON if requested
+    if args.output:
+        save_results_json(results, args.output)
+        print(f"💾 Results saved to {args.output}")
+    
+    # Exit with appropriate code
+    failed_count = len([r for r in results if r.get('status') == 'FAIL'])
+    sys.exit(1 if failed_count > 0 else 0)
 
-    print_summary(results, args.verbose, args.failed_only)
-    logging.info("CIS Audit Tool finished.")
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

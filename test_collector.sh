@@ -1,67 +1,57 @@
 #!/bin/bash
+# Test script for the system collector
 
-# Script to test the data collection scripts
+echo "🧪 Testing RHEL 9 CIS System Collector"
+echo "======================================"
 
-# Set the project root directory (assuming this script is in the root)
-PROJECT_ROOT="$(dirname "$(readlink -f "$0")")"
-cd "$PROJECT_ROOT" || { echo "Error: Could not change to project directory."; exit 1; }
+# Create test directory
+TEST_DIR="./test_collection_$(date +%Y%m%d_%H%M%S)"
+echo "📁 Test directory: $TEST_DIR"
 
-echo "--- Testing Data Collection Scripts ---"
+# Test collection
+echo "🔍 Starting data collection..."
+sudo python3 src/main.py --mode offline --phase collect --output-dir "$TEST_DIR"
 
-TEST_DATA_DIR="./test_data_collection"
-
-# Clean up previous test data
-if [ -d "$TEST_DATA_DIR" ]; then
-    echo "Cleaning up previous test data in $TEST_DATA_DIR..."
-    rm -rf "$TEST_DATA_DIR"
-fi
-
-# Test collect_data.sh
-echo "Running scripts/collect_data.sh..."
-# Temporarily override DATA_DIR for testing
-DATA_DIR="$TEST_DATA_DIR/collect_data" ./scripts/collect_data.sh
-if [ $? -eq 0 ]; then
-    echo "scripts/collect_data.sh: PASS"
-    ls -l "$TEST_DATA_DIR/collect_data"
-else
-    echo "scripts/collect_data.sh: FAIL"
-fi
+# Check results
 echo ""
+echo "📊 Collection Results:"
+echo "====================="
 
-# Clean up for next test
-if [ -d "$TEST_DATA_DIR" ]; then
-    rm -rf "$TEST_DATA_DIR"
-fi
-
-# Test collect_data_enhanced.sh
-echo "Running scripts/collect_data_enhanced.sh..."
-DATA_DIR="$TEST_DATA_DIR/collect_data_enhanced" ./scripts/collect_data_enhanced.sh
-if [ $? -eq 0 ]; then
-    echo "scripts/collect_data_enhanced.sh: PASS"
-    ls -l "$TEST_DATA_DIR/collect_data_enhanced"
+if [ -d "$TEST_DIR" ]; then
+    echo "✅ Collection directory created"
+    
+    # Count collected files
+    TOTAL_FILES=$(find "$TEST_DIR" -type f | wc -l)
+    echo "📄 Total files collected: $TOTAL_FILES"
+    
+    # Show directory structure
+    echo ""
+    echo "📂 Directory structure:"
+    tree "$TEST_DIR" -L 2 2>/dev/null || ls -la "$TEST_DIR"
+    
+    # Show collection info
+    if [ -f "$TEST_DIR/collection_info.json" ]; then
+        echo ""
+        echo "📋 Collection Summary:"
+        python3 -c "
+import json
+with open('$TEST_DIR/collection_info.json') as f:
+    info = json.load(f)
+    print(f'Hostname: {info[\"hostname\"]}')
+    print(f'Timestamp: {info[\"timestamp\"]}')
+    print(f'Files collected: {len(info[\"collected_files\"])}')
+    if info['errors']:
+        print(f'Errors: {len(info[\"errors\"])}')
+        for error in info['errors'][:5]:  # Show first 5 errors
+            print(f'  - {error}')
+"
+    fi
+    
+    echo ""
+    echo "🎉 Test completed successfully!"
+    echo "📂 Test data saved in: $TEST_DIR"
+    
 else
-    echo "scripts/collect_data_enhanced.sh: FAIL"
+    echo "❌ Collection failed - directory not created"
+    exit 1
 fi
-echo ""
-
-# Clean up for next test
-if [ -d "$TEST_DATA_DIR" ]; then
-    rm -rf "$TEST_DATA_DIR"
-fi
-
-# Test collect_data_final.sh
-echo "Running scripts/collect_data_final.sh..."
-DATA_DIR="$TEST_DATA_DIR/collect_data_final" ./scripts/collect_data_final.sh
-if [ $? -eq 0 ]; then
-    echo "scripts/collect_data_final.sh: PASS"
-    ls -l "$TEST_DATA_DIR/collect_data_final"
-else
-    echo "scripts/collect_data_final.sh: FAIL"
-fi
-echo ""
-
-# Final cleanup
-echo "Cleaning up all test data..."
-rm -rf "$TEST_DATA_DIR"
-
-echo "--- Data Collection Test Complete ---"

@@ -1,642 +1,930 @@
 #!/usr/bin/env python3
-"""RHEL 9 CIS Benchmark - Section 4: Host Based Firewall
-Complete implementation with all host firewall-related checks"""
+"""
+RHEL 9 CIS Benchmark - Section 4: Host Based Firewall
+Complete implementation with all firewall-related checks following CIS Benchmark structure
+"""
 
 import os
 import subprocess
 import re
-from typing import List, Dict, Any, Optional
 from pathlib import Path
-import logging
 
-# Assume Status and Severity are defined in a common place or passed in
-class Status:
-    PASS = "PASS"
-    FAIL = "FAIL"
-    ERROR = "ERROR"
-    MANUAL = "MANUAL"
-    INFO = "INFO"
-    SKIPPED = "SKIPPED"
+def run_firewall_checks(data_dir=None):
+    """Main entry point for firewall checks - for compatibility with main.py"""
+    if data_dir:
+        return run_offline(data_dir)
+    else:
+        return run_online()
 
-class Severity:
-    CRITICAL = "CRITICAL"
-    HIGH = "HIGH"
-    MEDIUM = "MEDIUM"
-    LOW = "LOW"
-    UNKNOWN = "UNKNOWN"
+def run_online():
+    """Run Section 4 checks in online mode"""
+    results = []
+    
+    # 4.1 Configure a firewall utility
+    results.extend(check_firewall_utility_online())
+    
+    # 4.2 Configure FirewallD
+    results.extend(check_firewalld_online())
+    
+    # 4.3 Configure NFTables
+    results.extend(check_nftables_online())
+    
+    return results
 
-def _run_command(command: str) -> Optional[str]:
-    """Helper to run shell commands and return output or None on error."""
+def run_offline(data_dir):
+    """Run Section 4 checks in offline mode"""
+    results = []
+    
+    # 4.1 Configure a firewall utility
+    results.extend(check_firewall_utility_offline(data_dir))
+    
+    # 4.2 Configure FirewallD
+    results.extend(check_firewalld_offline(data_dir))
+    
+    # 4.3 Configure NFTables
+    results.extend(check_nftables_offline(data_dir))
+    
+    return results
+
+# ============================================================================
+# 4.1 Configure a firewall utility
+# ============================================================================
+
+def check_firewall_utility_online():
+    """Check firewall utility configuration (4.1.1 - 4.1.2)"""
+    results = []
+    
+    # 4.1.1 - Ensure nftables is installed (Automated)
+    results.append(check_nftables_installed_online())
+    
+    # 4.1.2 - Ensure a single firewall configuration utility is in use (Automated)
+    results.append(check_single_firewall_utility_online())
+    
+    return results
+
+def check_firewall_utility_offline(data_dir):
+    """Check firewall utility configuration offline"""
+    results = []
+    
+    # 4.1.1 - Ensure nftables is installed (Automated)
+    results.append(check_nftables_installed_offline(data_dir))
+    
+    # 4.1.2 - Ensure a single firewall configuration utility is in use (Automated)
+    results.append(check_single_firewall_utility_offline(data_dir))
+    
+    return results
+
+def check_nftables_installed_online():
+    """4.1.1 - Ensure nftables is installed (Automated)"""
     try:
-        result = subprocess.run(command, shell=True, capture_output=True, text=True, check=True)
-        return result.stdout.strip()
-    except subprocess.CalledProcessError as e:
-        logging.error(f"Command '{command}' failed with error: {e.stderr.strip()}")
-        return None
-    except FileNotFoundError:
-        logging.error(f"Command not found: {command.split()[0]}")
-        return None
-
-def run_online() -> List[Dict[str, Any]]:
-    """Run all host firewall checks in online mode."""
-    logging.info("Running host firewall checks (online)...")
-    results = []
-    results.append(check_firewalld_installed_and_running())
-    results.append(check_default_zone_configured())
-    results.append(check_unnecessary_services_disabled())
-    results.append(check_loopback_traffic_configured())
-    results.append(check_outbound_connections_restricted())
-    results.append(check_all_ports_closed_by_default())
-    results.append(check_firewall_rules_persistent())
-    return results
-
-def run_offline(data_dir: str) -> List[Dict[str, Any]]:
-    """Run all host firewall checks in offline mode using collected data."""
-    logging.info(f"Running host firewall checks (offline) using data from: {data_dir}")
-    results = []
-    results.append(check_firewalld_installed_and_running_offline(data_dir))
-    results.append(check_default_zone_configured_offline(data_dir))
-    results.append(check_unnecessary_services_disabled_offline(data_dir))
-    results.append(check_loopback_traffic_configured_offline(data_dir))
-    results.append(check_outbound_connections_restricted_offline(data_dir))
-    results.append(check_all_ports_closed_by_default_offline(data_dir))
-    results.append(check_firewall_rules_persistent_offline(data_dir))
-    return results
-
-def check_firewalld_installed_and_running() -> Dict[str, Any]:
-    """
-    CIS 4.1.1: Ensure firewalld is installed and active.
-    """
-    rule_id = "4.1.1"
-    title = "Ensure firewalld is installed and active"
-    
-    # Check if firewalld package is installed
-    rpm_output = _run_command("rpm -q firewalld")
-    if rpm_output is None or "not installed" in rpm_output:
-        return {
-            "rule_id": rule_id,
-            "title": title,
-            "status": Status.FAIL,
-            "severity": Severity.CRITICAL,
-            "details": "firewalld package is not installed.",
-            "found_value": "Not installed",
-            "expected_value": "firewalld installed and active",
-            "remediation": "Run: dnf install firewalld"
-        }
-    
-    # Check if firewalld service is active
-    systemctl_output = _run_command("systemctl is-active firewalld")
-    if systemctl_output == "active":
-        return {
-            "rule_id": rule_id,
-            "title": title,
-            "status": Status.PASS,
-            "severity": Severity.CRITICAL,
-            "details": "firewalld is installed and active.",
-            "found_value": "Installed and active",
-            "expected_value": "firewalld installed and active"
-        }
-    else:
-        return {
-            "rule_id": rule_id,
-            "title": title,
-            "status": Status.FAIL,
-            "severity": Severity.CRITICAL,
-            "details": "firewalld is installed but not active.",
-            "found_value": f"Installed but {systemctl_output}",
-            "expected_value": "firewalld installed and active",
-            "remediation": "Run: systemctl enable firewalld --now"
-        }
-
-def check_firewalld_installed_and_running_offline(data_dir: str) -> Dict[str, Any]:
-    """
-    CIS 4.1.1: Ensure firewalld is installed and active (offline).
-    """
-    rule_id = "4.1.1"
-    title = "Ensure firewalld is installed and active"
-    
-    packages_file = Path(data_dir) / "system" / "packages.txt"
-    services_file = Path(data_dir) / "system" / "services.txt"
-
-    firewalld_installed = False
-    if packages_file.exists():
-        packages_content = packages_file.read_text()
-        if "firewalld-" in packages_content:
-            firewalld_installed = True
-    else:
-        return {
-            "rule_id": rule_id,
-            "title": title,
-            "status": Status.SKIPPED,
-            "severity": Severity.CRITICAL,
-            "details": "Offline package data (packages.txt) not found, cannot verify firewalld installation.",
-            "found_value": "N/A",
-            "expected_value": "firewalld installed and active"
-        }
-
-    if not firewalld_installed:
-        return {
-            "rule_id": rule_id,
-            "title": title,
-            "status": Status.FAIL,
-            "severity": Severity.CRITICAL,
-            "details": "firewalld package is not found in collected data.",
-            "found_value": "Not installed",
-            "expected_value": "firewalld installed and active",
-            "remediation": "Run: dnf install firewalld"
-        }
-
-    if services_file.exists():
-        services_content = services_file.read_text()
-        if "firewalld.service; enabled; active" in services_content:
-            return {
-                "rule_id": rule_id,
-                "title": title,
-                "status": Status.PASS,
-                "severity": Severity.CRITICAL,
-                "details": "firewalld is installed and active based on collected data.",
-                "found_value": "Installed and active",
-                "expected_value": "firewalld installed and active"
-            }
-        else:
-            return {
-                "rule_id": rule_id,
-                "title": title,
-                "status": Status.FAIL,
-                "severity": Severity.CRITICAL,
-                "details": "firewalld is installed but not active based on collected data.",
-                "found_value": "Installed but not active",
-                "expected_value": "firewalld installed and active",
-                "remediation": "Run: systemctl enable firewalld --now"
-            }
-    else:
-        return {
-            "rule_id": rule_id,
-            "title": title,
-            "status": Status.SKIPPED,
-            "severity": Severity.CRITICAL,
-            "details": "Offline services data (services.txt) not found, cannot verify firewalld active status.",
-            "found_value": "N/A",
-            "expected_value": "firewalld installed and active"
-        }
-
-def check_default_zone_configured() -> Dict[str, Any]:
-    """
-    CIS 4.1.2: Ensure default zone is configured.
-    """
-    rule_id = "4.1.2"
-    title = "Ensure default zone is configured"
-    
-    firewall_cmd_output = _run_command("firewall-cmd --get-default-zone")
-    if firewall_cmd_output:
-        return {
-            "rule_id": rule_id,
-            "title": title,
-            "status": Status.PASS,
-            "severity": Severity.MEDIUM,
-            "details": f"Default firewalld zone is configured to '{firewall_cmd_output}'.",
-            "found_value": firewall_cmd_output,
-            "expected_value": "A default zone is configured"
-        }
-    else:
-        return {
-            "rule_id": rule_id,
-            "title": title,
-            "status": Status.FAIL,
-            "severity": Severity.MEDIUM,
-            "details": "Default firewalld zone is not configured or could not be retrieved.",
-            "found_value": "Not configured",
-            "expected_value": "A default zone is configured",
-            "remediation": "Run: firewall-cmd --set-default-zone=public --permanent"
-        }
-
-def check_default_zone_configured_offline(data_dir: str) -> Dict[str, Any]:
-    """
-    CIS 4.1.2: Ensure default zone is configured (offline).
-    """
-    rule_id = "4.1.2"
-    title = "Ensure default zone is configured"
-    
-    firewalld_info_file = Path(data_dir) / "network" / "firewalld_info.txt"
-
-    if firewalld_info_file.exists():
-        content = firewalld_info_file.read_text()
-        match = re.search(r'default zone:\s*(\S+)', content)
-        if match:
-            found_zone = match.group(1)
-            return {
-                "rule_id": rule_id,
-                "title": title,
-                "status": Status.PASS,
-                "severity": Severity.MEDIUM,
-                "details": f"Default firewalld zone is configured to '{found_zone}' based on collected data.",
-                "found_value": found_zone,
-                "expected_value": "A default zone is configured"
-            }
-        else:
-            return {
-                "rule_id": rule_id,
-                "title": title,
-                "status": Status.FAIL,
-                "severity": Severity.MEDIUM,
-                "details": "Default firewalld zone not found in collected firewalld info.",
-                "found_value": "Not found",
-                "expected_value": "A default zone is configured",
-                "remediation": "Run: firewall-cmd --set-default-zone=public --permanent"
-            }
-    else:
-        return {
-            "rule_id": rule_id,
-            "title": title,
-            "status": Status.SKIPPED,
-            "severity": Severity.MEDIUM,
-            "details": "Offline firewalld info data (firewalld_info.txt) not found, cannot check default zone.",
-            "found_value": "N/A",
-            "expected_value": "A default zone is configured"
-        }
-
-def check_unnecessary_services_disabled() -> Dict[str, Any]:
-    """
-    CIS 4.1.3: Ensure unnecessary services are disabled in firewalld.
-    This is a manual check as "unnecessary" depends on system role.
-    """
-    rule_id = "4.1.3"
-    title = "Ensure unnecessary services are disabled in firewalld"
-    
-    return {
-        "rule_id": rule_id,
-        "title": title,
-        "status": Status.MANUAL,
-        "severity": Severity.MEDIUM,
-        "details": "Review active firewalld services and ports using 'firewall-cmd --list-all --zone=<zone>' to ensure only necessary services are allowed. This check requires manual verification based on system's role.",
-        "found_value": "Requires manual review",
-        "expected_value": "Only necessary services/ports allowed"
-    }
-
-def check_unnecessary_services_disabled_offline(data_dir: str) -> Dict[str, Any]:
-    """
-    CIS 4.1.3: Ensure unnecessary services are disabled in firewalld (offline).
-    """
-    rule_id = "4.1.3"
-    title = "Ensure unnecessary services are disabled in firewalld"
-    
-    firewalld_list_all_file = Path(data_dir) / "network" / "firewalld_list_all.txt"
-
-    if firewalld_list_all_file.exists():
-        content = firewalld_list_all_file.read_text()
-        return {
-            "rule_id": rule_id,
-            "title": title,
-            "status": Status.MANUAL,
-            "severity": Severity.MEDIUM,
-            "details": f"Review collected firewalld configuration in '{firewalld_list_all_file}' to ensure only necessary services and ports are allowed. This check requires manual verification based on system's role.",
-            "found_value": "Review collected firewalld_list_all.txt",
-            "expected_value": "Only necessary services/ports allowed"
-        }
-    else:
-        return {
-            "rule_id": rule_id,
-            "title": title,
-            "status": Status.SKIPPED,
-            "severity": Severity.MEDIUM,
-            "details": "Offline firewalld list-all data (firewalld_list_all.txt) not found, cannot check unnecessary services.",
-            "found_value": "N/A",
-            "expected_value": "Only necessary services/ports allowed"
-        }
-
-def check_loopback_traffic_configured() -> Dict[str, Any]:
-    """
-    CIS 4.1.4: Ensure loopback traffic is configured.
-    The 'trusted' zone typically handles loopback.
-    """
-    rule_id = "4.1.4"
-    title = "Ensure loopback traffic is configured"
-    
-    # Check if the 'trusted' zone is active and has the loopback interface
-    # This is a common way to ensure loopback traffic is allowed.
-    # A more direct check would be to list rules for the loopback interface, but firewalld abstracts this.
-    # We'll check if the 'trusted' zone is active and has the 'lo' interface.
-    
-    trusted_zone_info = _run_command("firewall-cmd --zone=trusted --list-all")
-    
-    if trusted_zone_info and "interfaces: lo" in trusted_zone_info:
-        return {
-            "rule_id": rule_id,
-            "title": title,
-            "status": Status.PASS,
-            "severity": Severity.LOW,
-            "details": "Loopback interface 'lo' is assigned to the 'trusted' zone, ensuring loopback traffic is allowed.",
-            "found_value": "lo in trusted zone",
-            "expected_value": "Loopback traffic allowed"
-        }
-    else:
-        return {
-            "rule_id": rule_id,
-            "title": title,
-            "status": Status.FAIL,
-            "severity": Severity.LOW,
-            "details": "Loopback interface 'lo' is not explicitly configured in the 'trusted' zone or could not be verified. This might prevent loopback traffic.",
-            "found_value": "lo not in trusted zone or info unavailable",
-            "expected_value": "Loopback traffic allowed",
-            "remediation": "Run: firewall-cmd --zone=trusted --add-interface=lo --permanent && firewall-cmd --reload"
-        }
-
-def check_loopback_traffic_configured_offline(data_dir: str) -> Dict[str, Any]:
-    """
-    CIS 4.1.4: Ensure loopback traffic is configured (offline).
-    """
-    rule_id = "4.1.4"
-    title = "Ensure loopback traffic is configured"
-    
-    firewalld_list_all_file = Path(data_dir) / "network" / "firewalld_list_all.txt"
-
-    if firewalld_list_all_file.exists():
-        content = firewalld_list_all_file.read_text()
-        # Look for 'trusted' zone and 'interfaces: lo' within it
-        trusted_zone_pattern = r'zone: trusted\n(?:.*\n)*?  interfaces: (.*)'
-        match = re.search(trusted_zone_pattern, content, re.MULTILINE)
+        result = subprocess.run("rpm -q nftables", shell=True, capture_output=True, text=True)
         
-        if match and 'lo' in match.group(1).split():
+        if result.returncode == 0:
             return {
-                "rule_id": rule_id,
-                "title": title,
-                "status": Status.PASS,
-                "severity": Severity.LOW,
-                "details": "Loopback interface 'lo' is assigned to the 'trusted' zone in collected data, ensuring loopback traffic is allowed.",
-                "found_value": "lo in trusted zone",
-                "expected_value": "Loopback traffic allowed"
+                'rule_id': '4.1.1',
+                'title': 'Ensure nftables is installed',
+                'status': 'PASS',
+                'details': f'nftables is installed: {result.stdout.strip()}',
+                'severity': 'High',
+                'section': 'firewall'
             }
         else:
             return {
-                "rule_id": rule_id,
-                "title": title,
-                "status": Status.FAIL,
-                "severity": Severity.LOW,
-                "details": "Loopback interface 'lo' is not explicitly configured in the 'trusted' zone in collected data. This might prevent loopback traffic.",
-                "found_value": "lo not in trusted zone or info unavailable",
-                "expected_value": "Loopback traffic allowed",
-                "remediation": "Run: firewall-cmd --zone=trusted --add-interface=lo --permanent && firewall-cmd --reload"
+                'rule_id': '4.1.1',
+                'title': 'Ensure nftables is installed',
+                'status': 'FAIL',
+                'details': 'nftables is not installed',
+                'severity': 'High',
+                'section': 'firewall',
+                'remediation': 'Install nftables: dnf install nftables'
             }
-    else:
+        
+    except Exception as e:
         return {
-            "rule_id": rule_id,
-            "title": title,
-            "status": Status.SKIPPED,
-            "severity": Severity.LOW,
-            "details": "Offline firewalld list-all data (firewalld_list_all.txt) not found, cannot check loopback traffic configuration.",
-            "found_value": "N/A",
-            "expected_value": "Loopback traffic allowed"
+            'rule_id': '4.1.1',
+            'title': 'Ensure nftables is installed',
+            'status': 'ERROR',
+            'details': f'Error checking nftables installation: {str(e)}',
+            'severity': 'High',
+            'section': 'firewall'
         }
 
-def check_outbound_connections_restricted() -> Dict[str, Any]:
-    """
-    CIS 4.1.5: Ensure outbound connections are restricted.
-    This is a manual check as it depends on specific organizational policy.
-    """
-    rule_id = "4.1.5"
-    title = "Ensure outbound connections are restricted"
-    
-    return {
-        "rule_id": rule_id,
-        "title": title,
-        "status": Status.MANUAL,
-        "severity": Severity.HIGH,
-        "details": "Review firewalld rules for outbound connections using 'firewall-cmd --list-all --zone=<zone>' and 'firewall-cmd --list-rich-rules' to ensure they are restricted according to organizational policy. By default, firewalld allows all outbound traffic.",
-        "found_value": "Requires manual review",
-        "expected_value": "Outbound connections restricted by policy"
-    }
-
-def check_outbound_connections_restricted_offline(data_dir: str) -> Dict[str, Any]:
-    """
-    CIS 4.1.5: Ensure outbound connections are restricted (offline).
-    """
-    rule_id = "4.1.5"
-    title = "Ensure outbound connections are restricted"
-    
-    firewalld_list_all_file = Path(data_dir) / "network" / "firewalld_list_all.txt"
-    firewalld_rich_rules_file = Path(data_dir) / "network" / "firewalld_rich_rules.txt"
-
-    if firewalld_list_all_file.exists() or firewalld_rich_rules_file.exists():
-        details = "Review collected firewalld configuration (firewalld_list_all.txt and firewalld_rich_rules.txt) to ensure outbound connections are restricted according to organizational policy. By default, firewalld allows all outbound traffic."
-        return {
-            "rule_id": rule_id,
-            "title": title,
-            "status": Status.MANUAL,
-            "severity": Severity.HIGH,
-            "details": details,
-            "found_value": "Review collected firewalld data",
-            "expected_value": "Outbound connections restricted by policy"
-        }
-    else:
-        return {
-            "rule_id": rule_id,
-            "title": title,
-            "status": Status.SKIPPED,
-            "severity": Severity.HIGH,
-            "details": "Offline firewalld configuration data (firewalld_list_all.txt, firewalld_rich_rules.txt) not found, cannot check outbound restrictions.",
-            "found_value": "N/A",
-            "expected_value": "Outbound connections restricted by policy"
-        }
-
-def check_all_ports_closed_by_default() -> Dict[str, Any]:
-    """
-    CIS 4.1.6: Ensure all ports are closed by default.
-    This is generally true if the default zone's target is 'default' or 'REJECT'.
-    """
-    rule_id = "4.1.6"
-    title = "Ensure all ports are closed by default"
-    
-    default_zone_output = _run_command("firewall-cmd --get-default-zone")
-    if not default_zone_output:
-        return {
-            "rule_id": rule_id,
-            "title": title,
-            "status": Status.ERROR,
-            "severity": Severity.HIGH,
-            "details": "Could not determine default firewalld zone.",
-            "found_value": "N/A",
-            "expected_value": "Default zone target is 'default' or 'REJECT'"
-        }
-
-    zone_info = _run_command(f"firewall-cmd --zone={default_zone_output} --list-all")
-    if zone_info and "target: default" in zone_info or "target: REJECT" in zone_info:
-        return {
-            "rule_id": rule_id,
-            "title": title,
-            "status": Status.PASS,
-            "severity": Severity.HIGH,
-            "details": f"Default zone '{default_zone_output}' has target 'default' or 'REJECT', ensuring ports are closed by default.",
-            "found_value": f"Target: {'default' if 'target: default' in zone_info else 'REJECT'}",
-            "expected_value": "Default zone target is 'default' or 'REJECT'"
-        }
-    else:
-        return {
-            "rule_id": rule_id,
-            "title": title,
-            "status": Status.FAIL,
-            "severity": Severity.HIGH,
-            "details": f"Default zone '{default_zone_output}' does not have target 'default' or 'REJECT'. Ports may not be closed by default.",
-            "found_value": "Target not 'default' or 'REJECT'",
-            "expected_value": "Default zone target is 'default' or 'REJECT'",
-            "remediation": f"Run: firewall-cmd --set-target=REJECT --zone={default_zone_output} --permanent && firewall-cmd --reload"
-        }
-
-def check_all_ports_closed_by_default_offline(data_dir: str) -> Dict[str, Any]:
-    """
-    CIS 4.1.6: Ensure all ports are closed by default (offline).
-    """
-    rule_id = "4.1.6"
-    title = "Ensure all ports are closed by default"
-    
-    firewalld_info_file = Path(data_dir) / "network" / "firewalld_info.txt"
-    firewalld_list_all_file = Path(data_dir) / "network" / "firewalld_list_all.txt"
-
-    if not firewalld_info_file.exists() or not firewalld_list_all_file.exists():
-        return {
-            "rule_id": rule_id,
-            "title": title,
-            "status": Status.SKIPPED,
-            "severity": Severity.HIGH,
-            "details": "Offline firewalld info or list-all data not found, cannot check default port closure.",
-            "found_value": "N/A",
-            "expected_value": "Default zone target is 'default' or 'REJECT'"
-        }
-
-    firewalld_info_content = firewalld_info_file.read_text()
-    firewalld_list_all_content = firewalld_list_all_file.read_text()
-
-    default_zone_match = re.search(r'default zone:\s*(\S+)', firewalld_info_content)
-    if not default_zone_match:
-        return {
-            "rule_id": rule_id,
-            "title": title,
-            "status": Status.ERROR,
-            "severity": Severity.HIGH,
-            "details": "Could not determine default firewalld zone from collected data.",
-            "found_value": "N/A",
-            "expected_value": "Default zone target is 'default' or 'REJECT'"
-        }
-    default_zone = default_zone_match.group(1)
-
-    # Find the section for the default zone in firewalld_list_all_content
-    zone_pattern = rf'zone: {re.escape(default_zone)}\n(.*?)(?=\nzone:|\Z)'
-    zone_content_match = re.search(zone_pattern, firewalld_list_all_content, re.DOTALL)
-
-    if zone_content_match:
-        zone_content = zone_content_match.group(1)
-        if "target: default" in zone_content or "target: REJECT" in zone_content:
+def check_nftables_installed_offline(data_dir):
+    """4.1.1 - Ensure nftables is installed (Automated) - Offline"""
+    try:
+        packages_file = Path(data_dir) / "packages" / "installed_packages.txt"
+        
+        if packages_file.exists():
+            packages_content = packages_file.read_text().lower()
+            
+            if 'nftables' in packages_content:
+                return {
+                    'rule_id': '4.1.1',
+                    'title': 'Ensure nftables is installed',
+                    'status': 'PASS',
+                    'details': 'nftables is installed',
+                    'severity': 'High',
+                    'section': 'firewall'
+                }
+            else:
+                return {
+                    'rule_id': '4.1.1',
+                    'title': 'Ensure nftables is installed',
+                    'status': 'FAIL',
+                    'details': 'nftables is not installed',
+                    'severity': 'High',
+                    'section': 'firewall',
+                    'remediation': 'Install nftables: dnf install nftables'
+                }
+        else:
             return {
-                "rule_id": rule_id,
-                "title": title,
-                "status": Status.PASS,
-                "severity": Severity.HIGH,
-                "details": f"Default zone '{default_zone}' has target 'default' or 'REJECT' in collected data, ensuring ports are closed by default.",
-                "found_value": f"Target: {'default' if 'target: default' in zone_content else 'REJECT'}",
-                "expected_value": "Default zone target is 'default' or 'REJECT'"
+                'rule_id': '4.1.1',
+                'title': 'Ensure nftables is installed',
+                'status': 'ERROR',
+                'details': 'No package data available',
+                'severity': 'High',
+                'section': 'firewall'
+            }
+        
+    except Exception as e:
+        return {
+            'rule_id': '4.1.1',
+            'title': 'Ensure nftables is installed',
+            'status': 'ERROR',
+            'details': f'Error checking nftables installation: {str(e)}',
+            'severity': 'High',
+            'section': 'firewall'
+        }
+
+def check_single_firewall_utility_online():
+    """4.1.2 - Ensure a single firewall configuration utility is in use (Automated)"""
+    try:
+        # Check which firewall utilities are installed and active
+        firewall_utilities = {}
+        
+        # Check firewalld
+        firewalld_installed = subprocess.run("rpm -q firewalld", shell=True, capture_output=True, text=True).returncode == 0
+        firewalld_active = subprocess.run("systemctl is-active firewalld", shell=True, capture_output=True, text=True).stdout.strip() == 'active'
+        firewall_utilities['firewalld'] = {'installed': firewalld_installed, 'active': firewalld_active}
+        
+        # Check nftables
+        nftables_installed = subprocess.run("rpm -q nftables", shell=True, capture_output=True, text=True).returncode == 0
+        nftables_active = subprocess.run("systemctl is-active nftables", shell=True, capture_output=True, text=True).stdout.strip() == 'active'
+        firewall_utilities['nftables'] = {'installed': nftables_installed, 'active': nftables_active}
+        
+        # Check iptables
+        iptables_installed = subprocess.run("rpm -q iptables-services", shell=True, capture_output=True, text=True).returncode == 0
+        iptables_active = subprocess.run("systemctl is-active iptables", shell=True, capture_output=True, text=True).stdout.strip() == 'active'
+        firewall_utilities['iptables'] = {'installed': iptables_installed, 'active': iptables_active}
+        
+        # Count active utilities
+        active_utilities = [name for name, info in firewall_utilities.items() if info['active']]
+        
+        if len(active_utilities) == 1:
+            return {
+                'rule_id': '4.1.2',
+                'title': 'Ensure a single firewall configuration utility is in use',
+                'status': 'PASS',
+                'details': f'Single firewall utility in use: {active_utilities[0]}',
+                'severity': 'High',
+                'section': 'firewall'
+            }
+        elif len(active_utilities) == 0:
+            return {
+                'rule_id': '4.1.2',
+                'title': 'Ensure a single firewall configuration utility is in use',
+                'status': 'FAIL',
+                'details': 'No firewall utility is active',
+                'severity': 'High',
+                'section': 'firewall',
+                'remediation': 'Enable one firewall utility (firewalld, nftables, or iptables)'
             }
         else:
-            target_match = re.search(r'target:\s*(\S+)', zone_content)
-            found_target = target_match.group(1) if target_match else 'Not found'
             return {
-                "rule_id": rule_id,
-                "title": title,
-                "status": Status.FAIL,
-                "severity": Severity.HIGH,
-                "details": f"Default zone '{default_zone}' has target '{found_target}' in collected data, which is not 'default' or 'REJECT'. Ports may not be closed by default.",
-                "found_value": f"Target: {found_target}",
-                "expected_value": "Default zone target is 'default' or 'REJECT'",
-                "remediation": f"Run: firewall-cmd --set-target=REJECT --zone={default_zone} --permanent && firewall-cmd --reload"
+                'rule_id': '4.1.2',
+                'title': 'Ensure a single firewall configuration utility is in use',
+                'status': 'FAIL',
+                'details': f'Multiple firewall utilities are active: {", ".join(active_utilities)}',
+                'severity': 'High',
+                'section': 'firewall',
+                'remediation': 'Disable all but one firewall utility'
             }
+        
+    except Exception as e:
+        return {
+            'rule_id': '4.1.2',
+            'title': 'Ensure a single firewall configuration utility is in use',
+            'status': 'ERROR',
+            'details': f'Error checking firewall utilities: {str(e)}',
+            'severity': 'High',
+            'section': 'firewall'
+        }
+
+def check_single_firewall_utility_offline(data_dir):
+    """4.1.2 - Ensure a single firewall configuration utility is in use (Automated) - Offline"""
+    try:
+        services_file = Path(data_dir) / "services" / "systemctl-services.txt"
+        packages_file = Path(data_dir) / "packages" / "installed_packages.txt"
+        
+        if not services_file.exists() or not packages_file.exists():
+            return {
+                'rule_id': '4.1.2',
+                'title': 'Ensure a single firewall configuration utility is in use',
+                'status': 'ERROR',
+                'details': 'Required data files not available',
+                'severity': 'High',
+                'section': 'firewall'
+            }
+        
+        services_content = services_file.read_text()
+        packages_content = packages_file.read_text().lower()
+        
+        # Check which firewall utilities are installed and active
+        firewall_utilities = {}
+        
+        # Check firewalld
+        firewalld_installed = 'firewalld' in packages_content
+        firewalld_active = 'firewalld.service' in services_content and 'active' in services_content
+        firewall_utilities['firewalld'] = {'installed': firewalld_installed, 'active': firewalld_active}
+        
+        # Check nftables
+        nftables_installed = 'nftables' in packages_content
+        nftables_active = 'nftables.service' in services_content and 'active' in services_content
+        firewall_utilities['nftables'] = {'installed': nftables_installed, 'active': nftables_active}
+        
+        # Check iptables
+        iptables_installed = 'iptables-services' in packages_content
+        iptables_active = 'iptables.service' in services_content and 'active' in services_content
+        firewall_utilities['iptables'] = {'installed': iptables_installed, 'active': iptables_active}
+        
+        # Count active utilities
+        active_utilities = [name for name, info in firewall_utilities.items() if info['active']]
+        
+        if len(active_utilities) == 1:
+            return {
+                'rule_id': '4.1.2',
+                'title': 'Ensure a single firewall configuration utility is in use',
+                'status': 'PASS',
+                'details': f'Single firewall utility in use: {active_utilities[0]}',
+                'severity': 'High',
+                'section': 'firewall'
+            }
+        elif len(active_utilities) == 0:
+            return {
+                'rule_id': '4.1.2',
+                'title': 'Ensure a single firewall configuration utility is in use',
+                'status': 'FAIL',
+                'details': 'No firewall utility appears to be active',
+                'severity': 'High',
+                'section': 'firewall',
+                'remediation': 'Enable one firewall utility (firewalld, nftables, or iptables)'
+            }
+        else:
+            return {
+                'rule_id': '4.1.2',
+                'title': 'Ensure a single firewall configuration utility is in use',
+                'status': 'FAIL',
+                'details': f'Multiple firewall utilities appear to be active: {", ".join(active_utilities)}',
+                'severity': 'High',
+                'section': 'firewall',
+                'remediation': 'Disable all but one firewall utility'
+            }
+        
+    except Exception as e:
+        return {
+            'rule_id': '4.1.2',
+            'title': 'Ensure a single firewall configuration utility is in use',
+            'status': 'ERROR',
+            'details': f'Error checking firewall utilities: {str(e)}',
+            'severity': 'High',
+            'section': 'firewall'
+        }
+
+# ============================================================================
+# 4.2 Configure FirewallD
+# ============================================================================
+
+def check_firewalld_online():
+    """Check FirewallD configuration (4.2.1 - 4.2.2)"""
+    results = []
+    
+    # 4.2.1 - Ensure firewalld drops unnecessary services and ports (Manual)
+    results.append(check_firewalld_unnecessary_services_online())
+    
+    # 4.2.2 - Ensure firewalld loopback traffic is configured (Automated)
+    results.append(check_firewalld_loopback_online())
+    
+    return results
+
+def check_firewalld_offline(data_dir):
+    """Check FirewallD configuration offline"""
+    results = []
+    
+    # 4.2.1 - Ensure firewalld drops unnecessary services and ports (Manual)
+    results.append(check_firewalld_unnecessary_services_offline(data_dir))
+    
+    # 4.2.2 - Ensure firewalld loopback traffic is configured (Automated)
+    results.append(check_firewalld_loopback_offline(data_dir))
+    
+    return results
+
+def check_firewalld_unnecessary_services_online():
+    """4.2.1 - Ensure firewalld drops unnecessary services and ports (Manual)"""
+    try:
+        # Check if firewalld is active
+        active_result = subprocess.run("systemctl is-active firewalld", 
+                                     shell=True, capture_output=True, text=True)
+        
+        if 'active' not in active_result.stdout:
+            return {
+                'rule_id': '4.2.1',
+                'title': 'Ensure firewalld drops unnecessary services and ports',
+                'status': 'MANUAL',
+                'details': 'firewalld is not active - manual review required',
+                'severity': 'Medium',
+                'section': 'firewall'
+            }
+        
+        # Get firewall configuration
+        config_result = subprocess.run("firewall-cmd --list-all", 
+                                     shell=True, capture_output=True, text=True)
+        
+        if config_result.returncode == 0:
+            return {
+                'rule_id': '4.2.1',
+                'title': 'Ensure firewalld drops unnecessary services and ports',
+                'status': 'MANUAL',
+                'details': 'Manual review required for firewalld services and ports configuration',
+                'severity': 'Medium',
+                'section': 'firewall'
+            }
+        else:
+            return {
+                'rule_id': '4.2.1',
+                'title': 'Ensure firewalld drops unnecessary services and ports',
+                'status': 'ERROR',
+                'details': 'Could not retrieve firewalld configuration',
+                'severity': 'Medium',
+                'section': 'firewall'
+            }
+        
+    except Exception as e:
+        return {
+            'rule_id': '4.2.1',
+            'title': 'Ensure firewalld drops unnecessary services and ports',
+            'status': 'ERROR',
+            'details': f'Error checking firewalld configuration: {str(e)}',
+            'severity': 'Medium',
+            'section': 'firewall'
+        }
+
+def check_firewalld_unnecessary_services_offline(data_dir):
+    """4.2.1 - Ensure firewalld drops unnecessary services and ports (Manual) - Offline"""
+    try:
+        firewall_rules_file = Path(data_dir) / "security" / "firewall" / "firewall_rules.txt"
+        
+        if firewall_rules_file.exists():
+            return {
+                'rule_id': '4.2.1',
+                'title': 'Ensure firewalld drops unnecessary services and ports',
+                'status': 'MANUAL',
+                'details': 'Manual review required for firewalld services and ports configuration',
+                'severity': 'Medium',
+                'section': 'firewall'
+            }
+        else:
+            return {
+                'rule_id': '4.2.1',
+                'title': 'Ensure firewalld drops unnecessary services and ports',
+                'status': 'ERROR',
+                'details': 'No firewalld configuration data available',
+                'severity': 'Medium',
+                'section': 'firewall'
+            }
+        
+    except Exception as e:
+        return {
+            'rule_id': '4.2.1',
+            'title': 'Ensure firewalld drops unnecessary services and ports',
+            'status': 'ERROR',
+            'details': f'Error checking firewalld configuration: {str(e)}',
+            'severity': 'Medium',
+            'section': 'firewall'
+        }
+
+def check_firewalld_loopback_online():
+    """4.2.2 - Ensure firewalld loopback traffic is configured (Automated)"""
+    try:
+        # Check if firewalld is active
+        active_result = subprocess.run("systemctl is-active firewalld", 
+                                     shell=True, capture_output=True, text=True)
+        
+        if 'active' not in active_result.stdout:
+            return {
+                'rule_id': '4.2.2',
+                'title': 'Ensure firewalld loopback traffic is configured',
+                'status': 'FAIL',
+                'details': 'firewalld is not active',
+                'severity': 'High',
+                'section': 'firewall',
+                'remediation': 'Start and enable firewalld: systemctl enable --now firewalld'
+            }
+        
+        # Check loopback interface configuration
+        lo_result = subprocess.run("firewall-cmd --get-zone-of-interface=lo", 
+                                 shell=True, capture_output=True, text=True)
+        
+        if lo_result.returncode == 0 and 'trusted' in lo_result.stdout:
+            return {
+                'rule_id': '4.2.2',
+                'title': 'Ensure firewalld loopback traffic is configured',
+                'status': 'PASS',
+                'details': 'Loopback interface is configured in trusted zone',
+                'severity': 'High',
+                'section': 'firewall'
+            }
+        else:
+            return {
+                'rule_id': '4.2.2',
+                'title': 'Ensure firewalld loopback traffic is configured',
+                'status': 'FAIL',
+                'details': 'Loopback interface is not properly configured',
+                'severity': 'High',
+                'section': 'firewall',
+                'remediation': 'Configure loopback interface: firewall-cmd --zone=trusted --add-interface=lo --permanent'
+            }
+        
+    except Exception as e:
+        return {
+            'rule_id': '4.2.2',
+            'title': 'Ensure firewalld loopback traffic is configured',
+            'status': 'ERROR',
+            'details': f'Error checking firewalld loopback configuration: {str(e)}',
+            'severity': 'High',
+            'section': 'firewall'
+        }
+
+def check_firewalld_loopback_offline(data_dir):
+    """4.2.2 - Ensure firewalld loopback traffic is configured (Automated) - Offline"""
+    try:
+        firewall_rules_file = Path(data_dir) / "security" / "firewall" / "firewall_rules.txt"
+        firewalld_active_file = Path(data_dir) / "security" / "firewall" / "firewalld_active.txt"
+        
+        # Check if firewalld is active
+        if firewalld_active_file.exists():
+            active_content = firewalld_active_file.read_text().strip()
+            if 'active' not in active_content:
+                return {
+                    'rule_id': '4.2.2',
+                    'title': 'Ensure firewalld loopback traffic is configured',
+                    'status': 'FAIL',
+                    'details': 'firewalld is not active',
+                    'severity': 'High',
+                    'section': 'firewall',
+                    'remediation': 'Start and enable firewalld: systemctl enable --now firewalld'
+                }
+        
+        # Check firewall rules for loopback configuration
+        if firewall_rules_file.exists():
+            rules_content = firewall_rules_file.read_text()
+            
+            if 'trusted' in rules_content and ('lo' in rules_content or 'loopback' in rules_content):
+                return {
+                    'rule_id': '4.2.2',
+                    'title': 'Ensure firewalld loopback traffic is configured',
+                    'status': 'PASS',
+                    'details': 'Loopback interface appears to be configured in trusted zone',
+                    'severity': 'High',
+                    'section': 'firewall'
+                }
+            else:
+                return {
+                    'rule_id': '4.2.2',
+                    'title': 'Ensure firewalld loopback traffic is configured',
+                    'status': 'FAIL',
+                    'details': 'Loopback interface configuration not found in firewall rules',
+                    'severity': 'High',
+                    'section': 'firewall',
+                    'remediation': 'Configure loopback interface: firewall-cmd --zone=trusted --add-interface=lo --permanent'
+                }
+        else:
+            return {
+                'rule_id': '4.2.2',
+                'title': 'Ensure firewalld loopback traffic is configured',
+                'status': 'ERROR',
+                'details': 'No firewalld rules data available',
+                'severity': 'High',
+                'section': 'firewall'
+            }
+        
+    except Exception as e:
+        return {
+            'rule_id': '4.2.2',
+            'title': 'Ensure firewalld loopback traffic is configured',
+            'status': 'ERROR',
+            'details': f'Error checking firewalld loopback configuration: {str(e)}',
+            'severity': 'High',
+            'section': 'firewall'
+        }
+
+# ============================================================================
+# 4.3 Configure NFTables
+# ============================================================================
+
+def check_nftables_online():
+    """Check NFTables configuration (4.3.1 - 4.3.4)"""
+    results = []
+    
+    # 4.3.1 - Ensure nftables base chains exist (Automated)
+    results.append(check_nftables_base_chains_online())
+    
+    # 4.3.2 - Ensure nftables established connections are configured (Manual)
+    results.append(check_nftables_established_connections_online())
+    
+    # 4.3.3 - Ensure nftables default deny firewall policy (Automated)
+    results.append(check_nftables_default_deny_online())
+    
+    # 4.3.4 - Ensure nftables loopback traffic is configured (Automated)
+    results.append(check_nftables_loopback_online())
+    
+    return results
+
+def check_nftables_offline(data_dir):
+    """Check NFTables configuration offline"""
+    results = []
+    
+    # 4.3.1 - Ensure nftables base chains exist (Automated)
+    results.append(check_nftables_base_chains_offline(data_dir))
+    
+    # 4.3.2 - Ensure nftables established connections are configured (Manual)
+    results.append(check_nftables_established_connections_offline(data_dir))
+    
+    # 4.3.3 - Ensure nftables default deny firewall policy (Automated)
+    results.append(check_nftables_default_deny_offline(data_dir))
+    
+    # 4.3.4 - Ensure nftables loopback traffic is configured (Automated)
+    results.append(check_nftables_loopback_offline(data_dir))
+    
+    return results
+
+def check_nftables_base_chains_online():
+    """4.3.1 - Ensure nftables base chains exist (Automated)"""
+    try:
+        # Check if nftables service is active
+        active_result = subprocess.run("systemctl is-active nftables", 
+                                     shell=True, capture_output=True, text=True)
+        
+        if 'active' not in active_result.stdout:
+            return {
+                'rule_id': '4.3.1',
+                'title': 'Ensure nftables base chains exist',
+                'status': 'FAIL',
+                'details': 'nftables service is not active',
+                'severity': 'High',
+                'section': 'firewall',
+                'remediation': 'Start and enable nftables: systemctl enable --now nftables'
+            }
+        
+        # Check for base chains
+        chains_result = subprocess.run("nft list ruleset", 
+                                     shell=True, capture_output=True, text=True)
+        
+        if chains_result.returncode == 0:
+            ruleset = chains_result.stdout
+            
+            # Look for required base chains
+            required_chains = ['input', 'forward', 'output']
+            found_chains = []
+            
+            for chain in required_chains:
+                if f'chain {chain}' in ruleset.lower():
+                    found_chains.append(chain)
+            
+            if len(found_chains) == len(required_chains):
+                return {
+                    'rule_id': '4.3.1',
+                    'title': 'Ensure nftables base chains exist',
+                    'status': 'PASS',
+                    'details': f'All required base chains exist: {", ".join(found_chains)}',
+                    'severity': 'High',
+                    'section': 'firewall'
+                }
+            else:
+                missing_chains = [chain for chain in required_chains if chain not in found_chains]
+                return {
+                    'rule_id': '4.3.1',
+                    'title': 'Ensure nftables base chains exist',
+                    'status': 'FAIL',
+                    'details': f'Missing base chains: {", ".join(missing_chains)}',
+                    'severity': 'High',
+                    'section': 'firewall',
+                    'remediation': 'Create missing base chains in nftables configuration'
+                }
+        else:
+            return {
+                'rule_id': '4.3.1',
+                'title': 'Ensure nftables base chains exist',
+                'status': 'ERROR',
+                'details': 'Could not retrieve nftables ruleset',
+                'severity': 'High',
+                'section': 'firewall'
+            }
+        
+    except Exception as e:
+        return {
+            'rule_id': '4.3.1',
+            'title': 'Ensure nftables base chains exist',
+            'status': 'ERROR',
+            'details': f'Error checking nftables base chains: {str(e)}',
+            'severity': 'High',
+            'section': 'firewall'
+        }
+
+def check_nftables_base_chains_offline(data_dir):
+    """4.3.1 - Ensure nftables base chains exist (Automated) - Offline"""
+    try:
+        # This would require nftables ruleset data which might not be collected
+        # For now, return a manual check requirement
+        return {
+            'rule_id': '4.3.1',
+            'title': 'Ensure nftables base chains exist',
+            'status': 'MANUAL',
+            'details': 'Manual verification required - nftables ruleset data not available offline',
+            'severity': 'High',
+            'section': 'firewall'
+        }
+        
+    except Exception as e:
+        return {
+            'rule_id': '4.3.1',
+            'title': 'Ensure nftables base chains exist',
+            'status': 'ERROR',
+            'details': f'Error checking nftables base chains: {str(e)}',
+            'severity': 'High',
+            'section': 'firewall'
+        }
+
+def check_nftables_established_connections_online():
+    """4.3.2 - Ensure nftables established connections are configured (Manual)"""
+    try:
+        # Check if nftables service is active
+        active_result = subprocess.run("systemctl is-active nftables", 
+                                     shell=True, capture_output=True, text=True)
+        
+        if 'active' not in active_result.stdout:
+            return {
+                'rule_id': '4.3.2',
+                'title': 'Ensure nftables established connections are configured',
+                'status': 'MANUAL',
+                'details': 'nftables service is not active - manual review required',
+                'severity': 'Medium',
+                'section': 'firewall'
+            }
+        
+        # This requires manual review of nftables rules
+        return {
+            'rule_id': '4.3.2',
+            'title': 'Ensure nftables established connections are configured',
+            'status': 'MANUAL',
+            'details': 'Manual review required for nftables established connections configuration',
+            'severity': 'Medium',
+            'section': 'firewall'
+        }
+        
+    except Exception as e:
+        return {
+            'rule_id': '4.3.2',
+            'title': 'Ensure nftables established connections are configured',
+            'status': 'ERROR',
+            'details': f'Error checking nftables established connections: {str(e)}',
+            'severity': 'Medium',
+            'section': 'firewall'
+        }
+
+def check_nftables_established_connections_offline(data_dir):
+    """4.3.2 - Ensure nftables established connections are configured (Manual) - Offline"""
+    try:
+        return {
+            'rule_id': '4.3.2',
+            'title': 'Ensure nftables established connections are configured',
+            'status': 'MANUAL',
+            'details': 'Manual review required for nftables established connections configuration',
+            'severity': 'Medium',
+            'section': 'firewall'
+        }
+        
+    except Exception as e:
+        return {
+            'rule_id': '4.3.2',
+            'title': 'Ensure nftables established connections are configured',
+            'status': 'ERROR',
+            'details': f'Error checking nftables established connections: {str(e)}',
+            'severity': 'Medium',
+            'section': 'firewall'
+        }
+
+def check_nftables_default_deny_online():
+    """4.3.3 - Ensure nftables default deny firewall policy (Automated)"""
+    try:
+        # Check if nftables service is active
+        active_result = subprocess.run("systemctl is-active nftables", 
+                                     shell=True, capture_output=True, text=True)
+        
+        if 'active' not in active_result.stdout:
+            return {
+                'rule_id': '4.3.3',
+                'title': 'Ensure nftables default deny firewall policy',
+                'status': 'FAIL',
+                'details': 'nftables service is not active',
+                'severity': 'High',
+                'section': 'firewall',
+                'remediation': 'Start and enable nftables: systemctl enable --now nftables'
+            }
+        
+        # Check for default deny policy
+        chains_result = subprocess.run("nft list ruleset", 
+                                     shell=True, capture_output=True, text=True)
+        
+        if chains_result.returncode == 0:
+            ruleset = chains_result.stdout.lower()
+            
+            # Look for default drop/deny policies
+            has_input_drop = 'policy drop' in ruleset and 'input' in ruleset
+            has_forward_drop = 'policy drop' in ruleset and 'forward' in ruleset
+            
+            if has_input_drop and has_forward_drop:
+                return {
+                    'rule_id': '4.3.3',
+                    'title': 'Ensure nftables default deny firewall policy',
+                    'status': 'PASS',
+                    'details': 'Default deny policy is configured for input and forward chains',
+                    'severity': 'High',
+                    'section': 'firewall'
+                }
+            else:
+                return {
+                    'rule_id': '4.3.3',
+                    'title': 'Ensure nftables default deny firewall policy',
+                    'status': 'FAIL',
+                    'details': 'Default deny policy is not properly configured',
+                    'severity': 'High',
+                    'section': 'firewall',
+                    'remediation': 'Configure default drop policy for input and forward chains'
+                }
+        else:
+            return {
+                'rule_id': '4.3.3',
+                'title': 'Ensure nftables default deny firewall policy',
+                'status': 'ERROR',
+                'details': 'Could not retrieve nftables ruleset',
+                'severity': 'High',
+                'section': 'firewall'
+            }
+        
+    except Exception as e:
+        return {
+            'rule_id': '4.3.3',
+            'title': 'Ensure nftables default deny firewall policy',
+            'status': 'ERROR',
+            'details': f'Error checking nftables default policy: {str(e)}',
+            'severity': 'High',
+            'section': 'firewall'
+        }
+
+def check_nftables_default_deny_offline(data_dir):
+    """4.3.3 - Ensure nftables default deny firewall policy (Automated) - Offline"""
+    try:
+        return {
+            'rule_id': '4.3.3',
+            'title': 'Ensure nftables default deny firewall policy',
+            'status': 'MANUAL',
+            'details': 'Manual verification required - nftables ruleset data not available offline',
+            'severity': 'High',
+            'section': 'firewall'
+        }
+        
+    except Exception as e:
+        return {
+            'rule_id': '4.3.3',
+            'title': 'Ensure nftables default deny firewall policy',
+            'status': 'ERROR',
+            'details': f'Error checking nftables default policy: {str(e)}',
+            'severity': 'High',
+            'section': 'firewall'
+        }
+
+def check_nftables_loopback_online():
+    """4.3.4 - Ensure nftables loopback traffic is configured (Automated)"""
+    try:
+        # Check if nftables service is active
+        active_result = subprocess.run("systemctl is-active nftables", 
+                                     shell=True, capture_output=True, text=True)
+        
+        if 'active' not in active_result.stdout:
+            return {
+                'rule_id': '4.3.4',
+                'title': 'Ensure nftables loopback traffic is configured',
+                'status': 'FAIL',
+                'details': 'nftables service is not active',
+                'severity': 'High',
+                'section': 'firewall',
+                'remediation': 'Start and enable nftables: systemctl enable --now nftables'
+            }
+        
+        # Check for loopback configuration
+        chains_result = subprocess.run("nft list ruleset", 
+                                     shell=True, capture_output=True, text=True)
+        
+        if chains_result.returncode == 0:
+            ruleset = chains_result.stdout.lower()
+            
+            # Look for loopback interface rules
+            has_loopback_accept = ('iif "lo"' in ruleset and 'accept' in ruleset) or \
+                                ('iifname "lo"' in ruleset and 'accept' in ruleset)
+            
+            if has_loopback_accept:
+                return {
+                    'rule_id': '4.3.4',
+                    'title': 'Ensure nftables loopback traffic is configured',
+                    'status': 'PASS',
+                    'details': 'Loopback traffic is properly configured in nftables',
+                    'severity': 'High',
+                    'section': 'firewall'
+                }
+            else:
+                return {
+                    'rule_id': '4.3.4',
+                    'title': 'Ensure nftables loopback traffic is configured',
+                    'status': 'FAIL',
+                    'details': 'Loopback traffic configuration not found in nftables rules',
+                    'severity': 'High',
+                    'section': 'firewall',
+                    'remediation': 'Configure loopback traffic rules in nftables'
+                }
+        else:
+            return {
+                'rule_id': '4.3.4',
+                'title': 'Ensure nftables loopback traffic is configured',
+                'status': 'ERROR',
+                'details': 'Could not retrieve nftables ruleset',
+                'severity': 'High',
+                'section': 'firewall'
+            }
+        
+    except Exception as e:
+        return {
+            'rule_id': '4.3.4',
+            'title': 'Ensure nftables loopback traffic is configured',
+            'status': 'ERROR',
+            'details': f'Error checking nftables loopback configuration: {str(e)}',
+            'severity': 'High',
+            'section': 'firewall'
+        }
+
+def check_nftables_loopback_offline(data_dir):
+    """4.3.4 - Ensure nftables loopback traffic is configured (Automated) - Offline"""
+    try:
+        return {
+            'rule_id': '4.3.4',
+            'title': 'Ensure nftables loopback traffic is configured',
+            'status': 'MANUAL',
+            'details': 'Manual verification required - nftables ruleset data not available offline',
+            'severity': 'High',
+            'section': 'firewall'
+        }
+        
+    except Exception as e:
+        return {
+            'rule_id': '4.3.4',
+            'title': 'Ensure nftables loopback traffic is configured',
+            'status': 'ERROR',
+            'details': f'Error checking nftables loopback configuration: {str(e)}',
+            'severity': 'High',
+            'section': 'firewall'
+        }
+
+# ============================================================================
+# Main execution for standalone testing
+# ============================================================================
+
+if __name__ == "__main__":
+    import sys
+    
+    if len(sys.argv) > 1 and sys.argv[1] == "--offline":
+        data_dir = sys.argv[2] if len(sys.argv) > 2 else "data"
+        results = run_offline(data_dir)
     else:
-        return {
-            "rule_id": rule_id,
-            "title": title,
-            "status": Status.ERROR,
-            "severity": Severity.HIGH,
-            "details": f"Could not find details for default zone '{default_zone}' in collected firewalld list-all data.",
-            "found_value": "Zone details not found",
-            "expected_value": "Default zone target is 'default' or 'REJECT'"
-        }
-
-def check_firewall_rules_persistent() -> Dict[str, Any]:
-    """
-    CIS 4.1.7: Ensure firewall rules are persistent.
-    This means using --permanent with firewall-cmd.
-    """
-    rule_id = "4.1.7"
-    title = "Ensure firewall rules are persistent"
+        results = run_online()
     
-    # This check is inherently difficult to automate online without knowing
-    # what rules *should* be persistent. The best approach is to check
-    # if the permanent configuration matches the runtime configuration.
-    # If they differ, it implies non-persistent changes.
+    # Print results
+    print(f"\n🔥 Host Based Firewall Audit Results: {len(results)} checks")
+    print("=" * 60)
     
-    runtime_config = _run_command("firewall-cmd --list-all-zones")
-    permanent_config = _run_command("firewall-cmd --list-all-zones --permanent")
-
-    if runtime_config is None or permanent_config is None:
-        return {
-            "rule_id": rule_id,
-            "title": title,
-            "status": Status.ERROR,
-            "severity": Severity.MEDIUM,
-            "details": "Could not retrieve firewalld runtime or permanent configuration.",
-            "found_value": "N/A",
-            "expected_value": "Runtime and permanent configurations match"
-        }
-
-    # Simple comparison: if they are not identical, there are non-persistent changes
-    if runtime_config == permanent_config:
-        return {
-            "rule_id": rule_id,
-            "title": title,
-            "status": Status.PASS,
-            "severity": Severity.MEDIUM,
-            "details": "Firewalld runtime and permanent configurations match, indicating rules are persistent.",
-            "found_value": "Configurations match",
-            "expected_value": "Runtime and permanent configurations match"
-        }
-    else:
-        return {
-            "rule_id": rule_id,
-            "title": title,
-            "status": Status.FAIL,
-            "severity": Severity.MEDIUM,
-            "details": "Firewalld runtime and permanent configurations do not match. There are non-persistent firewall rules.",
-            "found_value": "Configurations differ",
-            "expected_value": "Runtime and permanent configurations match",
-            "remediation": "Run: firewall-cmd --runtime-to-permanent to save current runtime rules, or remove temporary rules."
-        }
-
-def check_firewall_rules_persistent_offline(data_dir: str) -> Dict[str, Any]:
-    """
-    CIS 4.1.7: Ensure firewall rules are persistent (offline).
-    """
-    rule_id = "4.1.7"
-    title = "Ensure firewall rules are persistent"
-    
-    # Offline, we can only check the permanent configuration files.
-    # We cannot compare runtime vs permanent. So this becomes a manual check.
-    
-    firewalld_zones_dir = Path(data_dir) / "network" / "firewalld_zones"
-    
-    if firewalld_zones_dir.exists() and any(firewalld_zones_dir.iterdir()):
-        return {
-            "rule_id": rule_id,
-            "title": title,
-            "status": Status.MANUAL,
-            "severity": Severity.MEDIUM,
-            "details": f"Review the collected permanent firewalld zone files in '{firewalld_zones_dir}' to ensure all intended rules are saved persistently. This check cannot verify runtime vs. permanent state offline.",
-            "found_value": "Permanent zone files collected",
-            "expected_value": "All intended rules are persistent"
-        }
-    else:
-        return {
-            "rule_id": rule_id,
-            "title": title,
-            "status": Status.SKIPPED,
-            "severity": Severity.MEDIUM,
-            "details": "Offline firewalld permanent zone configuration data not found, cannot check persistence.",
-            "found_value": "N/A",
-            "expected_value": "All intended rules are persistent"
-        }
+    for result in results:
+        status_icon = "✅" if result['status'] == 'PASS' else "❌" if result['status'] == 'FAIL' else "⚠️"
+        print(f"{status_icon} {result['rule_id']}: {result['title']}")
+        print(f"   Status: {result['status']}")
+        print(f"   Details: {result['details']}")
+        if 'remediation' in result:
+            print(f"   Remediation: {result['remediation']}")
+        print()
