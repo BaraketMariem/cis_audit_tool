@@ -1,1696 +1,2163 @@
+#!/usr/bin/env python3
+"""RHEL 9 CIS Benchmark - Section 1: Initial Setup
+Complete implementation with all initial setup-related checks"""
+
+import os
+import subprocess
 import re
+from typing import List, Dict, Any, Optional
 from pathlib import Path
+import logging
 
-def run_offline(data_dir):
-    """Run Section 1 checks in offline mode"""
+# Assume Status and Severity are defined in a common place or passed in
+class Status:
+    PASS = "PASS"
+    FAIL = "FAIL"
+    ERROR = "ERROR"
+    MANUAL = "MANUL"
+    INFO = "INFO"
+    SKIPPED = "SKIPPED"
+
+class Severity:
+    CRITICAL = "CRITICAL"
+    HIGH = "HIGH"
+    MEDIUM = "MEDIUM"
+    LOW = "LOW"
+    UNKNOWN = "UNKNOWN"
+
+def _run_command(command: str) -> Optional[str]:
+    """Helper to run shell commands and return output or None on error."""
+    try:
+        result = subprocess.run(command, shell=True, capture_output=True, text=True, check=True)
+        return result.stdout.strip()
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Command '{command}' failed with error: {e.stderr.strip()}")
+        return None
+    except FileNotFoundError:
+        logging.error(f"Command not found: {command.split()[0]}")
+        return None
+
+def run_online() -> List[Dict[str, Any]]:
+    """Run all initial setup checks in online mode."""
+    logging.info("Running initial setup checks (online)...")
     results = []
+    results.append(check_filesystem_mount_options())
+    results.append(check_separate_partition_for_tmp())
+    results.append(check_separate_partition_for_var())
+    results.append(check_separate_partition_for_var_log())
+    results.append(check_separate_partition_for_var_log_audit())
+    results.append(check_separate_partition_for_home())
+    results.append(check_separate_partition_for_var_tmp())
+    results.append(check_separate_partition_for_dev_shm())
+    results.append(check_nodev_on_removable_media())
+    results.append(check_nosuid_on_removable_media())
+    results.append(check_noexec_on_removable_media())
+    results.append(check_sticky_bit_on_world_writable_directories())
+    results.append(check_disable_usb_storage())
+    results.append(check_disable_automounting())
+    results.append(check_disable_unused_filesystems())
+    results.append(check_ensure_aide_installed())
+    results.append(check_ensure_aide_initialized())
+    results.append(check_ensure_aide_cron_job())
+    results.append(check_ensure_prelink_not_installed())
+    results.append(check_ensure_core_dumps_restricted())
+    results.append(check_ensure_selinux_installed())
+    results.append(check_ensure_selinux_enforcing())
+    results.append(check_ensure_selinux_policy_configured())
+    results.append(check_ensure_selinux_boot_parameters())
+    results.append(check_ensure_package_integrity_verified())
+    results.append(check_ensure_gpg_keys_configured())
+    results.append(check_ensure_software_updates_configured())
+    results.append(check_ensure_unnecessary_packages_removed())
+    return results
+
+def run_offline(data_dir: str) -> List[Dict[str, Any]]:
+    """Run all initial setup checks in offline mode using collected data."""
+    logging.info(f"Running initial setup checks (offline) using data from: {data_dir}")
+    results = []
+    results.append(check_filesystem_mount_options_offline(data_dir))
+    results.append(check_separate_partition_for_tmp_offline(data_dir))
+    results.append(check_separate_partition_for_var_offline(data_dir))
+    results.append(check_separate_partition_for_var_log_offline(data_dir))
+    results.append(check_separate_partition_for_var_log_audit_offline(data_dir))
+    results.append(check_separate_partition_for_home_offline(data_dir))
+    results.append(check_separate_partition_for_var_tmp_offline(data_dir))
+    results.append(check_separate_partition_for_dev_shm_offline(data_dir))
+    results.append(check_nodev_on_removable_media_offline(data_dir))
+    results.append(check_nosuid_on_removable_media_offline(data_dir))
+    results.append(check_noexec_on_removable_media_offline(data_dir))
+    results.append(check_sticky_bit_on_world_writable_directories_offline(data_dir))
+    results.append(check_disable_usb_storage_offline(data_dir))
+    results.append(check_disable_automounting_offline(data_dir))
+    results.append(check_disable_unused_filesystems_offline(data_dir))
+    results.append(check_ensure_aide_installed_offline(data_dir))
+    results.append(check_ensure_aide_initialized_offline(data_dir))
+    results.append(check_ensure_aide_cron_job_offline(data_dir))
+    results.append(check_ensure_prelink_not_installed_offline(data_dir))
+    results.append(check_ensure_core_dumps_restricted_offline(data_dir))
+    results.append(check_ensure_selinux_installed_offline(data_dir))
+    results.append(check_ensure_selinux_enforcing_offline(data_dir))
+    results.append(check_ensure_selinux_policy_configured_offline(data_dir))
+    results.append(check_ensure_selinux_boot_parameters_offline(data_dir))
+    results.append(check_ensure_package_integrity_verified_offline(data_dir))
+    results.append(check_ensure_gpg_keys_configured_offline(data_dir))
+    results.append(check_ensure_software_updates_configured_offline(data_dir))
+    results.append(check_ensure_unnecessary_packages_removed_offline(data_dir))
+    return results
+
+def check_filesystem_mount_options() -> Dict[str, Any]:
+    """
+    CIS 1.1.1: Ensure mounting of cramfs, freevxfs, jffs2, hfs, hfsplus, squashfs, udf, fat, vfat, nfs, nfs4, cifs, autofs, and usb-storage is disabled.
+    This check is complex and requires checking modprobe configurations.
+    """
+    rule_id = "1.1.1"
+    title = "Ensure mounting of unused filesystems is disabled"
     
-    print(f"📋 Running CIS Section 1: Initial Setup (Offline Mode - {data_dir})")
-
-    # Define paths to expected data files
-    modprobe_data_file = Path(data_dir) / "system" / "modprobe.txt"
-    mount_data_file = Path(data_dir) / "filesystem" / "mount.txt"
-    gpg_key_data_file = Path(data_dir) / "system" / "gpg_keys.txt"
-    yum_repo_data_dir = Path(data_dir) / "system" / "yum.repos.d"
-    aide_status_file = Path(data_dir) / "system" / "aide_status.txt"
-    bootloader_config_file = Path(data_dir) / "boot" / "grub.cfg"
-    bootloader_permissions_file = Path(data_dir) / "boot" / "grub_permissions.txt"
-    shadow_file = Path(data_dir) / "security" / "shadow"
-    limits_conf_file = Path(data_dir) / "system" / "limits.conf"
-    sysctl_data_file = Path(data_dir) / "system" / "sysctl_all.txt"
-    dmesg_data_file = Path(data_dir) / "system" / "dmesg.txt"
-    selinux_status_file = Path(data_dir) / "security" / "selinux_status.txt"
-    selinux_mode_file = Path(data_dir) / "security" / "selinux_mode.txt"
-    selinux_processes_file = Path(data_dir) / "security" / "selinux_processes.txt"
-    packages_file = Path(data_dir) / "system" / "packages.txt"
-    motd_file = Path(data_dir) / "system" / "motd.txt"
-    issue_file = Path(data_dir) / "system" / "issue.txt"
-    issue_net_file = Path(data_dir) / "system" / "issue.net.txt"
-    motd_permissions_file = Path(data_dir) / "system" / "motd_permissions.txt"
-    issue_permissions_file = Path(data_dir) / "system" / "issue_permissions.txt"
-    issue_net_permissions_file = Path(data_dir) / "system" / "issue_net_permissions.txt"
-    gdm_config_dir = Path(data_dir) / "system" / "gdm_config"
-
-    # 1.1 Filesystem Configuration
-    print("  💾 Section 1.1: Filesystem Configuration")
-    results.extend(check_filesystem_offline(data_dir, modprobe_data_file, mount_data_file))
-
-    # 1.2 Software Updates
-    print("  🔄 Section 1.2: Software Updates")
-    results.extend(check_software_updates_offline(data_dir, gpg_key_data_file, yum_repo_data_dir))
-
-    # 1.3 Filesystem Integrity
-    print("   integrity Section 1.3: Filesystem Integrity")
-    results.extend(check_filesystem_integrity_offline(data_dir, aide_status_file))
-
-    # 1.4 Boot Settings
-    print("   boot Section 1.4: Boot Settings")
-    results.extend(check_boot_settings_offline(data_dir, bootloader_config_file, bootloader_permissions_file, shadow_file))
-
-    # 1.5 Additional Process Hardening
-    print("  🔒 Section 1.5: Additional Process Hardening")
-    results.extend(check_process_hardening_offline(data_dir, limits_conf_file, sysctl_data_file, dmesg_data_file, packages_file))
-
-    # 1.6 SELinux
-    print("  🛡️  Section 1.6: SELinux")
-    results.extend(check_selinux_offline(data_dir, selinux_status_file, selinux_mode_file, selinux_processes_file, packages_file, bootloader_config_file))
-
-    # 1.7 Warning Banners
-    print("  ⚠️  Section 1.7: Warning Banners")
-    results.extend(check_warning_banners_offline(data_dir, motd_file, issue_file, issue_net_file, motd_permissions_file, issue_permissions_file, issue_net_permissions_file))
-
-    # 1.8 Graphical Access
-    print("  🖥️  Section 1.8: Graphical Access")
-    results.extend(check_graphical_access_offline(data_dir, packages_file, gdm_config_dir))
-
-    return results
-
-def check_filesystem_offline(data_dir, modprobe_data_file, mount_data_file):
-    results = []
-
-    # 1.1.1.1 - 1.1.1.8: Ensure kernel modules are not available
-    kernel_modules = {
-        '1.1.1.1': 'cramfs', '1.1.1.2': 'freevxfs', '1.1.1.3': 'hfs',
-        '1.1.1.4': 'hfsplus', '1.1.1.5': 'jffs2', '1.1.1.6': 'squashfs',
-        '1.1.1.7': 'udf', '1.1.1.8': 'usb-storage'
-    }
-    if modprobe_data_file.exists():
-        modprobe_content = modprobe_data_file.read_text()
-        for rule_id, module in kernel_modules.items():
-            if re.search(rf'install\s+{module}\s+/bin/true', modprobe_content) or \
-               re.search(rf'blacklist\s+{module}', modprobe_content):
-                results.append({
-                    'rule_id': rule_id,
-                    'title': f'Ensure {module} kernel module is not available',
-                    'status': 'PASS',
-                    'details': f'{module} is blacklisted or configured to not load.',
-                    'found_value': f'{module} blacklisted/installed to /bin/true',
-                    'expected_value': 'Module not available',
-                    'severity': 'Medium',
-                    'section': 'initial_setup'
-                })
-            else:
-                results.append({
-                    'rule_id': rule_id,
-                    'title': f'Ensure {module} kernel module is not available',
-                    'status': 'FAIL',
-                    'details': f'{module} is not blacklisted or configured to not load. Manual verification required.',
-                    'found_value': f'{module} not blacklisted/installed to /bin/true',
-                    'expected_value': 'Module not available',
-                    'severity': 'Medium',
-                    'section': 'initial_setup'
-                })
-    else:
-        for rule_id, module in kernel_modules.items():
-            results.append({
-                'rule_id': rule_id,
-                'title': f'Ensure {module} kernel module is not available',
-                'status': 'SKIPPED',
-                'details': f'No modprobe data available for {module}.',
-                'found_value': 'No modprobe data available',
-                'expected_value': 'Module not available',
-                'severity': 'Medium',
-                'section': 'initial_setup'
-            })
-
-    # 1.1.2.1 - 1.1.8.3: Ensure separate partitions and mount options
-    partitions_and_options = {
-        '1.1.2.1': {'path': '/tmp', 'options': []},
-        '1.1.2.2': {'path': '/tmp', 'options': ['nodev']},
-        '1.1.2.3': {'path': '/tmp', 'options': ['noexec']},
-        '1.1.2.4': {'path': '/tmp', 'options': ['nosuid']},
-        '1.1.3.1': {'path': '/var', 'options': []},
-        '1.1.4.1': {'path': '/var/tmp', 'options': []},
-        '1.1.4.2': {'path': '/var/tmp', 'options': ['nodev']},
-        '1.1.4.3': {'path': '/var/tmp', 'options': ['noexec']},
-        '1.1.4.4': {'path': '/var/tmp', 'options': ['nosuid']},
-        '1.1.5.1': {'path': '/var/log', 'options': []},
-        '1.1.6.1': {'path': '/var/log/audit', 'options': []},
-        '1.1.7.1': {'path': '/home', 'options': []},
-        '1.1.7.2': {'path': '/home', 'options': ['nodev']},
-        '1.1.8.1': {'path': '/dev/shm', 'options': ['nodev']},
-        '1.1.8.2': {'path': '/dev/shm', 'options': ['noexec']},
-        '1.1.8.3': {'path': '/dev/shm', 'options': ['nosuid']}
-    }
-
-    if mount_data_file.exists():
-        mount_content = mount_data_file.read_text()
-        for rule_id, check_info in partitions_and_options.items():
-            path = check_info['path']
-            options = check_info['options']
+    filesystems = ["cramfs", "freevxfs", "jffs2", "hfs", "hfsplus", "squashfs", "udf", "fat", "vfat", "nfs", "nfs4", "cifs", "autofs", "usb-storage"]
+    
+    failed_fss = []
+    for fs in filesystems:
+        # Check if it's blacklisted in modprobe
+        modprobe_output = _run_command(f"modprobe -n -v {fs}")
+        if modprobe_output is None or "install /bin/true" not in modprobe_output:
+            failed_fss.append(fs)
             
-            # Check for separate partition
-            is_separate = False
-            mount_line = None
-            for line in mount_content.splitlines():
-                if f' on {path} ' in line:
-                    is_separate = True
-                    mount_line = line
-                    break
-            
-            if not is_separate and not options: # Only checking for separate partition
-                results.append({
-                    'rule_id': rule_id,
-                    'title': f'Ensure {path} is a separate partition',
-                    'status': 'FAIL',
-                    'details': f'{path} is not a separate partition.',
-                    'found_value': 'Not separate',
-                    'expected_value': 'Separate partition',
-                    'severity': 'High',
-                    'section': 'initial_setup'
-                })
-            elif is_separate and not options:
-                results.append({
-                    'rule_id': rule_id,
-                    'title': f'Ensure {path} is a separate partition',
-                    'status': 'PASS',
-                    'details': f'{path} is a separate partition.',
-                    'found_value': 'Separate',
-                    'expected_value': 'Separate partition',
-                    'severity': 'High',
-                    'section': 'initial_setup'
-                })
-            elif is_separate and options: # Checking for mount options on a separate partition
-                all_options_present = True
-                found_options = []
-                if mount_line:
-                    mount_options_match = re.search(r'$$([^)]+)$$', mount_line)
-                    if mount_options_match:
-                        found_options = [opt.strip() for opt in mount_options_match.group(1).split(',')]
-                        for opt in options:
-                            if opt not in found_options:
-                                all_options_present = False
-                                break
-                else: # Should not happen if is_separate is True
-                    all_options_present = False
-
-                if all_options_present:
-                    results.append({
-                        'rule_id': rule_id,
-                        'title': f'Ensure {" ".join(options)} option set on {path} partition',
-                        'status': 'PASS',
-                        'details': f'{path} partition has the required mount options: {", ".join(options)}.',
-                        'found_value': f'Options: {", ".join(found_options)}',
-                        'expected_value': f'Options: {", ".join(options)}',
-                        'severity': 'High',
-                        'section': 'initial_setup'
-                    })
-                else:
-                    results.append({
-                        'rule_id': rule_id,
-                        'title': f'Ensure {" ".join(options)} option set on {path} partition',
-                        'status': 'FAIL',
-                        'details': f'{path} partition is missing required mount options: {", ".join(options)}. Found: {", ".join(found_options)}',
-                        'found_value': f'Options: {", ".join(found_options)}',
-                        'expected_value': f'Options: {", ".join(options)}',
-                        'severity': 'High',
-                        'section': 'initial_setup'
-                    })
-            else: # Not a separate partition, and options are expected
-                results.append({
-                    'rule_id': rule_id,
-                    'title': f'Ensure {" ".join(options)} option set on {path} partition',
-                    'status': 'FAIL',
-                    'details': f'{path} is not a separate partition, so mount options cannot be enforced.',
-                    'found_value': 'Not separate',
-                    'expected_value': 'Separate partition with options',
-                    'severity': 'High',
-                    'section': 'initial_setup'
-                })
+    if not failed_fss:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.PASS,
+            "severity": Severity.MEDIUM,
+            "details": "All specified unused filesystems are disabled.",
+            "found_value": "All disabled",
+            "expected_value": "All disabled"
+        }
     else:
-        for rule_id, check_info in partitions_and_options.items():
-            path = check_info['path']
-            options = check_info['options']
-            title_suffix = f' is a separate partition' if not options else f' option set on {path} partition'
-            results.append({
-                'rule_id': rule_id,
-                'title': f'Ensure {path}{title_suffix}',
-                'status': 'SKIPPED',
-                'details': f'No mount data available for {path}.',
-                'found_value': 'No mount data available',
-                'expected_value': 'Mount data available',
-                'severity': 'High',
-                'section': 'initial_setup'
-            })
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.FAIL,
+            "severity": Severity.MEDIUM,
+            "details": f"The following unused filesystems are not disabled: {', '.join(failed_fss)}.",
+            "found_value": f"Not disabled: {', '.join(failed_fss)}",
+            "expected_value": "All disabled",
+            "remediation": f"For each: echo 'install {fs} /bin/true' >> /etc/modprobe.d/{fs}.conf && rmmod {fs}"
+        }
 
-    # 1.1.9.1 - Disable USB Storage
-    rule_id = '1.1.9.1'
-    title = 'Disable USB Storage'
-    if modprobe_data_file.exists():
-        modprobe_content = modprobe_data_file.read_text()
-        if re.search(r'install\s+usb-storage\s+/bin/true', modprobe_content) or \
-           re.search(r'blacklist\s+usb-storage', modprobe_content):
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'PASS',
-                'details': 'USB storage is blacklisted or configured to not load.',
-                'found_value': 'usb-storage blacklisted/installed to /bin/true',
-                'expected_value': 'USB storage disabled',
-                'severity': 'Medium',
-                'section': 'initial_setup'
-            })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': 'USB storage is not blacklisted or configured to not load. Manual verification required.',
-                'found_value': 'usb-storage not blacklisted/installed to /bin/true',
-                'expected_value': 'USB storage disabled',
-                'severity': 'Medium',
-                'section': 'initial_setup'
-            })
-    else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'No modprobe data available for usb-storage.',
-            'found_value': 'No modprobe data available',
-            'expected_value': 'USB storage disabled',
-            'severity': 'Medium',
-            'section': 'initial_setup'
-        })
+def check_filesystem_mount_options_offline(data_dir: str) -> Dict[str, Any]:
+    """
+    CIS 1.1.1: Ensure mounting of unused filesystems is disabled (offline).
+    """
+    rule_id = "1.1.1"
+    title = "Ensure mounting of unused filesystems is disabled"
+    
+    modprobe_d_dir = Path(data_dir) / "system_config" / "modprobe.d"
+    
+    filesystems = ["cramfs", "freevxfs", "jffs2", "hfs", "hfsplus", "squashfs", "udf", "fat", "vfat", "nfs", "nfs4", "cifs", "autofs", "usb-storage"]
+    
+    if not modprobe_d_dir.exists():
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.SKIPPED,
+            "severity": Severity.MEDIUM,
+            "details": "Offline modprobe.d configuration directory not found, cannot verify filesystem mounting options.",
+            "found_value": "N/A",
+            "expected_value": "All specified unused filesystems are disabled"
+        }
 
-    return results
-
-def check_software_updates_offline(data_dir, gpg_key_data_file, yum_repo_data_dir):
-    results = []
-
-    # 1.2.1 - Ensure GPG keys are configured
-    rule_id = '1.2.1'
-    title = 'Ensure GPG keys are configured'
-    if gpg_key_data_file.exists():
-        gpg_key_content = gpg_key_data_file.read_text()
-        if "pub" in gpg_key_content and "uid" in gpg_key_content:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'PASS',
-                'details': 'GPG keys appear to be configured based on collected data.',
-                'found_value': 'GPG key data found',
-                'expected_value': 'GPG keys configured',
-                'severity': 'High',
-                'section': 'initial_setup'
-            })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': 'GPG key data available but does not appear to contain valid keys. Manual verification required.',
-                'found_value': 'GPG key data available but invalid',
-                'expected_value': 'GPG keys configured',
-                'severity': 'High',
-                'section': 'initial_setup'
-            })
-    else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'No GPG key data available.',
-            'found_value': 'No GPG key data available',
-            'expected_value': 'GPG keys configured',
-            'severity': 'High',
-            'section': 'initial_setup'
-        })
-
-    # 1.2.2 - Ensure gpgcheck is globally activated
-    rule_id = '1.2.2'
-    title = 'Ensure gpgcheck is globally activated'
-    expected_value = 'gpgcheck=1'
-    if yum_repo_data_dir.exists():
-        all_repos_checked = True
-        all_gpgcheck_enabled = True
-        found_values = []
-        
-        for repo_file in yum_repo_data_dir.glob("*.repo"):
+    failed_fss = []
+    for fs in filesystems:
+        found_config = False
+        for config_file in modprobe_d_dir.glob(f"*{fs}*.conf"):
             try:
-                repo_content = repo_file.read_text()
-                gpgcheck_match = re.search(r'^\s*gpgcheck\s*=\s*(\d+)', repo_content, re.MULTILINE | re.IGNORECASE)
-                if gpgcheck_match:
-                    current_value = gpgcheck_match.group(1)
-                    found_values.append(f'{repo_file.name}: gpgcheck={current_value}')
-                    if current_value != '1':
-                        all_gpgcheck_enabled = False
-                else:
-                    all_gpgcheck_enabled = False # If not explicitly set, assume not enabled
-                    found_values.append(f'{repo_file.name}: gpgcheck not explicitly set')
-            except Exception:
-                all_repos_checked = False
-                found_values.append(f'{repo_file.name}: Error reading file')
-
-        if not all_repos_checked:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'MANUAL',
-                'details': 'Some repository files could not be read or parsed. Manual review required to ensure gpgcheck is globally activated.',
-                'found_value': '; '.join(found_values),
-                'expected_value': expected_value,
-                'severity': 'High',
-                'section': 'initial_setup'
-            })
-        elif all_gpgcheck_enabled:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'PASS',
-                'details': 'gpgcheck is globally activated in all collected repository files.',
-                'found_value': '; '.join(found_values),
-                'expected_value': expected_value,
-                'severity': 'High',
-                'section': 'initial_setup'
-            })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': 'gpgcheck is not globally activated in all collected repository files. Some repositories may not be verifying package signatures. Found: ' + '; '.join(found_values),
-                'found_value': '; '.join(found_values),
-                'expected_value': expected_value,
-                'severity': 'High',
-                'section': 'initial_setup'
-            })
+                content = config_file.read_text()
+                if f"install {fs} /bin/true" in content:
+                    found_config = True
+                    break
+            except Exception as e:
+                logging.warning(f"Could not read modprobe config file {config_file}: {e}")
+                continue
+        
+        if not found_config:
+            failed_fss.append(fs)
+            
+    if not failed_fss:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.PASS,
+            "severity": Severity.MEDIUM,
+            "details": "All specified unused filesystems are disabled based on collected modprobe.d configurations.",
+            "found_value": "All disabled",
+            "expected_value": "All disabled"
+        }
     else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'No yum.repos.d data available.',
-            'found_value': 'No yum.repos.d data available',
-            'expected_value': expected_value,
-            'severity': 'High',
-            'section': 'initial_setup'
-        })
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.FAIL,
+            "severity": Severity.MEDIUM,
+            "details": f"The following unused filesystems are not disabled in collected modprobe.d configurations: {', '.join(failed_fss)}.",
+            "found_value": f"Not disabled: {', '.join(failed_fss)}",
+            "expected_value": "All disabled",
+            "remediation": f"For each: echo 'install {{fs}} /bin/true' >> /etc/modprobe.d/{{fs}}.conf && rmmod {{fs}}"
+        }
 
-    return results
+def _check_separate_partition(mount_point: str, rule_id: str, title: str, severity: str, fstab_content: Optional[str] = None) -> Dict[str, Any]:
+    """Helper to check for separate partitions."""
+    if fstab_content is None: # Online mode
+        df_output = _run_command("df -h")
+        if df_output is None:
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.ERROR,
+                "severity": Severity.CRITICAL,
+                "details": f"Could not retrieve disk usage information for {mount_point}.",
+                "found_value": "N/A",
+                "expected_value": f"Separate partition for {mount_point}"
+            }
+        
+        if re.search(rf"\s+{re.escape(mount_point)}\s+", df_output, re.MULTILINE):
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.PASS,
+                "severity": severity,
+                "details": f"Separate partition found for {mount_point}.",
+                "found_value": f"Separate partition for {mount_point}",
+                "expected_value": f"Separate partition for {mount_point}"
+            }
+        else:
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.FAIL,
+                "severity": severity,
+                "details": f"No separate partition found for {mount_point}.",
+                "found_value": f"No separate partition for {mount_point}",
+                "expected_value": f"Separate partition for {mount_point}",
+                "remediation": f"Create a separate partition for {mount_point} and configure it in /etc/fstab."
+            }
+    else: # Offline mode
+        if re.search(rf"\s+{re.escape(mount_point)}\s+", fstab_content, re.MULTILINE):
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.PASS,
+                "severity": severity,
+                "details": f"Separate partition found for {mount_point} in collected fstab.",
+                "found_value": f"Separate partition for {mount_point}",
+                "expected_value": f"Separate partition for {mount_point}"
+            }
+        else:
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.FAIL,
+                "severity": severity,
+                "details": f"No separate partition found for {mount_point} in collected fstab.",
+                "found_value": f"No separate partition for {mount_point}",
+                "expected_value": f"Separate partition for {mount_point}",
+                "remediation": f"Create a separate partition for {mount_point} and configure it in /etc/fstab."
+            }
 
-def check_filesystem_integrity_offline(data_dir, aide_status_file):
+def check_separate_partition_for_tmp() -> Dict[str, Any]:
+    return _check_separate_partition("/tmp", "1.1.2", "Ensure separate partition for /tmp", Severity.HIGH)
+
+def check_separate_partition_for_tmp_offline(data_dir: str) -> Dict[str, Any]:
+    fstab_file = Path(data_dir) / "system_info" / "fstab.txt"
+    if not fstab_file.exists():
+        return {
+            "rule_id": "1.1.2",
+            "title": "Ensure separate partition for /tmp",
+            "status": Status.SKIPPED,
+            "severity": Severity.HIGH,
+            "details": "Offline fstab data not found, cannot check separate partition for /tmp.",
+            "found_value": "N/A",
+            "expected_value": "Separate partition for /tmp"
+        }
+    return _check_separate_partition("/tmp", "1.1.2", "Ensure separate partition for /tmp", Severity.HIGH, fstab_file.read_text())
+
+def check_separate_partition_for_var() -> Dict[str, Any]:
+    return _check_separate_partition("/var", "1.1.3", "Ensure separate partition for /var", Severity.MEDIUM)
+
+def check_separate_partition_for_var_offline(data_dir: str) -> Dict[str, Any]:
+    fstab_file = Path(data_dir) / "system_info" / "fstab.txt"
+    if not fstab_file.exists():
+        return {
+            "rule_id": "1.1.3",
+            "title": "Ensure separate partition for /var",
+            "status": Status.SKIPPED,
+            "severity": Severity.MEDIUM,
+            "details": "Offline fstab data not found, cannot check separate partition for /var.",
+            "found_value": "N/A",
+            "expected_value": "Separate partition for /var"
+        }
+    return _check_separate_partition("/var", "1.1.3", "Ensure separate partition for /var", Severity.MEDIUM, fstab_file.read_text())
+
+def check_separate_partition_for_var_log() -> Dict[str, Any]:
+    return _check_separate_partition("/var/log", "1.1.4", "Ensure separate partition for /var/log", Severity.MEDIUM)
+
+def check_separate_partition_for_var_log_offline(data_dir: str) -> Dict[str, Any]:
+    fstab_file = Path(data_dir) / "system_info" / "fstab.txt"
+    if not fstab_file.exists():
+        return {
+            "rule_id": "1.1.4",
+            "title": "Ensure separate partition for /var/log",
+            "status": Status.SKIPPED,
+            "severity": Severity.MEDIUM,
+            "details": "Offline fstab data not found, cannot check separate partition for /var/log.",
+            "found_value": "N/A",
+            "expected_value": "Separate partition for /var/log"
+        }
+    return _check_separate_partition("/var/log", "1.1.4", "Ensure separate partition for /var/log", Severity.MEDIUM, fstab_file.read_text())
+
+def check_separate_partition_for_var_log_audit() -> Dict[str, Any]:
+    return _check_separate_partition("/var/log/audit", "1.1.5", "Ensure separate partition for /var/log/audit", Severity.CRITICAL)
+
+def check_separate_partition_for_var_log_audit_offline(data_dir: str) -> Dict[str, Any]:
+    fstab_file = Path(data_dir) / "system_info" / "fstab.txt"
+    if not fstab_file.exists():
+        return {
+            "rule_id": "1.1.5",
+            "title": "Ensure separate partition for /var/log/audit",
+            "status": Status.SKIPPED,
+            "severity": Severity.CRITICAL,
+            "details": "Offline fstab data not found, cannot check separate partition for /var/log/audit.",
+            "found_value": "N/A",
+            "expected_value": "Separate partition for /var/log/audit"
+        }
+    return _check_separate_partition("/var/log/audit", "1.1.5", "Ensure separate partition for /var/log/audit", Severity.CRITICAL, fstab_file.read_text())
+
+def check_separate_partition_for_home() -> Dict[str, Any]:
+    return _check_separate_partition("/home", "1.1.6", "Ensure separate partition for /home", Severity.MEDIUM)
+
+def check_separate_partition_for_home_offline(data_dir: str) -> Dict[str, Any]:
+    fstab_file = Path(data_dir) / "system_info" / "fstab.txt"
+    if not fstab_file.exists():
+        return {
+            "rule_id": "1.1.6",
+            "title": "Ensure separate partition for /home",
+            "status": Status.SKIPPED,
+            "severity": Severity.MEDIUM,
+            "details": "Offline fstab data not found, cannot check separate partition for /home.",
+            "found_value": "N/A",
+            "expected_value": "Separate partition for /home"
+        }
+    return _check_separate_partition("/home", "1.1.6", "Ensure separate partition for /home", Severity.MEDIUM, fstab_file.read_text())
+
+def check_separate_partition_for_var_tmp() -> Dict[str, Any]:
+    return _check_separate_partition("/var/tmp", "1.1.7", "Ensure separate partition for /var/tmp", Severity.MEDIUM)
+
+def check_separate_partition_for_var_tmp_offline(data_dir: str) -> Dict[str, Any]:
+    fstab_file = Path(data_dir) / "system_info" / "fstab.txt"
+    if not fstab_file.exists():
+        return {
+            "rule_id": "1.1.7",
+            "title": "Ensure separate partition for /var/tmp",
+            "status": Status.SKIPPED,
+            "severity": Severity.MEDIUM,
+            "details": "Offline fstab data not found, cannot check separate partition for /var/tmp.",
+            "found_value": "N/A",
+            "expected_value": "Separate partition for /var/tmp"
+        }
+    return _check_separate_partition("/var/tmp", "1.1.7", "Ensure separate partition for /var/tmp", Severity.MEDIUM, fstab_file.read_text())
+
+def check_separate_partition_for_dev_shm() -> Dict[str, Any]:
+    return _check_separate_partition("/dev/shm", "1.1.8", "Ensure separate partition for /dev/shm", Severity.MEDIUM)
+
+def check_separate_partition_for_dev_shm_offline(data_dir: str) -> Dict[str, Any]:
+    fstab_file = Path(data_dir) / "system_info" / "fstab.txt"
+    if not fstab_file.exists():
+        return {
+            "rule_id": "1.1.8",
+            "title": "Ensure separate partition for /dev/shm",
+            "status": Status.SKIPPED,
+            "severity": Severity.MEDIUM,
+            "details": "Offline fstab data not found, cannot check separate partition for /dev/shm.",
+            "found_value": "N/A",
+            "expected_value": "Separate partition for /dev/shm"
+        }
+    return _check_separate_partition("/dev/shm", "1.1.8", "Ensure separate partition for /dev/shm", Severity.MEDIUM, fstab_file.read_text())
+
+def _check_mount_option(mount_point: str, option: str, rule_id: str, title: str, severity: str, fstab_content: Optional[str] = None) -> Dict[str, Any]:
+    """Helper to check for specific mount options."""
+    if fstab_content is None: # Online mode
+        mount_output = _run_command(f"findmnt -n -o OPTIONS {mount_point}")
+        if mount_output is None:
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.ERROR,
+                "severity": severity,
+                "details": f"Could not retrieve mount options for {mount_point}.",
+                "found_value": "N/A",
+                "expected_value": f"{option} option on {mount_point}"
+            }
+        
+        if option in mount_output:
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.PASS,
+                "severity": severity,
+                "details": f"{option} option is set on {mount_point}.",
+                "found_value": mount_output,
+                "expected_value": f"{option} option on {mount_point}"
+            }
+        else:
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.FAIL,
+                "severity": severity,
+                "details": f"{option} option is NOT set on {mount_point}.",
+                "found_value": mount_output,
+                "expected_value": f"{option} option on {mount_point}",
+                "remediation": f"Add '{option}' to the options for {mount_point} in /etc/fstab and remount."
+            }
+    else: # Offline mode
+        # Find the line for the mount_point in fstab_content
+        lines = fstab_content.splitlines()
+        for line in lines:
+            if not line.strip() or line.strip().startswith('#'):
+                continue
+            parts = line.split()
+            if len(parts) >= 4 and parts[1] == mount_point:
+                options_str = parts[3]
+                if option in options_str:
+                    return {
+                        "rule_id": rule_id,
+                        "title": title,
+                        "status": Status.PASS,
+                        "severity": severity,
+                        "details": f"{option} option is set on {mount_point} in collected fstab.",
+                        "found_value": options_str,
+                        "expected_value": f"{option} option on {mount_point}"
+                    }
+                else:
+                    return {
+                        "rule_id": rule_id,
+                        "title": title,
+                        "status": Status.FAIL,
+                        "severity": severity,
+                        "details": f"{option} option is NOT set on {mount_point} in collected fstab.",
+                        "found_value": options_str,
+                        "expected_value": f"{option} option on {mount_point}",
+                        "remediation": f"Add '{option}' to the options for {mount_point} in /etc/fstab and remount."
+                    }
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.FAIL,
+            "severity": severity,
+            "details": f"Mount point {mount_point} not found in collected fstab.",
+            "found_value": "Not found in fstab",
+            "expected_value": f"{option} option on {mount_point}",
+            "remediation": f"Ensure {mount_point} is configured in /etc/fstab with the '{option}' option."
+        }
+
+def check_nodev_on_removable_media() -> Dict[str, Any]:
+    """
+    CIS 1.1.9: Ensure nodev option set on /tmp, /var/tmp, /home, /dev/shm.
+    This is a general check for common removable media mount points.
+    """
+    rule_id = "1.1.9"
+    title = "Ensure nodev option set on removable media partitions"
+    mount_points = ["/tmp", "/var/tmp", "/home", "/dev/shm"]
     results = []
+    for mp in mount_points:
+        results.append(_check_mount_option(mp, "nodev", rule_id, f"Ensure nodev on {mp}", Severity.HIGH))
+    
+    # Aggregate results for this rule
+    overall_status = Status.PASS
+    overall_details = []
+    overall_found_value = []
+    overall_remediation = []
 
-    # 1.3.1 - Ensure AIDE is installed
-    rule_id = '1.3.1'
-    title = 'Ensure AIDE is installed'
-    expected_status = 'installed'
+    for res in results:
+        if res['status'] == Status.FAIL:
+            overall_status = Status.FAIL
+            overall_details.append(res['details'])
+            if res.get('remediation'):
+                overall_remediation.append(res['remediation'])
+        elif res['status'] == Status.ERROR:
+            overall_status = Status.ERROR
+            overall_details.append(res['details'])
+        else:
+            overall_details.append(res['details'])
+        overall_found_value.append(f"{res['title']}: {res['found_value']}")
+
+    if overall_status == Status.PASS:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": overall_status,
+            "severity": Severity.HIGH,
+            "details": "All specified mount points have 'nodev' option set.",
+            "found_value": "; ".join(overall_found_value),
+            "expected_value": "nodev on /tmp, /var/tmp, /home, /dev/shm"
+        }
+    else:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": overall_status,
+            "severity": Severity.HIGH,
+            "details": "Some mount points do not have 'nodev' option set: " + " ".join(overall_details),
+            "found_value": "; ".join(overall_found_value),
+            "expected_value": "nodev on /tmp, /var/tmp, /home, /dev/shm",
+            "remediation": " ".join(overall_remediation) if overall_remediation else None
+        }
+
+def check_nodev_on_removable_media_offline(data_dir: str) -> Dict[str, Any]:
+    rule_id = "1.1.9"
+    title = "Ensure nodev option set on removable media partitions"
+    mount_points = ["/tmp", "/var/tmp", "/home", "/dev/shm"]
+    
+    fstab_file = Path(data_dir) / "system_info" / "fstab.txt"
+    if not fstab_file.exists():
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.SKIPPED,
+            "severity": Severity.HIGH,
+            "details": "Offline fstab data not found, cannot check nodev option on removable media partitions.",
+            "found_value": "N/A",
+            "expected_value": "nodev on /tmp, /var/tmp, /home, /dev/shm"
+        }
+    fstab_content = fstab_file.read_text()
+
+    results = []
+    for mp in mount_points:
+        results.append(_check_mount_option(mp, "nodev", rule_id, f"Ensure nodev on {mp}", Severity.HIGH, fstab_content))
+    
+    overall_status = Status.PASS
+    overall_details = []
+    overall_found_value = []
+    overall_remediation = []
+
+    for res in results:
+        if res['status'] == Status.FAIL:
+            overall_status = Status.FAIL
+            overall_details.append(res['details'])
+            if res.get('remediation'):
+                overall_remediation.append(res['remediation'])
+        elif res['status'] == Status.ERROR:
+            overall_status = Status.ERROR
+            overall_details.append(res['details'])
+        elif res['status'] == Status.SKIPPED: # If any sub-check is skipped, the overall is skipped
+            overall_status = Status.SKIPPED
+            overall_details.append(res['details'])
+        else:
+            overall_details.append(res['details'])
+        overall_found_value.append(f"{res['title']}: {res['found_value']}")
+
+    if overall_status == Status.SKIPPED:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": overall_status,
+            "severity": Severity.HIGH,
+            "details": "Some or all required data for checking nodev option on removable media partitions was skipped: " + " ".join(overall_details),
+            "found_value": "N/A",
+            "expected_value": "nodev on /tmp, /var/tmp, /home, /dev/shm"
+        }
+    elif overall_status == Status.PASS:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": overall_status,
+            "severity": Severity.HIGH,
+            "details": "All specified mount points have 'nodev' option set based on collected fstab.",
+            "found_value": "; ".join(overall_found_value),
+            "expected_value": "nodev on /tmp, /var/tmp, /home, /dev/shm"
+        }
+    else:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": overall_status,
+            "severity": Severity.HIGH,
+            "details": "Some mount points do not have 'nodev' option set in collected fstab: " + " ".join(overall_details),
+            "found_value": "; ".join(overall_found_value),
+            "expected_value": "nodev on /tmp, /var/tmp, /home, /dev/shm",
+            "remediation": " ".join(overall_remediation) if overall_remediation else None
+        }
+
+def check_nosuid_on_removable_media() -> Dict[str, Any]:
+    """
+    CIS 1.1.10: Ensure nosuid option set on /tmp, /var/tmp, /home, /dev/shm.
+    """
+    rule_id = "1.1.10"
+    title = "Ensure nosuid option set on removable media partitions"
+    mount_points = ["/tmp", "/var/tmp", "/home", "/dev/shm"]
+    results = []
+    for mp in mount_points:
+        results.append(_check_mount_option(mp, "nosuid", rule_id, f"Ensure nosuid on {mp}", Severity.HIGH))
+    
+    overall_status = Status.PASS
+    overall_details = []
+    overall_found_value = []
+    overall_remediation = []
+
+    for res in results:
+        if res['status'] == Status.FAIL:
+            overall_status = Status.FAIL
+            overall_details.append(res['details'])
+            if res.get('remediation'):
+                overall_remediation.append(res['remediation'])
+        elif res['status'] == Status.ERROR:
+            overall_status = Status.ERROR
+            overall_details.append(res['details'])
+        else:
+            overall_details.append(res['details'])
+        overall_found_value.append(f"{res['title']}: {res['found_value']}")
+
+    if overall_status == Status.PASS:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": overall_status,
+            "severity": Severity.HIGH,
+            "details": "All specified mount points have 'nosuid' option set.",
+            "found_value": "; ".join(overall_found_value),
+            "expected_value": "nosuid on /tmp, /var/tmp, /home, /dev/shm"
+        }
+    else:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": overall_status,
+            "severity": Severity.HIGH,
+            "details": "Some mount points do not have 'nosuid' option set: " + " ".join(overall_details),
+            "found_value": "; ".join(overall_found_value),
+            "expected_value": "nosuid on /tmp, /var/tmp, /home, /dev/shm",
+            "remediation": " ".join(overall_remediation) if overall_remediation else None
+        }
+
+def check_nosuid_on_removable_media_offline(data_dir: str) -> Dict[str, Any]:
+    rule_id = "1.1.10"
+    title = "Ensure nosuid option set on removable media partitions"
+    mount_points = ["/tmp", "/var/tmp", "/home", "/dev/shm"]
+    
+    fstab_file = Path(data_dir) / "system_info" / "fstab.txt"
+    if not fstab_file.exists():
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.SKIPPED,
+            "severity": Severity.HIGH,
+            "details": "Offline fstab data not found, cannot check nosuid option on removable media partitions.",
+            "found_value": "N/A",
+            "expected_value": "nosuid on /tmp, /var/tmp, /home, /dev/shm"
+        }
+    fstab_content = fstab_file.read_text()
+
+    results = []
+    for mp in mount_points:
+        results.append(_check_mount_option(mp, "nosuid", rule_id, f"Ensure nosuid on {mp}", Severity.HIGH, fstab_content))
+    
+    overall_status = Status.PASS
+    overall_details = []
+    overall_found_value = []
+    overall_remediation = []
+
+    for res in results:
+        if res['status'] == Status.FAIL:
+            overall_status = Status.FAIL
+            overall_details.append(res['details'])
+            if res.get('remediation'):
+                overall_remediation.append(res['remediation'])
+        elif res['status'] == Status.ERROR:
+            overall_status = Status.ERROR
+            overall_details.append(res['details'])
+        elif res['status'] == Status.SKIPPED:
+            overall_status = Status.SKIPPED
+            overall_details.append(res['details'])
+        else:
+            overall_details.append(res['details'])
+        overall_found_value.append(f"{res['title']}: {res['found_value']}")
+
+    if overall_status == Status.SKIPPED:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": overall_status,
+            "severity": Severity.HIGH,
+            "details": "Some or all required data for checking nosuid option on removable media partitions was skipped: " + " ".join(overall_details),
+            "found_value": "N/A",
+            "expected_value": "nosuid on /tmp, /var/tmp, /home, /dev/shm"
+        }
+    elif overall_status == Status.PASS:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": overall_status,
+            "severity": Severity.HIGH,
+            "details": "All specified mount points have 'nosuid' option set based on collected fstab.",
+            "found_value": "; ".join(overall_found_value),
+            "expected_value": "nosuid on /tmp, /var/tmp, /home, /dev/shm"
+        }
+    else:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": overall_status,
+            "severity": Severity.HIGH,
+            "details": "Some mount points do not have 'nosuid' option set in collected fstab: " + " ".join(overall_details),
+            "found_value": "; ".join(overall_found_value),
+            "expected_value": "nosuid on /tmp, /var/tmp, /home, /dev/shm",
+            "remediation": " ".join(overall_remediation) if overall_remediation else None
+        }
+
+def check_noexec_on_removable_media() -> Dict[str, Any]:
+    """
+    CIS 1.1.11: Ensure noexec option set on /tmp, /var/tmp, /home, /dev/shm.
+    """
+    rule_id = "1.1.11"
+    title = "Ensure noexec option set on removable media partitions"
+    mount_points = ["/tmp", "/var/tmp", "/home", "/dev/shm"]
+    results = []
+    for mp in mount_points:
+        results.append(_check_mount_option(mp, "noexec", rule_id, f"Ensure noexec on {mp}", Severity.HIGH))
+    
+    overall_status = Status.PASS
+    overall_details = []
+    overall_found_value = []
+    overall_remediation = []
+
+    for res in results:
+        if res['status'] == Status.FAIL:
+            overall_status = Status.FAIL
+            overall_details.append(res['details'])
+            if res.get('remediation'):
+                overall_remediation.append(res['remediation'])
+        elif res['status'] == Status.ERROR:
+            overall_status = Status.ERROR
+            overall_details.append(res['details'])
+        else:
+            overall_details.append(res['details'])
+        overall_found_value.append(f"{res['title']}: {res['found_value']}")
+
+    if overall_status == Status.PASS:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": overall_status,
+            "severity": Severity.HIGH,
+            "details": "All specified mount points have 'noexec' option set.",
+            "found_value": "; ".join(overall_found_value),
+            "expected_value": "noexec on /tmp, /var/tmp, /home, /dev/shm"
+        }
+    else:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": overall_status,
+            "severity": Severity.HIGH,
+            "details": "Some mount points do not have 'noexec' option set: " + " ".join(overall_details),
+            "found_value": "; ".join(overall_found_value),
+            "expected_value": "noexec on /tmp, /var/tmp, /home, /dev/shm",
+            "remediation": " ".join(overall_remediation) if overall_remediation else None
+        }
+
+def check_noexec_on_removable_media_offline(data_dir: str) -> Dict[str, Any]:
+    rule_id = "1.1.11"
+    title = "Ensure noexec option set on removable media partitions"
+    mount_points = ["/tmp", "/var/tmp", "/home", "/dev/shm"]
+    
+    fstab_file = Path(data_dir) / "system_info" / "fstab.txt"
+    if not fstab_file.exists():
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.SKIPPED,
+            "severity": Severity.HIGH,
+            "details": "Offline fstab data not found, cannot check noexec option on removable media partitions.",
+            "found_value": "N/A",
+            "expected_value": "noexec on /tmp, /var/tmp, /home, /dev/shm"
+        }
+    fstab_content = fstab_file.read_text()
+
+    results = []
+    for mp in mount_points:
+        results.append(_check_mount_option(mp, "noexec", rule_id, f"Ensure noexec on {mp}", Severity.HIGH, fstab_content))
+    
+    overall_status = Status.PASS
+    overall_details = []
+    overall_found_value = []
+    overall_remediation = []
+
+    for res in results:
+        if res['status'] == Status.FAIL:
+            overall_status = Status.FAIL
+            overall_details.append(res['details'])
+            if res.get('remediation'):
+                overall_remediation.append(res['remediation'])
+        elif res['status'] == Status.ERROR:
+            overall_status = Status.ERROR
+            overall_details.append(res['details'])
+        elif res['status'] == Status.SKIPPED:
+            overall_status = Status.SKIPPED
+            overall_details.append(res['details'])
+        else:
+            overall_details.append(res['details'])
+        overall_found_value.append(f"{res['title']}: {res['found_value']}")
+
+    if overall_status == Status.SKIPPED:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": overall_status,
+            "severity": Severity.HIGH,
+            "details": "Some or all required data for checking noexec option on removable media partitions was skipped: " + " ".join(overall_details),
+            "found_value": "N/A",
+            "expected_value": "noexec on /tmp, /var/tmp, /home, /dev/shm"
+        }
+    elif overall_status == Status.PASS:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": overall_status,
+            "severity": Severity.HIGH,
+            "details": "All specified mount points have 'noexec' option set based on collected fstab.",
+            "found_value": "; ".join(overall_found_value),
+            "expected_value": "noexec on /tmp, /var/tmp, /home, /dev/shm"
+        }
+    else:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": overall_status,
+            "severity": Severity.HIGH,
+            "details": "Some mount points do not have 'noexec' option set in collected fstab: " + " ".join(overall_details),
+            "found_value": "; ".join(overall_found_value),
+            "expected_value": "noexec on /tmp, /var/tmp, /home, /dev/shm",
+            "remediation": " ".join(overall_remediation) if overall_remediation else None
+        }
+
+def check_sticky_bit_on_world_writable_directories() -> Dict[str, Any]:
+    """
+    CIS 1.1.12: Ensure sticky bit is set on all world-writable directories.
+    """
+    rule_id = "1.1.12"
+    title = "Ensure sticky bit is set on all world-writable directories"
+    
+    # Find world-writable directories that do not have the sticky bit set
+    command = "find / -xdev -type d -perm -0002 -a ! -perm -1000 2>/dev/null"
+    output = _run_command(command)
+    
+    if output is None:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.ERROR,
+            "severity": Severity.HIGH,
+            "details": "Could not execute find command to check world-writable directories.",
+            "found_value": "N/A",
+            "expected_value": "Sticky bit set on all world-writable directories"
+        }
+    
+    non_compliant_dirs = [d for d in output.splitlines() if d.strip()]
+    
+    if not non_compliant_dirs:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.PASS,
+            "severity": Severity.HIGH,
+            "details": "All world-writable directories have the sticky bit set.",
+            "found_value": "No non-compliant directories found",
+            "expected_value": "Sticky bit set on all world-writable directories"
+        }
+    else:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.FAIL,
+            "severity": Severity.HIGH,
+            "details": f"The following world-writable directories do not have the sticky bit set: {', '.join(non_compliant_dirs)}.",
+            "found_value": f"Non-compliant directories: {', '.join(non_compliant_dirs)}",
+            "expected_value": "Sticky bit set on all world-writable directories",
+            "remediation": f"For each directory: chmod +t <directory>"
+        }
+
+def check_sticky_bit_on_world_writable_directories_offline(data_dir: str) -> Dict[str, Any]:
+    """
+    CIS 1.1.12: Ensure sticky bit is set on all world-writable directories (offline).
+    This check is difficult to perform accurately offline without a full filesystem snapshot
+    including permissions. Marking as manual.
+    """
+    rule_id = "1.1.12"
+    title = "Ensure sticky bit is set on all world-writable directories"
+    
+    # We would need a file containing `find / -xdev -type d -perm -0002 -a ! -perm -1000` output
+    # For now, mark as manual.
+    world_writable_dirs_file = Path(data_dir) / "system_info" / "world_writable_dirs.txt"
+
+    if world_writable_dirs_file.exists():
+        content = world_writable_dirs_file.read_text()
+        non_compliant_dirs = [d for d in content.splitlines() if d.strip()]
+        
+        if not non_compliant_dirs:
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.PASS,
+                "severity": Severity.HIGH,
+                "details": "All world-writable directories have the sticky bit set based on collected data.",
+                "found_value": "No non-compliant directories found",
+                "expected_value": "Sticky bit set on all world-writable directories"
+            }
+        else:
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.FAIL,
+                "severity": Severity.HIGH,
+                "details": f"The following world-writable directories do not have the sticky bit set based on collected data: {', '.join(non_compliant_dirs)}.",
+                "found_value": f"Non-compliant directories: {', '.join(non_compliant_dirs)}",
+                "expected_value": "Sticky bit set on all world-writable directories",
+                "remediation": f"For each directory: chmod +t <directory>"
+            }
+    else:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.SKIPPED,
+            "severity": Severity.HIGH,
+            "details": "Offline data for world-writable directories (world_writable_dirs.txt) not found, cannot check sticky bit.",
+            "found_value": "N/A",
+            "expected_value": "Sticky bit set on all world-writable directories"
+        }
+
+def _check_kernel_module_disabled(module_name: str, rule_id: str, title: str, severity: str, modprobe_d_dir: Optional[Path] = None) -> Dict[str, Any]:
+    """Helper to check if a kernel module is disabled."""
+    if modprobe_d_dir is None: # Online mode
+        modprobe_output = _run_command(f"modprobe -n -v {module_name}")
+        lsmod_output = _run_command(f"lsmod | grep {module_name}")
+        
+        if modprobe_output and "install /bin/true" in modprobe_output and (lsmod_output is None or not lsmod_output.strip()):
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.PASS,
+                "severity": severity,
+                "details": f"Kernel module '{module_name}' is disabled and not loaded.",
+                "found_value": f"Module disabled: {module_name}",
+                "expected_value": f"Module {module_name} disabled"
+            }
+        else:
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.FAIL,
+                "severity": severity,
+                "details": f"Kernel module '{module_name}' is not properly disabled or is currently loaded.",
+                "found_value": f"Modprobe: {modprobe_output}, lsmod: {lsmod_output}",
+                "expected_value": f"Module {module_name} disabled",
+                "remediation": f"echo 'install {module_name} /bin/true' >> /etc/modprobe.d/{module_name}.conf && rmmod {module_name}"
+            }
+    else: # Offline mode
+        found_config = False
+        for config_file in modprobe_d_dir.glob(f"*{module_name}*.conf"):
+            try:
+                content = config_file.read_text()
+                if f"install {module_name} /bin/true" in content:
+                    found_config = True
+                    break
+            except Exception as e:
+                logging.warning(f"Could not read modprobe config file {config_file}: {e}")
+                continue
+        
+        if found_config:
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.PASS,
+                "severity": severity,
+                "details": f"Kernel module '{module_name}' is configured to be disabled based on collected modprobe.d configurations.",
+                "found_value": f"Module disabled in config: {module_name}",
+                "expected_value": f"Module {module_name} disabled"
+            }
+        else:
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.FAIL,
+                "severity": severity,
+                "details": f"Kernel module '{module_name}' is not configured to be disabled in collected modprobe.d configurations.",
+                "found_value": f"Module not disabled in config: {module_name}",
+                "expected_value": f"Module {module_name} disabled",
+                "remediation": f"echo 'install {module_name} /bin/true' >> /etc/modprobe.d/{module_name}.conf"
+            }
+
+def check_disable_usb_storage() -> Dict[str, Any]:
+    return _check_kernel_module_disabled("usb-storage", "1.1.13", "Ensure USB storage is disabled", Severity.MEDIUM)
+
+def check_disable_usb_storage_offline(data_dir: str) -> Dict[str, Any]:
+    modprobe_d_dir = Path(data_dir) / "system_config" / "modprobe.d"
+    if not modprobe_d_dir.exists():
+        return {
+            "rule_id": "1.1.13",
+            "title": "Ensure USB storage is disabled",
+            "status": Status.SKIPPED,
+            "severity": Severity.MEDIUM,
+            "details": "Offline modprobe.d configuration directory not found, cannot check USB storage disablement.",
+            "found_value": "N/A",
+            "expected_value": "USB storage disabled"
+        }
+    return _check_kernel_module_disabled("usb-storage", "1.1.13", "Ensure USB storage is disabled", Severity.MEDIUM, modprobe_d_dir)
+
+def check_disable_automounting() -> Dict[str, Any]:
+    """
+    CIS 1.1.14: Ensure automounting is disabled.
+    """
+    rule_id = "1.1.14"
+    title = "Ensure automounting is disabled"
+    
+    # Check if autofs service is disabled
+    systemctl_output = _run_command("systemctl is-enabled autofs")
+    
+    if systemctl_output == "disabled":
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.PASS,
+            "severity": Severity.MEDIUM,
+            "details": "autofs service is disabled, ensuring automounting is disabled.",
+            "found_value": "autofs disabled",
+            "expected_value": "autofs disabled"
+        }
+    else:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.FAIL,
+            "severity": Severity.MEDIUM,
+            "details": f"autofs service is {systemctl_output}. Automounting may be enabled.",
+            "found_value": f"autofs {systemctl_output}",
+            "expected_value": "autofs disabled",
+            "remediation": "Run: systemctl disable autofs --now"
+        }
+
+def check_disable_automounting_offline(data_dir: str) -> Dict[str, Any]:
+    """
+    CIS 1.1.14: Ensure automounting is disabled (offline).
+    """
+    rule_id = "1.1.14"
+    title = "Ensure automounting is disabled"
+    
+    services_file = Path(data_dir) / "system" / "services.txt"
+
+    if services_file.exists():
+        services_content = services_file.read_text()
+        if "autofs.service; disabled" in services_content:
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.PASS,
+                "severity": Severity.MEDIUM,
+                "details": "autofs service is disabled based on collected data, ensuring automounting is disabled.",
+                "found_value": "autofs disabled",
+                "expected_value": "autofs disabled"
+            }
+        else:
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.FAIL,
+                "severity": Severity.MEDIUM,
+                "details": "autofs service is not disabled in collected data. Automounting may be enabled.",
+                "found_value": "autofs not disabled",
+                "expected_value": "autofs disabled",
+                "remediation": "Run: systemctl disable autofs --now"
+            }
+    else:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.SKIPPED,
+            "severity": Severity.MEDIUM,
+            "details": "Offline services data (services.txt) not found, cannot check automounting status.",
+            "found_value": "N/A",
+            "expected_value": "autofs disabled"
+        }
+
+def check_disable_unused_filesystems() -> Dict[str, Any]:
+    """
+    CIS 1.1.15: Ensure unused filesystems are disabled.
+    This is a manual check, as "unused" depends on system role.
+    """
+    rule_id = "1.1.15"
+    title = "Ensure unused filesystems are disabled"
+    
+    return {
+        "rule_id": rule_id,
+        "title": title,
+        "status": Status.MANUAL,
+        "severity": Severity.MEDIUM,
+        "details": "Review currently mounted filesystems using 'findmnt' and kernel modules using 'lsmod' to ensure no unnecessary filesystems are enabled or mounted. This check requires manual verification based on system's role.",
+        "found_value": "Requires manual review",
+        "expected_value": "Only necessary filesystems enabled/mounted"
+    }
+
+def check_disable_unused_filesystems_offline(data_dir: str) -> Dict[str, Any]:
+    """
+    CIS 1.1.15: Ensure unused filesystems are disabled (offline).
+    """
+    rule_id = "1.1.15"
+    title = "Ensure unused filesystems are disabled"
+    
+    findmnt_file = Path(data_dir) / "system_info" / "findmnt.txt"
+    lsmod_file = Path(data_dir) / "system_info" / "lsmod.txt"
+
+    if findmnt_file.exists() or lsmod_file.exists():
+        details = "Review collected mounted filesystems (findmnt.txt) and loaded kernel modules (lsmod.txt) to ensure no unnecessary filesystems are enabled or mounted. This check requires manual verification based on system's role."
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.MANUAL,
+            "severity": Severity.MEDIUM,
+            "details": details,
+            "found_value": "Review collected findmnt.txt and lsmod.txt",
+            "expected_value": "Only necessary filesystems enabled/mounted"
+        }
+    else:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.SKIPPED,
+            "severity": Severity.MEDIUM,
+            "details": "Offline data for mounted filesystems (findmnt.txt) or loaded modules (lsmod.txt) not found, cannot check unused filesystems.",
+            "found_value": "N/A",
+            "expected_value": "Only necessary filesystems enabled/mounted"
+        }
+
+def check_ensure_aide_installed() -> Dict[str, Any]:
+    """
+    CIS 1.2.1: Ensure AIDE is installed.
+    """
+    rule_id = "1.2.1"
+    title = "Ensure AIDE is installed"
+    
+    rpm_output = _run_command("rpm -q aide")
+    if rpm_output is None or "not installed" in rpm_output:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.FAIL,
+            "severity": Severity.HIGH,
+            "details": "AIDE package is not installed.",
+            "found_value": "Not installed",
+            "expected_value": "AIDE installed",
+            "remediation": "Run: dnf install aide"
+        }
+    else:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.PASS,
+            "severity": Severity.HIGH,
+            "details": "AIDE package is installed.",
+            "found_value": rpm_output,
+            "expected_value": "AIDE installed"
+        }
+
+def check_ensure_aide_installed_offline(data_dir: str) -> Dict[str, Any]:
+    """
+    CIS 1.2.1: Ensure AIDE is installed (offline).
+    """
+    rule_id = "1.2.1"
+    title = "Ensure AIDE is installed"
+    
     packages_file = Path(data_dir) / "system" / "packages.txt"
+
     if packages_file.exists():
         packages_content = packages_file.read_text()
-        if 'aide-' in packages_content:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'PASS',
-                'details': 'AIDE package found in collected installed packages.',
-                'found_value': 'aide package found',
-                'expected_value': expected_status,
-                'severity': 'High',
-                'section': 'initial_setup'
-            })
+        if "aide-" in packages_content:
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.PASS,
+                "severity": Severity.HIGH,
+                "details": "AIDE package found in collected installed packages.",
+                "found_value": "aide package found",
+                "expected_value": "AIDE installed"
+            }
         else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': 'AIDE package not found in collected installed packages.',
-                'found_value': 'aide package not found',
-                'expected_value': expected_status,
-                'severity': 'High',
-                'section': 'initial_setup'
-            })
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.FAIL,
+                "severity": Severity.HIGH,
+                "details": "AIDE package not found in collected installed packages.",
+                "found_value": "aide package not found",
+                "expected_value": "AIDE installed",
+                "remediation": "Run: dnf install aide"
+            }
     else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'Package information (packages.txt) not available in collected data, cannot check AIDE installation.',
-            'found_value': 'Data file not found',
-            'expected_value': expected_status,
-            'severity': 'High',
-            'section': 'initial_setup'
-        })
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.SKIPPED,
+            "severity": Severity.HIGH,
+            "details": "Offline package data (packages.txt) not found, cannot verify AIDE installation.",
+            "found_value": "N/A",
+            "expected_value": "AIDE installed"
+        }
 
-    # 1.3.2 - Ensure filesystem integrity is regularly checked
-    rule_id = '1.3.2'
-    title = 'Ensure filesystem integrity is regularly checked'
-    expected_status = 'scheduled'
-    if aide_status_file.exists():
-        aide_status_content = aide_status_file.read_text()
-        if "aide.timer" in aide_status_content and "enabled" in aide_status_content:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'PASS',
-                'details': 'AIDE timer is enabled, indicating regular filesystem integrity checks.',
-                'found_value': 'aide.timer enabled',
-                'expected_value': expected_status,
-                'severity': 'High',
-                'section': 'initial_setup'
-            })
+def check_ensure_aide_initialized() -> Dict[str, Any]:
+    """
+    CIS 1.2.2: Ensure AIDE is initialized.
+    """
+    rule_id = "1.2.2"
+    title = "Ensure AIDE is initialized"
+    
+    if os.path.exists("/var/lib/aide/aide.db.gz"):
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.PASS,
+            "severity": Severity.HIGH,
+            "details": "AIDE database file /var/lib/aide/aide.db.gz exists, indicating AIDE has been initialized.",
+            "found_value": "aide.db.gz exists",
+            "expected_value": "AIDE initialized"
+        }
+    else:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.FAIL,
+            "severity": Severity.HIGH,
+            "details": "AIDE database file /var/lib/aide/aide.db.gz does not exist. AIDE may not have been initialized.",
+            "found_value": "aide.db.gz not found",
+            "expected_value": "AIDE initialized",
+            "remediation": "Run: aide --init && mv /var/lib/aide/aide.db.new.gz /var/lib/aide/aide.db.gz"
+        }
+
+def check_ensure_aide_initialized_offline(data_dir: str) -> Dict[str, Any]:
+    """
+    CIS 1.2.2: Ensure AIDE is initialized (offline).
+    """
+    rule_id = "1.2.2"
+    title = "Ensure AIDE is initialized"
+    
+    aide_db_file = Path(data_dir) / "security" / "aide" / "aide.db.gz"
+
+    if aide_db_file.exists():
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.PASS,
+            "severity": Severity.HIGH,
+            "details": "AIDE database file aide.db.gz found in collected data, indicating AIDE has been initialized.",
+            "found_value": "aide.db.gz exists",
+            "expected_value": "AIDE initialized"
+        }
+    else:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.FAIL,
+            "severity": Severity.HIGH,
+            "details": "AIDE database file aide.db.gz not found in collected data. AIDE may not have been initialized.",
+            "found_value": "aide.db.gz not found",
+            "expected_value": "AIDE initialized",
+            "remediation": "Run: aide --init && mv /var/lib/aide/aide.db.new.gz /var/lib/aide/aide.db.gz"
+        }
+
+def check_ensure_aide_cron_job() -> Dict[str, Any]:
+    """
+    CIS 1.2.3: Ensure AIDE check is regularly performed.
+    """
+    rule_id = "1.2.3"
+    title = "Ensure AIDE check is regularly performed"
+    
+    cron_output = _run_command("grep -r aide /etc/cron.* /etc/crontab /var/spool/cron/root 2>/dev/null")
+    
+    if cron_output and "aide --check" in cron_output:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.PASS,
+            "severity": Severity.MEDIUM,
+            "details": "AIDE check cron job found.",
+            "found_value": cron_output,
+            "expected_value": "AIDE check cron job configured"
+        }
+    else:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.FAIL,
+            "severity": Severity.MEDIUM,
+            "details": "AIDE check cron job not found. AIDE integrity checks may not be performed regularly.",
+            "found_value": "Not found",
+            "expected_value": "AIDE check cron job configured",
+            "remediation": "Create a cron job for AIDE (e.g., in /etc/cron.daily/aide)."
+        }
+
+def check_ensure_aide_cron_job_offline(data_dir: str) -> Dict[str, Any]:
+    """
+    CIS 1.2.3: Ensure AIDE check is regularly performed (offline).
+    """
+    rule_id = "1.2.3"
+    title = "Ensure AIDE check is regularly performed"
+    
+    cron_dir = Path(data_dir) / "system_config" / "cron"
+    
+    if not cron_dir.exists():
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.SKIPPED,
+            "severity": Severity.MEDIUM,
+            "details": "Offline cron configuration directory not found, cannot check AIDE cron job.",
+            "found_value": "N/A",
+            "expected_value": "AIDE check cron job configured"
+        }
+
+    aide_cron_found = False
+    found_content = []
+    for cron_file in cron_dir.rglob("*"): # Search recursively
+        if cron_file.is_file():
+            try:
+                content = cron_file.read_text()
+                if "aide --check" in content:
+                    aide_cron_found = True
+                    found_content.append(f"{cron_file.relative_to(cron_dir)}: {content.strip()}")
+            except Exception as e:
+                logging.warning(f"Could not read cron file {cron_file}: {e}")
+                continue
+    
+    if aide_cron_found:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.PASS,
+            "severity": Severity.MEDIUM,
+            "details": "AIDE check cron job found in collected cron configurations.",
+            "found_value": "\n".join(found_content),
+            "expected_value": "AIDE check cron job configured"
+        }
+    else:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.FAIL,
+            "severity": Severity.MEDIUM,
+            "details": "AIDE check cron job not found in collected cron configurations. AIDE integrity checks may not be performed regularly.",
+            "found_value": "Not found",
+            "expected_value": "AIDE check cron job configured",
+            "remediation": "Create a cron job for AIDE (e.g., in /etc/cron.daily/aide)."
+        }
+
+def check_ensure_prelink_not_installed() -> Dict[str, Any]:
+    """
+    CIS 1.3.1: Ensure prelink is not installed.
+    """
+    rule_id = "1.3.1"
+    title = "Ensure prelink is not installed"
+    
+    rpm_output = _run_command("rpm -q prelink")
+    if rpm_output is None or "not installed" in rpm_output:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.PASS,
+            "severity": Severity.HIGH,
+            "details": "prelink package is not installed.",
+            "found_value": "Not installed",
+            "expected_value": "prelink not installed"
+        }
+    else:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.FAIL,
+            "severity": Severity.HIGH,
+            "details": "prelink package is installed. prelink can make forensic analysis difficult.",
+            "found_value": rpm_output,
+            "expected_value": "prelink not installed",
+            "remediation": "Run: dnf remove prelink"
+        }
+
+def check_ensure_prelink_not_installed_offline(data_dir: str) -> Dict[str, Any]:
+    """
+    CIS 1.3.1: Ensure prelink is not installed (offline).
+    """
+    rule_id = "1.3.1"
+    title = "Ensure prelink is not installed"
+    
+    packages_file = Path(data_dir) / "system" / "packages.txt"
+
+    if packages_file.exists():
+        packages_content = packages_file.read_text()
+        if "prelink-" in packages_content:
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.FAIL,
+                "severity": Severity.HIGH,
+                "details": "prelink package found in collected installed packages. prelink can make forensic analysis difficult.",
+                "found_value": "prelink package found",
+                "expected_value": "prelink not installed",
+                "remediation": "Run: dnf remove prelink"
+            }
         else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': 'AIDE timer is not enabled. Filesystem integrity checks may not be running regularly.',
-                'found_value': 'aide.timer not enabled',
-                'expected_value': expected_status,
-                'severity': 'High',
-                'section': 'initial_setup'
-            })
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.PASS,
+                "severity": Severity.HIGH,
+                "details": "prelink package not found in collected installed packages.",
+                "found_value": "prelink not installed",
+                "expected_value": "prelink not installed"
+            }
     else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'AIDE status data (aide_status.txt) not available in collected data, cannot check AIDE scheduling.',
-            'found_value': 'Data file not found',
-            'expected_value': expected_status,
-            'severity': 'High',
-            'section': 'initial_setup'
-        })
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.SKIPPED,
+            "severity": Severity.HIGH,
+            "details": "Offline package data (packages.txt) not found, cannot verify prelink installation.",
+            "found_value": "N/A",
+            "expected_value": "prelink not installed"
+        }
 
-    return results
-
-def check_boot_settings_offline(data_dir, bootloader_config_file, bootloader_permissions_file, shadow_file):
-    results = []
-
-    # 1.4.1 - Ensure bootloader password is set
-    rule_id = '1.4.1'
-    title = 'Ensure bootloader password is set'
-    expected_status = 'password set'
-    if bootloader_config_file.exists():
-        config_content = bootloader_config_file.read_text()
-        if re.search(r'^\s*password_pbkdf2\s+\S+\s+\S+', config_content, re.MULTILINE):
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'PASS',
-                'details': 'Bootloader password (password_pbkdf2) is configured.',
-                'found_value': 'password_pbkdf2 found',
-                'expected_value': expected_status,
-                'severity': 'Critical',
-                'section': 'initial_setup'
-            })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': 'Bootloader password (password_pbkdf2) is not configured. Unauthorized users may be able to alter boot parameters.',
-                'found_value': 'password_pbkdf2 not found',
-                'expected_value': expected_status,
-                'severity': 'Critical',
-                'section': 'initial_setup'
-            })
-    else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'No bootloader config data available.',
-            'found_value': 'No bootloader config data available',
-            'expected_value': expected_status,
-            'severity': 'Critical',
-            'section': 'initial_setup'
-        })
-
-    # 1.4.2 - Ensure permissions on bootloader config are configured
-    rule_id = '1.4.2'
-    title = 'Ensure permissions on bootloader config are configured'
-    expected_mode = '600'
-    expected_owner = 'root:root'
-    if bootloader_permissions_file.exists():
-        permissions_content = bootloader_permissions_file.read_text()
-        # Example: -rw-------. 1 root root 3900 Jan 18 2024 grub.cfg
-        match = re.search(r'(-r[wx-]{8,9})\s+\d+\s+(\S+)\s+(\S+).*grub.cfg', permissions_content)
-        if match:
-            current_mode_octal = oct(int(match.group(1).replace('r', '1').replace('w', '2').replace('x', '4').replace('-', '0'), 2))[-3:]
-            current_owner = match.group(2)
-            current_group = match.group(3)
-            current_owner_str = f"{current_owner}:{current_group}"
-
-            if current_mode_octal == expected_mode and current_owner == 'root' and current_group == 'root':
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'PASS',
-                    'details': f'Bootloader config file has correct permissions and ownership based on collected data.',
-                    'found_value': f'Mode: {current_mode_octal}, Owner: {current_owner_str}',
-                    'expected_value': f'Mode: {expected_mode}, Owner: {expected_owner}',
-                    'severity': 'High',
-                    'section': 'initial_setup'
-                })
-            else:
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'FAIL',
-                    'details': f'Bootloader config file has incorrect permissions or ownership. Expected mode {expected_mode} and owner {expected_owner}.',
-                    'found_value': f'Mode: {current_mode_octal}, Owner: {current_owner_str}',
-                    'expected_value': f'Mode: {expected_mode}, Owner: {expected_owner}',
-                    'severity': 'High',
-                    'section': 'initial_setup'
-                })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'MANUAL',
-                'details': 'Could not parse permissions for bootloader config from collected data. Manual review required.',
-                'found_value': 'Parsing failed',
-                'expected_value': f'Mode: {expected_mode}, Owner: {expected_owner}',
-                'severity': 'High',
-                'section': 'initial_setup'
-            })
-    else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'No bootloader permission data available.',
-            'found_value': 'No bootloader permission data available',
-            'expected_value': f'Mode: {expected_mode}, Owner: {expected_owner}',
-            'severity': 'High',
-            'section': 'initial_setup'
-        })
-
-    # 1.4.3 - Ensure authentication required for single user mode
-    rule_id = '1.4.3'
-    title = 'Ensure authentication required for single user mode'
-    expected_status = 'authentication required'
-    if shadow_file.exists():
-        shadow_content = shadow_file.read_text()
-        # Check if root has a password
-        root_line = next((line for line in shadow_content.splitlines() if line.startswith('root:')), None)
-        if root_line:
-            fields = root_line.split(':')
-            if fields[1] not in ['*', '!', '!!']: # Check if password field is not empty/locked
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'PASS',
-                    'details': 'Root account has a password, which helps secure single user mode.',
-                    'found_value': 'Root password set',
-                    'expected_value': expected_status,
-                    'severity': 'High',
-                    'section': 'initial_setup'
-                })
-            else:
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'FAIL',
-                    'details': 'Root account does not have a password or is locked, which weakens single user mode security.',
-                    'found_value': 'Root password not set or locked',
-                    'expected_value': expected_status,
-                    'severity': 'High',
-                    'section': 'initial_setup'
-                })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'ERROR',
-                'details': 'Root entry not found in collected shadow file.',
-                'found_value': 'Root entry not found',
-                'expected_value': expected_status,
-                'severity': 'High',
-                'section': 'initial_setup'
-            })
-    else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'No shadow data available.',
-            'found_value': 'No shadow data available',
-            'expected_value': expected_status,
-            'severity': 'High',
-            'section': 'initial_setup'
-        })
-
-    return results
-
-def check_process_hardening_offline(data_dir, limits_conf_file, sysctl_data_file, dmesg_data_file, packages_file):
-    results = []
-
-    # 1.5.1 - Ensure core dumps are restricted
-    rule_id = '1.5.1'
-    title = 'Ensure core dumps are restricted'
-    expected_limits = ['* hard core 0', '* soft core 0']
-    expected_sysctl = 'fs.suid_dumpable = 0'
+def check_ensure_core_dumps_restricted() -> Dict[str, Any]:
+    """
+    CIS 1.4.1: Ensure core dumps are restricted.
+    """
+    rule_id = "1.4.1"
+    title = "Ensure core dumps are restricted"
+    
+    limits_conf_output = _run_command("grep -E 'hard core|soft core' /etc/security/limits.conf /etc/security/limits.d/*.conf 2>/dev/null")
+    sysctl_output = _run_command("sysctl fs.suid_dumpable")
     
     limits_ok = False
+    if limits_conf_output and "* hard core 0" in limits_conf_output and "* soft core 0" in limits_conf_output:
+        limits_ok = True
+    
     sysctl_ok = False
+    if sysctl_output and "fs.suid_dumpable = 0" in sysctl_output:
+        sysctl_ok = True
+        
+    if limits_ok and sysctl_ok:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.PASS,
+            "severity": Severity.HIGH,
+            "details": "Core dumps are restricted via limits.conf and sysctl.",
+            "found_value": f"limits.conf: {limits_conf_output}, sysctl: {sysctl_output}",
+            "expected_value": "Core dumps restricted"
+        }
+    else:
+        details = []
+        if not limits_ok:
+            details.append("Core dump limits not properly set in /etc/security/limits.conf.")
+        if not sysctl_ok:
+            details.append("fs.suid_dumpable is not set to 0.")
+        
+        remediation = "Add '* hard core 0' and '* soft core 0' to /etc/security/limits.conf. Run: sysctl -w fs.suid_dumpable=0 && echo 'fs.suid_dumpable = 0' >> /etc/sysctl.d/99-sysctl.conf"
+        
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.FAIL,
+            "severity": Severity.HIGH,
+            "details": "Core dumps are not fully restricted: " + " ".join(details),
+            "found_value": f"limits.conf: {limits_conf_output}, sysctl: {sysctl_output}",
+            "expected_value": "Core dumps restricted",
+            "remediation": remediation
+        }
+
+def check_ensure_core_dumps_restricted_offline(data_dir: str) -> Dict[str, Any]:
+    """
+    CIS 1.4.1: Ensure core dumps are restricted (offline).
+    """
+    rule_id = "1.4.1"
+    title = "Ensure core dumps are restricted"
     
+    limits_conf_file = Path(data_dir) / "security_config" / "limits.conf"
+    sysctl_conf_file = Path(data_dir) / "system_config" / "sysctl.conf" # Assuming sysctl output is saved here
+
+    limits_ok = False
     if limits_conf_file.exists():
-        limits_content = limits_conf_file.read_text()
-        if all(re.search(re.escape(limit), limits_content) for limit in expected_limits):
-            limits_ok = True
+        try:
+            limits_content = limits_conf_file.read_text()
+            if "* hard core 0" in limits_content and "* soft core 0" in limits_content:
+                limits_ok = True
+        except Exception as e:
+            logging.warning(f"Could not read {limits_conf_file}: {e}")
+    else:
+        logging.warning(f"Offline limits.conf not found: {limits_conf_file}")
+
+    sysctl_ok = False
+    if sysctl_conf_file.exists():
+        try:
+            sysctl_content = sysctl_conf_file.read_text()
+            if "fs.suid_dumpable = 0" in sysctl_content:
+                sysctl_ok = True
+        except Exception as e:
+            logging.warning(f"Could not read {sysctl_conf_file}: {e}")
+    else:
+        logging.warning(f"Offline sysctl.conf not found: {sysctl_conf_file}")
+
+    if not limits_conf_file.exists() and not sysctl_conf_file.exists():
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.SKIPPED,
+            "severity": Severity.HIGH,
+            "details": "Offline limits.conf and sysctl.conf data not found, cannot check core dump restrictions.",
+            "found_value": "N/A",
+            "expected_value": "Core dumps restricted"
+        }
+
+    details = []
+    if not limits_ok:
+        details.append("Core dump limits not properly set in collected /etc/security/limits.conf.")
+    if not sysctl_ok:
+        details.append("fs.suid_dumpable is not set to 0 in collected sysctl data.")
     
-    if sysctl_data_file.exists():
-        sysctl_content = sysctl_data_file.read_text()
-        if re.search(r'fs\.suid_dumpable\s*=\s*0', sysctl_content):
-            sysctl_ok = True
+    if limits_ok and sysctl_ok:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.PASS,
+            "severity": Severity.HIGH,
+            "details": "Core dumps are restricted via limits.conf and sysctl based on collected data.",
+            "found_value": f"limits.conf: {'OK' if limits_ok else 'Not OK'}, sysctl: {'OK' if sysctl_ok else 'Not OK'}",
+            "expected_value": "Core dumps restricted"
+        }
+    else:
+        remediation = "Add '* hard core 0' and '* soft core 0' to /etc/security/limits.conf. Add 'fs.suid_dumpable = 0' to /etc/sysctl.d/99-sysctl.conf"
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.FAIL,
+            "severity": Severity.HIGH,
+            "details": "Core dumps are not fully restricted based on collected data: " + " ".join(details),
+            "found_value": f"limits.conf: {'OK' if limits_ok else 'Not OK'}, sysctl: {'OK' if sysctl_ok else 'Not OK'}",
+            "expected_value": "Core dumps restricted",
+            "remediation": remediation
+        }
+
+def check_ensure_selinux_installed() -> Dict[str, Any]:
+    """
+    CIS 1.5.1: Ensure SELinux is installed.
+    """
+    rule_id = "1.5.1"
+    title = "Ensure SELinux is installed"
     
-    found_value = f"limits.conf: {'Configured' if limits_ok else 'Not configured'}, sysctl: {'Configured' if sysctl_ok else 'Not configured'}"
-    expected_value = f"limits.conf: {', '.join(expected_limits)}, sysctl: {expected_sysctl}"
-
-    if limits_conf_file.exists() or sysctl_data_file.exists():
-        if limits_ok and sysctl_ok:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'PASS',
-                'details': 'Core dumps are restricted via both limits.conf and sysctl.',
-                'found_value': found_value,
-                'expected_value': expected_value,
-                'severity': 'Medium',
-                'section': 'initial_setup'
-            })
-        else:
-            details = []
-            if not limits_ok: details.append('limits.conf not configured for core dumps.')
-            if not sysctl_ok: details.append('sysctl fs.suid_dumpable not set to 0.')
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': 'Core dumps are not fully restricted. ' + ' '.join(details),
-                'found_value': found_value,
-                'expected_value': expected_value,
-                'severity': 'Medium',
-                'section': 'initial_setup'
-            })
+    rpm_output = _run_command("rpm -q libselinux")
+    if rpm_output is None or "not installed" in rpm_output:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.FAIL,
+            "severity": Severity.CRITICAL,
+            "details": "libselinux package is not installed.",
+            "found_value": "Not installed",
+            "expected_value": "SELinux installed",
+            "remediation": "Run: dnf install libselinux"
+        }
     else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'No limits.conf or sysctl data available to check core dump restriction.',
-            'found_value': 'Data files not found',
-            'expected_value': expected_value,
-            'severity': 'Medium',
-            'section': 'initial_setup'
-        })
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.PASS,
+            "severity": Severity.CRITICAL,
+            "details": "libselinux package is installed.",
+            "found_value": rpm_output,
+            "expected_value": "SELinux installed"
+        }
 
-    # 1.5.2 - Ensure XD/NX support is enabled
-    rule_id = '1.5.2'
-    title = 'Ensure XD/NX support is enabled'
-    expected_value = 'NX (No-Execute) or XD (Execute Disable) enabled'
-    if dmesg_data_file.exists():
-        dmesg_content = dmesg_data_file.read_text()
-        if re.search(r'NX\s+(\S+)\s+NXE\s+(\S+)', dmesg_content) or \
-           re.search(r'Execute Disable bit: enabled', dmesg_content):
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'PASS',
-                'details': 'XD/NX support appears to be enabled based on dmesg output.',
-                'found_value': 'NX/XD enabled in dmesg',
-                'expected_value': expected_value,
-                'severity': 'High',
-                'section': 'initial_setup'
-            })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': 'XD/NX support does not appear to be enabled based on dmesg output. This can expose the system to buffer overflow attacks.',
-                'found_value': 'NX/XD not found in dmesg',
-                'expected_value': expected_value,
-                'severity': 'High',
-                'section': 'initial_setup'
-            })
-    else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'No dmesg data available.',
-            'found_value': 'No dmesg data available',
-            'expected_value': expected_value,
-            'severity': 'High',
-            'section': 'initial_setup'
-        })
+def check_ensure_selinux_installed_offline(data_dir: str) -> Dict[str, Any]:
+    """
+    CIS 1.5.1: Ensure SELinux is installed (offline).
+    """
+    rule_id = "1.5.1"
+    title = "Ensure SELinux is installed"
+    
+    packages_file = Path(data_dir) / "system" / "packages.txt"
 
-    # 1.5.3 - Ensure address space layout randomization (ASLR) is enabled
-    rule_id = '1.5.3'
-    title = 'Ensure address space layout randomization (ASLR) is enabled'
-    expected_value = 'kernel.randomize_va_space = 2'
-    if sysctl_data_file.exists():
-        sysctl_content = sysctl_data_file.read_text()
-        if re.search(r'kernel\.randomize_va_space\s*=\s*2', sysctl_content):
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'PASS',
-                'details': 'ASLR is enabled (kernel.randomize_va_space is set to 2).',
-                'found_value': 'kernel.randomize_va_space = 2',
-                'expected_value': expected_value,
-                'severity': 'High',
-                'section': 'initial_setup'
-            })
-        else:
-            found_val = re.search(r'kernel\.randomize_va_space\s*=\s*(\d+)', sysctl_content)
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': f'ASLR is not enabled or not set to the recommended value (2). Found: {found_val.group(0) if found_val else "Not found"}.',
-                'found_value': found_val.group(1) if found_val else 'Not found',
-                'expected_value': expected_value,
-                'severity': 'High',
-                'section': 'initial_setup'
-            })
-    else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'No sysctl data available.',
-            'found_value': 'No sysctl data available',
-            'expected_value': expected_value,
-            'severity': 'High',
-            'section': 'initial_setup'
-        })
-
-    # 1.5.4 - Ensure prelink is not installed
-    rule_id = '1.5.4'
-    title = 'Ensure prelink is not installed'
-    expected_status = 'not installed'
     if packages_file.exists():
         packages_content = packages_file.read_text()
-        if 'prelink-' in packages_content:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': 'prelink package is installed. Prelinking can make ASLR less effective.',
-                'found_value': 'prelink package found',
-                'expected_value': expected_status,
-                'severity': 'Medium',
-                'section': 'initial_setup'
-            })
+        if "libselinux-" in packages_content:
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.PASS,
+                "severity": Severity.CRITICAL,
+                "details": "libselinux package found in collected installed packages.",
+                "found_value": "libselinux package found",
+                "expected_value": "SELinux installed"
+            }
         else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'PASS',
-                'details': 'prelink package is not installed.',
-                'found_value': 'prelink package not found',
-                'expected_value': expected_status,
-                'severity': 'Medium',
-                'section': 'initial_setup'
-            })
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.FAIL,
+                "severity": Severity.CRITICAL,
+                "details": "libselinux package not found in collected installed packages.",
+                "found_value": "libselinux package not found",
+                "expected_value": "SELinux installed",
+                "remediation": "Run: dnf install libselinux"
+            }
     else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'Package information (packages.txt) not available in collected data, cannot check prelink installation.',
-            'found_value': 'Data file not found',
-            'expected_value': expected_status,
-            'severity': 'Medium',
-            'section': 'initial_setup'
-        })
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.SKIPPED,
+            "severity": Severity.CRITICAL,
+            "details": "Offline package data (packages.txt) not found, cannot verify SELinux installation.",
+            "found_value": "N/A",
+            "expected_value": "SELinux installed"
+        }
 
-    return results
+def check_ensure_selinux_enforcing() -> Dict[str, Any]:
+    """
+    CIS 1.5.2: Ensure SELinux is enforcing.
+    """
+    rule_id = "1.5.2"
+    title = "Ensure SELinux is enforcing"
+    
+    sestatus_output = _run_command("sestatus")
+    
+    if sestatus_output and "Current mode:\s+enforcing" in sestatus_output:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.PASS,
+            "severity": Severity.CRITICAL,
+            "details": "SELinux is in enforcing mode.",
+            "found_value": "Enforcing",
+            "expected_value": "Enforcing"
+        }
+    else:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.FAIL,
+            "severity": Severity.CRITICAL,
+            "details": "SELinux is not in enforcing mode. Current status: " + (sestatus_output if sestatus_output else "N/A"),
+            "found_value": sestatus_output,
+            "expected_value": "Enforcing",
+            "remediation": "Set SELinux to enforcing mode: setenforce 1. Edit /etc/selinux/config and set SELINUX=enforcing."
+        }
 
-def check_selinux_offline(data_dir, selinux_status_file, selinux_mode_file, selinux_processes_file, packages_file, bootloader_config_file):
-    results = []
+def check_ensure_selinux_enforcing_offline(data_dir: str) -> Dict[str, Any]:
+    """
+    CIS 1.5.2: Ensure SELinux is enforcing (offline).
+    """
+    rule_id = "1.5.2"
+    title = "Ensure SELinux is enforcing"
+    
+    selinux_config_file = Path(data_dir) / "security" / "selinux" / "config"
+    sestatus_file = Path(data_dir) / "security" / "selinux" / "sestatus.txt"
 
-    # 1.6.1.1 - Ensure SELinux is installed
-    rule_id = '1.6.1.1'
-    title = 'Ensure SELinux is installed'
-    expected_status = 'installed'
-    if packages_file.exists():
-        packages_content = packages_file.read_text()
-        if 'selinux-policy-' in packages_content:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'PASS',
-                'details': 'SELinux policy package is installed.',
-                'found_value': 'selinux-policy package found',
-                'expected_value': expected_status,
-                'severity': 'High',
-                'section': 'initial_setup'
-            })
+    config_ok = False
+    if selinux_config_file.exists():
+        try:
+            config_content = selinux_config_file.read_text()
+            if re.search(r'^\s*SELINUX=enforcing', config_content, re.MULTILINE):
+                config_ok = True
+        except Exception as e:
+            logging.warning(f"Could not read {selinux_config_file}: {e}")
+    else:
+        logging.warning(f"Offline SELinux config file not found: {selinux_config_file}")
+
+    sestatus_ok = False
+    if sestatus_file.exists():
+        try:
+            sestatus_content = sestatus_file.read_text()
+            if "Current mode:\s+enforcing" in sestatus_content:
+                sestatus_ok = True
+        except Exception as e:
+            logging.warning(f"Could not read {sestatus_file}: {e}")
+    else:
+        logging.warning(f"Offline sestatus file not found: {sestatus_file}")
+
+    if not selinux_config_file.exists() and not sestatus_file.exists():
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.SKIPPED,
+            "severity": Severity.CRITICAL,
+            "details": "Offline SELinux config and sestatus data not found, cannot check SELinux enforcing mode.",
+            "found_value": "N/A",
+            "expected_value": "Enforcing"
+        }
+
+    details = []
+    if not config_ok:
+        details.append("SELINUX=enforcing not found in collected /etc/selinux/config.")
+    if not sestatus_ok:
+        details.append("sestatus output from collected data does not show 'Current mode: enforcing'.")
+    
+    if config_ok and sestatus_ok:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.PASS,
+            "severity": Severity.CRITICAL,
+            "details": "SELinux is in enforcing mode based on collected data.",
+            "found_value": f"Config: {'OK' if config_ok else 'Not OK'}, Sestatus: {'OK' if sestatus_ok else 'Not OK'}",
+            "expected_value": "Enforcing"
+        }
+    else:
+        remediation = "Set SELinux to enforcing mode: setenforce 1. Edit /etc/selinux/config and set SELINUX=enforcing."
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.FAIL,
+            "severity": Severity.CRITICAL,
+            "details": "SELinux is not in enforcing mode based on collected data: " + " ".join(details),
+            "found_value": f"Config: {'OK' if config_ok else 'Not OK'}, Sestatus: {'OK' if sestatus_ok else 'Not OK'}",
+            "expected_value": "Enforcing",
+            "remediation": remediation
+        }
+
+def check_ensure_selinux_policy_configured() -> Dict[str, Any]:
+    """
+    CIS 1.5.3: Ensure SELinux policy is configured.
+    """
+    rule_id = "1.5.3"
+    title = "Ensure SELinux policy is configured"
+    
+    sestatus_output = _run_command("sestatus")
+    
+    if sestatus_output and "Loaded policy name:\s+(\S+)" in sestatus_output:
+        policy_name = re.search(r"Loaded policy name:\s+(\S+)", sestatus_output).group(1)
+        if policy_name and policy_name != "(none)":
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.PASS,
+                "severity": Severity.CRITICAL,
+                "details": f"SELinux policy '{policy_name}' is loaded.",
+                "found_value": policy_name,
+                "expected_value": "A policy is loaded"
+            }
         else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': 'SELinux policy package is not installed. SELinux cannot enforce security policies.',
-                'found_value': 'selinux-policy package not found',
-                'expected_value': expected_status,
-                'severity': 'High',
-                'section': 'initial_setup'
-            })
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.FAIL,
+                "severity": Severity.CRITICAL,
+                "details": "No SELinux policy is loaded.",
+                "found_value": policy_name,
+                "expected_value": "A policy is loaded",
+                "remediation": "Ensure SELinux is configured with a policy (e.g., targeted or mls)."
+            }
     else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'Package information (packages.txt) not available in collected data, cannot check SELinux installation.',
-            'found_value': 'Data file not found',
-            'expected_value': expected_status,
-            'severity': 'High',
-            'section': 'initial_setup'
-        })
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.ERROR,
+            "severity": Severity.CRITICAL,
+            "details": "Could not retrieve SELinux policy status.",
+            "found_value": "N/A",
+            "expected_value": "A policy is loaded"
+        }
 
-    # 1.6.1.2 - Ensure SELinux is not disabled in bootloader configuration
-    rule_id = '1.6.1.2'
-    title = 'Ensure SELinux is not disabled in bootloader configuration'
-    expected_status = 'not disabled'
-    if bootloader_config_file.exists():
-        config_content = bootloader_config_file.read_text()
-        if re.search(r'selinux=0', config_content) or re.search(r'enforcing=0', config_content):
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': 'SELinux is disabled in bootloader configuration. This bypasses SELinux enforcement.',
-                'found_value': 'selinux=0 or enforcing=0 found',
-                'expected_value': expected_status,
-                'severity': 'Critical',
-                'section': 'initial_setup'
-            })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'PASS',
-                'details': 'SELinux is not disabled in bootloader configuration.',
-                'found_value': 'No selinux=0 or enforcing=0 found',
-                'expected_value': expected_status,
-                'severity': 'Critical',
-                'section': 'initial_setup'
-            })
-    else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'No bootloader config data available.',
-            'found_value': 'No bootloader config data available',
-            'expected_value': expected_status,
-            'severity': 'Critical',
-            'section': 'initial_setup'
-        })
+def check_ensure_selinux_policy_configured_offline(data_dir: str) -> Dict[str, Any]:
+    """
+    CIS 1.5.3: Ensure SELinux policy is configured (offline).
+    """
+    rule_id = "1.5.3"
+    title = "Ensure SELinux policy is configured"
+    
+    sestatus_file = Path(data_dir) / "security" / "selinux" / "sestatus.txt"
 
-    # 1.6.1.3 - Ensure SELinux policy is configured
-    rule_id = '1.6.1.3'
-    title = 'Ensure SELinux policy is configured'
-    expected_status = 'configured'
-    if selinux_status_file.exists():
-        status_content = selinux_status_file.read_text()
-        if "Current mode:       enforcing" in status_content or "Current mode:       permissive" in status_content:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'PASS',
-                'details': 'SELinux policy appears to be loaded and active.',
-                'found_value': 'SELinux status active',
-                'expected_value': expected_status,
-                'severity': 'High',
-                'section': 'initial_setup'
-            })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': 'SELinux policy does not appear to be loaded or active.',
-                'found_value': 'SELinux status inactive',
-                'expected_value': expected_status,
-                'severity': 'High',
-                'section': 'initial_setup'
-            })
-    else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'No SELinux status data available.',
-            'found_value': 'No SELinux status data available',
-            'expected_value': expected_status,
-            'severity': 'High',
-            'section': 'initial_setup'
-        })
-
-    # 1.6.1.4 - Ensure the SELinux mode is enforcing
-    rule_id = '1.6.1.4'
-    title = 'Ensure the SELinux mode is enforcing'
-    expected_mode = 'enforcing'
-    if selinux_mode_file.exists():
-        mode_content = selinux_mode_file.read_text().strip()
-        if mode_content == expected_mode:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'PASS',
-                'details': 'SELinux is in enforcing mode.',
-                'found_value': mode_content,
-                'expected_value': expected_mode,
-                'severity': 'High',
-                'section': 'initial_setup'
-            })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': f'SELinux is in {mode_content} mode, but should be enforcing.',
-                'found_value': mode_content,
-                'expected_value': expected_mode,
-                'severity': 'High',
-                'section': 'initial_setup'
-            })
-    else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'No SELinux mode data available.',
-            'found_value': 'No SELinux mode data available',
-            'expected_value': expected_mode,
-            'severity': 'High',
-            'section': 'initial_setup'
-        })
-
-    # 1.6.1.5 - Ensure the SELinux mode is not disabled
-    rule_id = '1.6.1.5'
-    title = 'Ensure the SELinux mode is not disabled'
-    expected_mode = 'not disabled'
-    if selinux_mode_file.exists():
-        mode_content = selinux_mode_file.read_text().strip()
-        if mode_content != 'disabled':
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'PASS',
-                'details': 'SELinux is not in disabled mode.',
-                'found_value': mode_content,
-                'expected_value': expected_mode,
-                'severity': 'High',
-                'section': 'initial_setup'
-            })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': 'SELinux is in disabled mode. This means SELinux is not providing any security enforcement.',
-                'found_value': mode_content,
-                'expected_value': expected_mode,
-                'severity': 'High',
-                'section': 'initial_setup'
-            })
-    else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'No SELinux mode data available.',
-            'found_value': 'No SELinux mode data available',
-            'expected_value': expected_mode,
-            'severity': 'High',
-            'section': 'initial_setup'
-        })
-
-    # 1.6.1.6 - Ensure no unconfined services exist
-    rule_id = '1.6.1.6'
-    title = 'Ensure no unconfined services exist'
-    expected_status = 'no unconfined services'
-    if selinux_processes_file.exists():
-        processes_content = selinux_processes_file.read_text()
-        unconfined_services = [line for line in processes_content.splitlines() if "unconfined_service_t" in line]
-        if not unconfined_services:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'PASS',
-                'details': 'No unconfined services found.',
-                'found_value': 'No unconfined services',
-                'expected_value': expected_status,
-                'severity': 'High',
-                'section': 'initial_setup'
-            })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': f'Unconfined services found: {"; ".join(unconfined_services)}. These services are not properly confined by SELinux.',
-                'found_value': "; ".join(unconfined_services),
-                'expected_value': expected_status,
-                'severity': 'High',
-                'section': 'initial_setup'
-            })
-    else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'No process SELinux data available.',
-            'found_value': 'No process SELinux data available',
-            'expected_value': expected_status,
-            'severity': 'High',
-            'section': 'initial_setup'
-        })
-
-    # 1.6.1.7 - Ensure SETroubleshoot is not installed
-    rule_id = '1.6.1.7'
-    title = 'Ensure SETroubleshoot is not installed'
-    expected_status = 'not installed'
-    if packages_file.exists():
-        packages_content = packages_file.read_text()
-        if 'setroubleshoot-' in packages_content:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': 'SETroubleshoot package is installed. This package is not recommended on production systems as it can provide too much information.',
-                'found_value': 'SETroubleshoot installed',
-                'expected_value': expected_status,
-                'severity': 'Medium',
-                'section': 'initial_setup'
-            })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'PASS',
-                'details': 'SETroubleshoot package is not installed.',
-                'found_value': 'SETroubleshoot not installed',
-                'expected_value': expected_status,
-                'severity': 'Medium',
-                'section': 'initial_setup'
-            })
-    else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'Package information (packages.txt) not available in collected data, cannot check SETroubleshoot installation.',
-            'found_value': 'Data file not found',
-            'expected_value': expected_status,
-            'severity': 'Medium',
-            'section': 'initial_setup'
-        })
-
-    # 1.6.1.8 - Ensure the MCS Translation Service (mcstrans) is not installed
-    rule_id = '1.6.1.8'
-    title = 'Ensure the MCS Translation Service (mcstrans) is not installed'
-    expected_status = 'not installed'
-    if packages_file.exists():
-        packages_content = packages_file.read_text()
-        if 'mcstrans-' in packages_content:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': 'MCS Translation Service (mcstrans) package is installed. This package is not recommended on production systems.',
-                'found_value': 'mcstrans installed',
-                'expected_value': expected_status,
-                'severity': 'Medium',
-                'section': 'initial_setup'
-            })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'PASS',
-                'details': 'MCS Translation Service (mcstrans) package is not installed.',
-                'found_value': 'mcstrans not installed',
-                'expected_value': expected_status,
-                'severity': 'Medium',
-                'section': 'initial_setup'
-            })
-    else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'Package information (packages.txt) not available in collected data, cannot check mcstrans installation.',
-            'found_value': 'Data file not found',
-            'expected_value': expected_status,
-            'severity': 'Medium',
-            'section': 'initial_setup'
-        })
-
-    return results
-
-def check_warning_banners_offline(data_dir, motd_file, issue_file, issue_net_file, motd_permissions_file, issue_permissions_file, issue_net_permissions_file):
-    results = []
-
-    # 1.7.1 - Ensure message of the day is configured properly
-    rule_id = '1.7.1'
-    title = 'Ensure message of the day is configured properly'
-    expected_content = 'Authorized uses only. All activity may be monitored and reported.'
-    if motd_file.exists():
-        motd_content = motd_file.read_text().strip()
-        if motd_content and len(motd_content) > 10: # Check for non-empty and reasonable length
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'MANUAL',
-                'details': 'Message of the day (MOTD) is configured. Manual review is required to ensure it contains appropriate legal and warning text.',
-                'found_value': motd_content,
-                'expected_value': expected_content,
-                'severity': 'Medium',
-                'section': 'initial_setup'
-            })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': 'Message of the day (MOTD) is not configured or is empty. A proper warning banner should be displayed.',
-                'found_value': 'Empty or not found',
-                'expected_value': expected_content,
-                'severity': 'Medium',
-                'section': 'initial_setup'
-            })
-    else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'No MOTD data available.',
-            'found_value': 'No MOTD data available',
-            'expected_value': expected_content,
-            'severity': 'Medium',
-            'section': 'initial_setup'
-        })
-
-    # 1.7.2 - Ensure local login warning banner is configured properly
-    rule_id = '1.7.2'
-    title = 'Ensure local login warning banner is configured properly'
-    expected_content = 'Authorized uses only. All activity may be monitored and reported.'
-    if issue_file.exists():
-        issue_content = issue_file.read_text().strip()
-        if issue_content and len(issue_content) > 10:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'MANUAL',
-                'details': 'Local login banner (/etc/issue) is configured. Manual review is required to ensure it contains appropriate legal and warning text.',
-                'found_value': issue_content,
-                'expected_value': expected_content,
-                'severity': 'Medium',
-                'section': 'initial_setup'
-            })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': 'Local login banner (/etc/issue) is not configured or is empty. A proper warning banner should be displayed.',
-                'found_value': 'Empty or not found',
-                'expected_value': expected_content,
-                'severity': 'Medium',
-                'section': 'initial_setup'
-            })
-    else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'No /etc/issue data available.',
-            'found_value': 'No /etc/issue data available',
-            'expected_value': expected_content,
-            'severity': 'Medium',
-            'section': 'initial_setup'
-        })
-
-    # 1.7.3 - Ensure remote login warning banner is configured properly
-    rule_id = '1.7.3'
-    title = 'Ensure remote login warning banner is configured properly'
-    expected_content = 'Authorized uses only. All activity may be monitored and reported.'
-    if issue_net_file.exists():
-        issue_net_content = issue_net_file.read_text().strip()
-        if issue_net_content and len(issue_net_content) > 10:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'MANUAL',
-                'details': 'Remote login banner (/etc/issue.net) is configured. Manual review is required to ensure it contains appropriate legal and warning text.',
-                'found_value': issue_net_content,
-                'expected_value': expected_content,
-                'severity': 'Medium',
-                'section': 'initial_setup'
-            })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': 'Remote login banner (/etc/issue.net) is not configured or is empty. A proper warning banner should be displayed.',
-                'found_value': 'Empty or not found',
-                'expected_value': expected_content,
-                'severity': 'Medium',
-                'section': 'initial_setup'
-            })
-    else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'No /etc/issue.net data available.',
-            'found_value': 'No /etc/issue.net data available',
-            'expected_value': expected_content,
-            'severity': 'Medium',
-            'section': 'initial_setup'
-        })
-
-    # 1.7.4 - Ensure permissions on /etc/motd are configured
-    rule_id = '1.7.4'
-    title = 'Ensure permissions on /etc/motd are configured'
-    expected_mode = '644'
-    expected_owner = 'root:root'
-    if motd_permissions_file.exists():
-        permissions_content = motd_permissions_file.read_text()
-        match = re.search(r'(-r[wx-]{8,9})\s+\d+\s+(\S+)\s+(\S+).*\s+motd', permissions_content)
-        if match:
-            current_mode_octal = oct(int(match.group(1).replace('r', '1').replace('w', '2').replace('x', '4').replace('-', '0'), 2))[-3:]
-            current_owner = match.group(2)
-            current_group = match.group(3)
-            current_owner_str = f"{current_owner}:{current_group}"
-
-            if current_mode_octal == expected_mode and current_owner == 'root' and current_group == 'root':
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'PASS',
-                    'details': f'/etc/motd has correct permissions and ownership based on collected data.',
-                    'found_value': f'Mode: {current_mode_octal}, Owner: {current_owner_str}',
-                    'expected_value': f'Mode: {expected_mode}, Owner: {expected_owner}',
-                    'severity': 'Medium',
-                    'section': 'initial_setup'
-                })
+    if sestatus_file.exists():
+        try:
+            sestatus_content = sestatus_file.read_text()
+            policy_match = re.search(r"Loaded policy name:\s+(\S+)", sestatus_content)
+            if policy_match:
+                policy_name = policy_match.group(1)
+                if policy_name and policy_name != "(none)":
+                    return {
+                        "rule_id": rule_id,
+                        "title": title,
+                        "status": Status.PASS,
+                        "severity": Severity.CRITICAL,
+                        "details": f"SELinux policy '{policy_name}' is loaded based on collected data.",
+                        "found_value": policy_name,
+                        "expected_value": "A policy is loaded"
+                    }
+                else:
+                    return {
+                        "rule_id": rule_id,
+                        "title": title,
+                        "status": Status.FAIL,
+                        "severity": Severity.CRITICAL,
+                        "details": "No SELinux policy is loaded based on collected data.",
+                        "found_value": policy_name,
+                        "expected_value": "A policy is loaded",
+                        "remediation": "Ensure SELinux is configured with a policy (e.g., targeted or mls)."
+                    }
             else:
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'FAIL',
-                    'details': f'/etc/motd has incorrect permissions or ownership. Expected mode {expected_mode} and owner {expected_owner}.',
-                    'found_value': f'Mode: {current_mode_octal}, Owner: {current_owner_str}',
-                    'expected_value': f'Mode: {expected_mode}, Owner: {expected_owner}',
-                    'severity': 'Medium',
-                    'section': 'initial_setup'
-                })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'MANUAL',
-                'details': 'Could not parse permissions for /etc/motd from collected data. Manual review required.',
-                'found_value': 'Parsing failed',
-                'expected_value': f'Mode: {expected_mode}, Owner: {expected_owner}',
-                'severity': 'Medium',
-                'section': 'initial_setup'
-            })
+                return {
+                    "rule_id": rule_id,
+                    "title": title,
+                    "status": Status.ERROR,
+                    "severity": Severity.CRITICAL,
+                    "details": "Could not parse SELinux policy status from collected data.",
+                    "found_value": "N/A",
+                    "expected_value": "A policy is loaded"
+                }
+        except Exception as e:
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.ERROR,
+                "severity": Severity.CRITICAL,
+                "details": f"Error reading sestatus file for SELinux policy: {str(e)}",
+                "found_value": "N/A",
+                "expected_value": "A policy is loaded"
+            }
     else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'No /etc/motd permission data available.',
-            'found_value': 'No /etc/motd permission data available',
-            'expected_value': f'Mode: {expected_mode}, Owner: {expected_owner}',
-            'severity': 'Medium',
-            'section': 'initial_setup'
-        })
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.SKIPPED,
+            "severity": Severity.CRITICAL,
+            "details": "Offline sestatus data not found, cannot check SELinux policy configuration.",
+            "found_value": "N/A",
+            "expected_value": "A policy is loaded"
+        }
 
-    # 1.7.5 - Ensure permissions on /etc/issue are configured
-    rule_id = '1.7.5'
-    title = 'Ensure permissions on /etc/issue are configured'
-    expected_mode = '644'
-    expected_owner = 'root:root'
-    if issue_permissions_file.exists():
-        permissions_content = issue_permissions_file.read_text()
-        match = re.search(r'(-r[wx-]{8,9})\s+\d+\s+(\S+)\s+(\S+).*\s+issue', permissions_content)
-        if match:
-            current_mode_octal = oct(int(match.group(1).replace('r', '1').replace('w', '2').replace('x', '4').replace('-', '0'), 2))[-3:]
-            current_owner = match.group(2)
-            current_group = match.group(3)
-            current_owner_str = f"{current_owner}:{current_group}"
+def check_ensure_selinux_boot_parameters() -> Dict[str, Any]:
+    """
+    CIS 1.5.4: Ensure SELinux is not disabled in bootloader configuration.
+    """
+    rule_id = "1.5.4"
+    title = "Ensure SELinux is not disabled in bootloader configuration"
+    
+    grub_cmdline_output = _run_command("grep -E 'GRUB_CMDLINE_LINUX.*(selinux=0|enforcing=0)' /etc/default/grub")
+    
+    if grub_cmdline_output is None:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.ERROR,
+            "severity": Severity.CRITICAL,
+            "details": "Could not read /etc/default/grub.",
+            "found_value": "N/A",
+            "expected_value": "SELinux not disabled in bootloader"
+        }
+    
+    if "selinux=0" in grub_cmdline_output or "enforcing=0" in grub_cmdline_output:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.FAIL,
+            "severity": Severity.CRITICAL,
+            "details": "SELinux is disabled in bootloader configuration.",
+            "found_value": grub_cmdline_output,
+            "expected_value": "SELinux not disabled in bootloader",
+            "remediation": "Remove 'selinux=0' or 'enforcing=0' from GRUB_CMDLINE_LINUX in /etc/default/grub and run grub2-mkconfig."
+        }
+    else:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.PASS,
+            "severity": Severity.CRITICAL,
+            "details": "SELinux is not disabled in bootloader configuration.",
+            "found_value": grub_cmdline_output,
+            "expected_value": "SELinux not disabled in bootloader"
+        }
 
-            if current_mode_octal == expected_mode and current_owner == 'root' and current_group == 'root':
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'PASS',
-                    'details': f'/etc/issue has correct permissions and ownership based on collected data.',
-                    'found_value': f'Mode: {current_mode_octal}, Owner: {current_owner_str}',
-                    'expected_value': f'Mode: {expected_mode}, Owner: {expected_owner}',
-                    'severity': 'Medium',
-                    'section': 'initial_setup'
-                })
+def check_ensure_selinux_boot_parameters_offline(data_dir: str) -> Dict[str, Any]:
+    """
+    CIS 1.5.4: Ensure SELinux is not disabled in bootloader configuration (offline).
+    """
+    rule_id = "1.5.4"
+    title = "Ensure SELinux is not disabled in bootloader configuration"
+    
+    grub_default_file = Path(data_dir) / "system_config" / "grub_default.txt"
+
+    if grub_default_file.exists():
+        try:
+            grub_content = grub_default_file.read_text()
+            if "selinux=0" in grub_content or "enforcing=0" in grub_content:
+                return {
+                    "rule_id": rule_id,
+                    "title": title,
+                    "status": Status.FAIL,
+                    "severity": Severity.CRITICAL,
+                    "details": "SELinux is disabled in bootloader configuration based on collected data.",
+                    "found_value": grub_content,
+                    "expected_value": "SELinux not disabled in bootloader",
+                    "remediation": "Remove 'selinux=0' or 'enforcing=0' from GRUB_CMDLINE_LINUX in /etc/default/grub and run grub2-mkconfig."
+                }
             else:
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'FAIL',
-                    'details': f'/etc/issue has incorrect permissions or ownership. Expected mode {expected_mode} and owner {expected_owner}.',
-                    'found_value': f'Mode: {current_mode_octal}, Owner: {current_owner_str}',
-                    'expected_value': f'Mode: {expected_mode}, Owner: {expected_owner}',
-                    'severity': 'Medium',
-                    'section': 'initial_setup'
-                })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'MANUAL',
-                'details': 'Could not parse permissions for /etc/issue from collected data. Manual review required.',
-                'found_value': 'Parsing failed',
-                'expected_value': f'Mode: {expected_mode}, Owner: {expected_owner}',
-                'severity': 'Medium',
-                'section': 'initial_setup'
-            })
+                return {
+                    "rule_id": rule_id,
+                    "title": title,
+                    "status": Status.PASS,
+                    "severity": Severity.CRITICAL,
+                    "details": "SELinux is not disabled in bootloader configuration based on collected data.",
+                    "found_value": grub_content,
+                    "expected_value": "SELinux not disabled in bootloader"
+                }
+        except Exception as e:
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.ERROR,
+                "severity": Severity.CRITICAL,
+                "details": f"Error reading grub_default.txt for SELinux boot parameters: {str(e)}",
+                "found_value": "N/A",
+                "expected_value": "SELinux not disabled in bootloader"
+            }
     else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'No /etc/issue permission data available.',
-            'found_value': 'No /etc/issue permission data available',
-            'expected_value': f'Mode: {expected_mode}, Owner: {expected_owner}',
-            'severity': 'Medium',
-            'section': 'initial_setup'
-        })
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.SKIPPED,
+            "severity": Severity.CRITICAL,
+            "details": "Offline grub_default.txt not found, cannot check SELinux boot parameters.",
+            "found_value": "N/A",
+            "expected_value": "SELinux not disabled in bootloader"
+        }
 
-    # 1.7.6 - Ensure permissions on /etc/issue.net are configured
-    rule_id = '1.7.6'
-    title = 'Ensure permissions on /etc/issue.net are configured'
-    expected_mode = '644'
-    expected_owner = 'root:root'
-    if issue_net_permissions_file.exists():
-        permissions_content = issue_net_permissions_file.read_text()
-        match = re.search(r'(-r[wx-]{8,9})\s+\d+\s+(\S+)\s+(\S+).*\s+issue.net', permissions_content)
-        if match:
-            current_mode_octal = oct(int(match.group(1).replace('r', '1').replace('w', '2').replace('x', '4').replace('-', '0'), 2))[-3:]
-            current_owner = match.group(2)
-            current_group = match.group(3)
-            current_owner_str = f"{current_owner}:{current_group}"
+def check_ensure_package_integrity_verified() -> Dict[str, Any]:
+    """
+    CIS 1.6.1: Ensure package integrity is verified.
+    This is a manual check.
+    """
+    rule_id = "1.6.1"
+    title = "Ensure package integrity is verified"
+    
+    return {
+        "rule_id": rule_id,
+        "title": title,
+        "status": Status.MANUAL,
+        "severity": Severity.MEDIUM,
+        "details": "Regularly verify package integrity using 'rpm -Va' or 'dnf check'. This check requires manual execution and review.",
+        "found_value": "Requires manual verification",
+        "expected_value": "Package integrity regularly verified"
+    }
 
-            if current_mode_octal == expected_mode and current_owner == 'root' and current_group == 'root':
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'PASS',
-                    'details': f'/etc/issue.net has correct permissions and ownership based on collected data.',
-                    'found_value': f'Mode: {current_mode_octal}, Owner: {current_owner_str}',
-                    'expected_value': f'Mode: {expected_mode}, Owner: {expected_owner}',
-                    'severity': 'Medium',
-                    'section': 'initial_setup'
-                })
+def check_ensure_package_integrity_verified_offline(data_dir: str) -> Dict[str, Any]:
+    """
+    CIS 1.6.1: Ensure package integrity is verified (offline).
+    """
+    rule_id = "1.6.1"
+    title = "Ensure package integrity is verified"
+    
+    # This check is inherently manual and cannot be fully automated offline.
+    # We can only confirm if the data for verification (e.g., rpm -Va output) was collected.
+    rpm_verify_output_file = Path(data_dir) / "system" / "rpm_verify_output.txt"
+
+    if rpm_verify_output_file.exists():
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.MANUAL,
+            "severity": Severity.MEDIUM,
+            "details": f"Review the collected package integrity verification output in '{rpm_verify_output_file}' for any discrepancies. This check requires manual analysis.",
+            "found_value": "Review collected rpm_verify_output.txt",
+            "expected_value": "Package integrity regularly verified"
+        }
+    else:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.SKIPPED,
+            "severity": Severity.MEDIUM,
+            "details": "Offline package integrity verification data (rpm_verify_output.txt) not found, cannot check package integrity.",
+            "found_value": "N/A",
+            "expected_value": "Package integrity regularly verified"
+        }
+
+def check_ensure_gpg_keys_configured() -> Dict[str, Any]:
+    """
+    CIS 1.6.2: Ensure GPG keys are configured.
+    """
+    rule_id = "1.6.2"
+    title = "Ensure GPG keys are configured"
+    
+    rpm_gpg_output = _run_command("rpm -q gpg-pubkey --qf '%{NAME}-%{VERSION}-%{RELEASE} %{SUMMARY}\n'")
+    
+    if rpm_gpg_output and "gpg-pubkey" in rpm_gpg_output:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.PASS,
+            "severity": Severity.HIGH,
+            "details": "GPG keys are configured for RPM package verification.",
+            "found_value": rpm_gpg_output,
+            "expected_value": "GPG keys configured"
+        }
+    else:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.FAIL,
+            "severity": Severity.HIGH,
+            "details": "No GPG keys found for RPM package verification. This may allow installation of untrusted packages.",
+            "found_value": "No GPG keys found",
+            "expected_value": "GPG keys configured",
+            "remediation": "Import GPG keys for your distribution's repositories."
+        }
+
+def check_ensure_gpg_keys_configured_offline(data_dir: str) -> Dict[str, Any]:
+    """
+    CIS 1.6.2: Ensure GPG keys are configured (offline).
+    """
+    rule_id = "1.6.2"
+    title = "Ensure GPG keys are configured"
+    
+    rpm_gpg_output_file = Path(data_dir) / "system" / "rpm_gpg_keys.txt"
+
+    if rpm_gpg_output_file.exists():
+        try:
+            gpg_content = rpm_gpg_output_file.read_text()
+            if "gpg-pubkey" in gpg_content:
+                return {
+                    "rule_id": rule_id,
+                    "title": title,
+                    "status": Status.PASS,
+                    "severity": Severity.HIGH,
+                    "details": "GPG keys are configured for RPM package verification based on collected data.",
+                    "found_value": gpg_content,
+                    "expected_value": "GPG keys configured"
+                }
             else:
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'FAIL',
-                    'details': f'/etc/issue.net has incorrect permissions or ownership. Expected mode {expected_mode} and owner {expected_owner}.',
-                    'found_value': f'Mode: {current_mode_octal}, Owner: {current_owner_str}',
-                    'expected_value': f'Mode: {expected_mode}, Owner: {expected_owner}',
-                    'severity': 'Medium',
-                    'section': 'initial_setup'
-                })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'MANUAL',
-                'details': 'Could not parse permissions for /etc/issue.net from collected data. Manual review required.',
-                'found_value': 'Parsing failed',
-                'expected_value': f'Mode: {expected_mode}, Owner: {expected_owner}',
-                'severity': 'Medium',
-                'section': 'initial_setup'
-            })
+                return {
+                    "rule_id": rule_id,
+                    "title": title,
+                    "status": Status.FAIL,
+                    "severity": Severity.HIGH,
+                    "details": "No GPG keys found for RPM package verification in collected data. This may allow installation of untrusted packages.",
+                    "found_value": "No GPG keys found",
+                    "expected_value": "GPG keys configured",
+                    "remediation": "Import GPG keys for your distribution's repositories."
+                }
+        except Exception as e:
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.ERROR,
+                "severity": Severity.HIGH,
+                "details": f"Error reading rpm_gpg_keys.txt for GPG keys: {str(e)}",
+                "found_value": "N/A",
+                "expected_value": "GPG keys configured"
+            }
     else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'No /etc/issue.net permission data available.',
-            'found_value': 'No /etc/issue.net permission data available',
-            'expected_value': f'Mode: {expected_mode}, Owner: {expected_owner}',
-            'severity': 'Medium',
-            'section': 'initial_setup'
-        })
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.SKIPPED,
+            "severity": Severity.HIGH,
+            "details": "Offline GPG key data (rpm_gpg_keys.txt) not found, cannot check GPG keys configuration.",
+            "found_value": "N/A",
+            "expected_value": "GPG keys configured"
+        }
 
-    return results
+def check_ensure_software_updates_configured() -> Dict[str, Any]:
+    """
+    CIS 1.7.1: Ensure software updates are configured.
+    This is a manual check.
+    """
+    rule_id = "1.7.1"
+    title = "Ensure software updates are configured"
+    
+    return {
+        "rule_id": rule_id,
+        "title": title,
+        "status": Status.MANUAL,
+        "severity": Severity.MEDIUM,
+        "details": "Verify that the system is configured to receive software updates from a trusted source (e.g., Red Hat Satellite, local mirror, or official repositories). This check requires manual verification.",
+        "found_value": "Requires manual verification",
+        "expected_value": "Software updates configured"
+    }
 
-def check_graphical_access_offline(data_dir, packages_file, gdm_config_dir):
-    results = []
+def check_ensure_software_updates_configured_offline(data_dir: str) -> Dict[str, Any]:
+    """
+    CIS 1.7.1: Ensure software updates are configured (offline).
+    """
+    rule_id = "1.7.1"
+    title = "Ensure software updates are configured"
+    
+    dnf_repo_dir = Path(data_dir) / "system_config" / "dnf_repos"
 
-    # 1.8.1 - Ensure GNOME Display Manager is removed
-    rule_id = '1.8.1'
-    title = 'Ensure GNOME Display Manager is removed'
-    expected_status = 'not installed'
+    if dnf_repo_dir.exists() and any(dnf_repo_dir.iterdir()):
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.MANUAL,
+            "severity": Severity.MEDIUM,
+            "details": f"Review the collected DNF repository files in '{dnf_repo_dir}' to ensure software updates are configured from trusted sources. This check requires manual analysis.",
+            "found_value": "Review collected DNF repo files",
+            "expected_value": "Software updates configured"
+        }
+    else:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.SKIPPED,
+            "severity": Severity.MEDIUM,
+            "details": "Offline DNF repository data not found, cannot check software update configuration.",
+            "found_value": "N/A",
+            "expected_value": "Software updates configured"
+        }
+
+def check_ensure_unnecessary_packages_removed() -> Dict[str, Any]:
+    """
+    CIS 1.8.1: Ensure unnecessary packages are removed.
+    This is a manual check.
+    """
+    rule_id = "1.8.1"
+    title = "Ensure unnecessary packages are removed"
+    
+    return {
+        "rule_id": rule_id,
+        "title": title,
+        "status": Status.MANUAL,
+        "severity": Severity.MEDIUM,
+        "details": "Review installed packages using 'rpm -qa' or 'dnf list installed' and remove any packages not required for the system's function. This check requires manual verification based on system's role.",
+        "found_value": "Requires manual review",
+        "expected_value": "Only necessary packages installed"
+    }
+
+def check_ensure_unnecessary_packages_removed_offline(data_dir: str) -> Dict[str, Any]:
+    """
+    CIS 1.8.1: Ensure unnecessary packages are removed (offline).
+    """
+    rule_id = "1.8.1"
+    title = "Ensure unnecessary packages are removed"
+    
+    packages_file = Path(data_dir) / "system" / "packages.txt"
+
     if packages_file.exists():
-        packages_content = packages_file.read_text()
-        if 'gdm-' in packages_content:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': 'GDM package is installed. Graphical login is not recommended on servers.',
-                'found_value': 'GDM installed',
-                'expected_value': expected_status,
-                'severity': 'Medium',
-                'section': 'initial_setup'
-            })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'PASS',
-                'details': 'GDM package is not installed.',
-                'found_value': 'GDM not installed',
-                'expected_value': expected_status,
-                'severity': 'Medium',
-                'section': 'initial_setup'
-            })
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.MANUAL,
+            "severity": Severity.MEDIUM,
+            "details": f"Review the collected list of installed packages in '{packages_file}' and remove any packages not required for the system's function. This check requires manual analysis based on system's role.",
+            "found_value": "Review collected packages.txt",
+            "expected_value": "Only necessary packages installed"
+        }
     else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'Package information (packages.txt) not available in collected data, cannot check GDM installation.',
-            'found_value': 'Data file not found',
-            'expected_value': expected_status,
-            'severity': 'Medium',
-            'section': 'initial_setup'
-        })
-
-    # 1.8.2 - Ensure GDM login banner is configured
-    rule_id = '1.8.2'
-    title = 'Ensure GDM login banner is configured'
-    expected_status = 'configured'
-    if gdm_config_dir.exists():
-        # Check for custom GDM configuration files that might set a banner
-        banner_configured = False
-        for config_file in gdm_config_dir.glob("*.conf"):
-            try:
-                content = config_file.read_text()
-                if re.search(r'banner-message-enable\s*=\s*true', content) and \
-                   re.search(r'banner-message-text\s*=', content):
-                    banner_configured = True
-                    break
-            except Exception:
-                pass
-        
-        if banner_configured:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'MANUAL',
-                'details': 'GDM login banner appears to be configured. Manual review is required to ensure the banner text is appropriate.',
-                'found_value': 'Banner settings found in GDM config',
-                'expected_value': expected_status,
-                'severity': 'Medium',
-                'section': 'initial_setup'
-            })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': 'GDM login banner is not configured in collected GDM configuration files.',
-                'found_value': 'Banner settings not found',
-                'expected_value': expected_status,
-                'severity': 'Medium',
-                'section': 'initial_setup'
-            })
-    else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'No GDM configuration data available.',
-            'found_value': 'No GDM config data available',
-            'expected_value': expected_status,
-            'severity': 'Medium',
-            'section': 'initial_setup'
-        })
-
-    # 1.8.3 - Ensure GDM disable-user-list option is enabled
-    rule_id = '1.8.3'
-    title = 'Ensure GDM disable-user-list option is enabled'
-    expected_value = 'true'
-    if gdm_config_dir.exists():
-        user_list_disabled = False
-        for config_file in gdm_config_dir.glob("*.conf"):
-            try:
-                content = config_file.read_text()
-                if re.search(r'disable-user-list\s*=\s*true', content):
-                    user_list_disabled = True
-                    break
-            except Exception:
-                pass
-        
-        if user_list_disabled:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'PASS',
-                'details': 'GDM disable-user-list option is enabled in collected GDM configuration.',
-                'found_value': 'disable-user-list=true',
-                'expected_value': expected_value,
-                'severity': 'Medium',
-                'section': 'initial_setup'
-            })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': 'GDM disable-user-list option is not enabled in collected GDM configuration. This can expose valid usernames.',
-                'found_value': 'disable-user-list not true',
-                'expected_value': expected_value,
-                'severity': 'Medium',
-                'section': 'initial_setup'
-            })
-    else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'No GDM configuration data available.',
-            'found_value': 'No GDM config data available',
-            'expected_value': expected_value,
-            'severity': 'Medium',
-            'section': 'initial_setup'
-        })
-
-    # 1.8.4 - Ensure GDM screen locks when the user is idle
-    rule_id = '1.8.4'
-    title = 'Ensure GDM screen locks when the user is idle'
-    expected_value = 'true and delay configured'
-    if gdm_config_dir.exists():
-        idle_lock_configured = False
-        for config_file in gdm_config_dir.glob("*.conf"):
-            try:
-                content = config_file.read_text()
-                if re.search(r'idle-delay\s*=\s*\d+', content) and \
-                   re.search(r'lock-enabled\s*=\s*true', content):
-                    idle_lock_configured = True
-                    break
-            except Exception:
-                pass
-        
-        if idle_lock_configured:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'MANUAL',
-                'details': 'GDM screen lock on idle appears configured. Manual review is required to ensure the delay is appropriate.',
-                'found_value': 'Idle lock settings found',
-                'expected_value': expected_value,
-                'severity': 'Medium',
-                'section': 'initial_setup'
-            })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': 'GDM screen lock on idle is not configured in collected GDM configuration files.',
-                'found_value': 'Idle lock settings not found',
-                'expected_value': expected_value,
-                'severity': 'Medium',
-                'section': 'initial_setup'
-            })
-    else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'No GDM configuration data available.',
-            'found_value': 'No GDM config data available',
-            'expected_value': expected_value,
-            'severity': 'Medium',
-            'section': 'initial_setup'
-        })
-
-    # 1.8.5 - Ensure GDM screen locks cannot be overridden
-    rule_id = '1.8.5'
-    title = 'Ensure GDM screen locks cannot be overridden'
-    expected_value = 'true'
-    if gdm_config_dir.exists():
-        lock_override_disabled = False
-        for config_file in gdm_config_dir.glob("*.conf"):
-            try:
-                content = config_file.read_text()
-                if re.search(r'lock-enabled\s*=\s*true', content) and \
-                   re.search(r'user-lock-enabled\s*=\s*false', content): # This is a common way to prevent user override
-                    lock_override_disabled = True
-                    break
-            except Exception:
-                pass
-        
-        if lock_override_disabled:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'MANUAL',
-                'details': 'GDM screen lock override appears disabled. Manual review is required to confirm.',
-                'found_value': 'Lock override settings found',
-                'expected_value': expected_value,
-                'severity': 'Medium',
-                'section': 'initial_setup'
-            })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': 'GDM screen lock override is not configured to be disabled in collected GDM configuration files.',
-                'found_value': 'Lock override settings not found',
-                'expected_value': expected_value,
-                'severity': 'Medium',
-                'section': 'initial_setup'
-            })
-    else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'No GDM configuration data available.',
-            'found_value': 'No GDM config data available',
-            'expected_value': expected_value,
-            'severity': 'Medium',
-            'section': 'initial_setup'
-        })
-
-    return results
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.SKIPPED,
+            "severity": Severity.MEDIUM,
+            "details": "Offline package list data (packages.txt) not found, cannot check unnecessary packages.",
+            "found_value": "N/A",
+            "expected_value": "Only necessary packages installed"
+        }

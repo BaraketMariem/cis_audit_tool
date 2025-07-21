@@ -9,51 +9,490 @@ import pwd
 import grp
 import stat
 from pathlib import Path
+import json
+from typing import List, Dict, Any, Optional
+import logging
 
-def run_access_control_checks(data_dir=None):
-    """Main entry point for access control checks - for compatibility with main.py"""
-    if data_dir:
-        return run_offline(data_dir)
-    else:
-        return run_online()
+# Assume Status and Severity are defined in a common place or passed in
+# For now, redefine them for clarity within this module
+class Status:
+    PASS = "PASS"
+    FAIL = "FAIL"
+    ERROR = "ERROR"
+    MANUAL = "MANUAL"
+    INFO = "INFO"
+    SKIPPED = "SKIPPED"
 
-def run_online():
-    """Run Section 5 checks in online mode"""
+class Severity:
+    CRITICAL = "CRITICAL"
+    HIGH = "HIGH"
+    MEDIUM = "MEDIUM"
+    LOW = "LOW"
+    UNKNOWN = "UNKNOWN"
+
+def _run_command(command: str) -> Optional[str]:
+    """Helper to run shell commands and return output or None on error."""
+    try:
+        result = subprocess.run(command, shell=True, capture_output=True, text=True, check=True)
+        return result.stdout.strip()
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Command '{command}' failed with error: {e.stderr.strip()}")
+        return None
+    except FileNotFoundError:
+        logging.error(f"Command not found: {command.split()[0]}")
+        return None
+
+def run_online() -> List[Dict[str, Any]]:
+    """Run all access control checks in online mode."""
+    logging.info("Running access control checks (online)...")
     results = []
-    
-    # 5.1 Configure SSH Server
     results.extend(check_ssh_server_online())
-    
-    # 5.2 Configure privilege escalation
     results.extend(check_privilege_escalation_online())
-    
-    ## 5.3 Configure PAM
     results.extend(check_pam_online())
-    
-    # 5.4 User Accounts and Environment
-    results.extend(check_user_accounts_online())
-    
+    results.extend(check_user_accounts_online()) # This will include 5.4.1.1, 5.4.1.2, 5.4.1.3, 5.4.1.4, 5.4.1.5
     return results
 
-def run_offline(data_dir):
-    """Run Section 5 checks in offline mode"""
+def run_offline(data_dir: str) -> List[Dict[str, Any]]:
+    """Run all access control checks in offline mode using collected data."""
+    logging.info(f"Running access control checks (offline) using data from: {data_dir}")
     results = []
     
-    # 5.1 Configure SSH Server
+    collected_data: Dict[str, Any] = {}
+
+    # Load collected data files for password policy checks
+    try:
+        with open(os.path.join(data_dir, 'security_config', 'auth_config.json'), 'r') as f:
+            collected_data['auth_config'] = json.load(f)
+    except FileNotFoundError:
+        collected_data['auth_config'] = None
+        logging.warning(f"Offline data file not found: {os.path.join(data_dir, 'security_config', 'auth_config.json')}")
+    
+    try:
+        with open(os.path.join(data_dir, 'security_config', 'login_defs.json'), 'r') as f:
+            collected_data['login_defs'] = json.load(f)
+    except FileNotFoundError:
+        collected_data['login_defs'] = None
+        logging.warning(f"Offline data file not found: {os.path.join(data_dir, 'security_config', 'login_defs.json')}")
+
+    try:
+        with open(os.path.join(data_dir, 'security_config', 'pam_faillock_conf.json'), 'r') as f:
+            collected_data['pam_config'] = {'pam_faillock_conf': json.load(f)}
+    except FileNotFoundError:
+        collected_data['pam_config'] = None
+        logging.warning(f"Offline data file not found: {os.path.join(data_dir, 'security_config', 'pam_faillock_conf.json')}")
+
+    try:
+        with open(os.path.join(data_dir, 'system_info', 'root_path.json'), 'r') as f:
+            collected_data['root_path'] = json.load(f).get('PATH')
+    except FileNotFoundError:
+        collected_data['root_path'] = None
+        logging.warning(f"Offline data file not found: {os.path.join(data_dir, 'system_info', 'root_path.json')}")
+
+    # Run password policy checks with collected data
+    results.append(_check_password_hashing_algorithm(collected_data))
+    results.append(_check_password_max_days(collected_data))
+    results.append(_check_password_min_days(collected_data))
+    results.append(_check_password_warn_age(collected_data))
+    results.append(_check_inactive_days(collected_data))
+    results.append(_check_password_retry_limit(collected_data))
+    results.append(_check_root_path_integrity(collected_data))
+
+    # Run other offline checks
     results.extend(check_ssh_server_offline(data_dir))
-    
-    # 5.2 Configure privilege escalation
     results.extend(check_privilege_escalation_offline(data_dir))
-    
-    # 5.3 Configure PAM
     results.extend(check_pam_offline(data_dir))
-    
-    # 5.4 User Accounts and Environment
-    results.extend(check_user_accounts_offline(data_dir))
-    
+    results.extend(check_user_accounts_offline(data_dir)) # This will include 5.4.1.1, 5.4.1.2, 5.4.1.3, 5.4.1.4, 5.4.1.5
+
     return results
 
-def check_ssh_server_online():
+def _check_password_hashing_algorithm(data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Check if password hashing algorithm is SHA512. (CIS 5.4.4)
+    """
+    rule_id = "5.4.4"
+    title = "Ensure password hashing algorithm is SHA512"
+    expected_algo = "sha512"
+    
+    if 'auth_config' not in data or data['auth_config'] is None or 'password_algorithm' not in data['auth_config']:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.SKIPPED,
+            "severity": Severity.MEDIUM,
+            "details": "Offline data for password hashing algorithm (auth_config.json) not found or incomplete.",
+            "found_value": "N/A",
+            "expected_value": expected_algo,
+            "section": "access_control"
+        }
+
+    found_algo = data['auth_config']['password_algorithm']
+    if found_algo == expected_algo:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.PASS,
+            "severity": Severity.MEDIUM,
+            "details": f"Password hashing algorithm is set to '{found_algo}'.",
+            "found_value": found_algo,
+            "expected_value": expected_algo,
+            "section": "access_control"
+        }
+    else:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.FAIL,
+            "severity": Severity.MEDIUM,
+            "details": f"Password hashing algorithm is '{found_algo}', expected '{expected_algo}'.",
+            "remediation": "Edit /etc/login.defs and set 'ENCRYPT_METHOD SHA512'. Run 'authselect select minimal with-sha512 --force'.",
+            "found_value": found_algo,
+            "expected_value": expected_algo,
+            "section": "access_control"
+        }
+
+def _check_password_max_days(data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Check password maximum age. (CIS 5.4.1.1)
+    """
+    rule_id = "5.4.1.1"
+    title = "Ensure password maximum age is 90 days or less"
+    expected_max_days = 90
+
+    if 'login_defs' not in data or data['login_defs'] is None or 'PASS_MAX_DAYS' not in data['login_defs']:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.SKIPPED,
+            "severity": Severity.MEDIUM,
+            "details": "Offline data for password maximum age (login_defs.json) not found or incomplete.",
+            "found_value": "N/A",
+            "expected_value": str(expected_max_days),
+            "section": "access_control"
+        }
+
+    try:
+        found_max_days = int(data['login_defs']['PASS_MAX_DAYS'])
+        if found_max_days <= expected_max_days:
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.PASS,
+                "severity": Severity.MEDIUM,
+                "details": f"Password maximum age is set to {found_max_days} days, which is <= {expected_max_days} days.",
+                "found_value": str(found_max_days),
+                "expected_value": str(expected_max_days),
+                "section": "access_control"
+            }
+        else:
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.FAIL,
+                "severity": Severity.MEDIUM,
+                "details": f"Password maximum age is set to {found_max_days} days, which is > {expected_max_days} days.",
+                "remediation": f"Edit /etc/login.defs and set 'PASS_MAX_DAYS {expected_max_days}'.",
+                "found_value": str(found_max_days),
+                "expected_value": str(expected_max_days),
+                "section": "access_control"
+            }
+    except ValueError:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.ERROR,
+            "severity": Severity.MEDIUM,
+            "details": f"Could not parse PASS_MAX_DAYS value: '{data['login_defs']['PASS_MAX_DAYS']}'.",
+            "found_value": data['login_defs']['PASS_MAX_DAYS'],
+            "expected_value": str(expected_max_days),
+            "section": "access_control"
+        }
+
+def _check_password_min_days(data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Check password minimum age. (CIS 5.4.1.2)
+    """
+    rule_id = "5.4.1.2"
+    title = "Ensure password minimum age is 7 days or more"
+    expected_min_days = 7
+
+    if 'login_defs' not in data or data['login_defs'] is None or 'PASS_MIN_DAYS' not in data['login_defs']:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.SKIPPED,
+            "severity": Severity.MEDIUM,
+            "details": "Offline data for password minimum age (login_defs.json) not found or incomplete.",
+            "found_value": "N/A",
+            "expected_value": str(expected_min_days),
+            "section": "access_control"
+        }
+
+    try:
+        found_min_days = int(data['login_defs']['PASS_MIN_DAYS'])
+        if found_min_days >= expected_min_days:
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.PASS,
+                "severity": Severity.MEDIUM,
+                "details": f"Password minimum age is set to {found_min_days} days, which is >= {expected_min_days} days.",
+                "found_value": str(found_min_days),
+                "expected_value": str(expected_min_days),
+                "section": "access_control"
+            }
+        else:
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.FAIL,
+                "severity": Severity.MEDIUM,
+                "details": f"Password minimum age is set to {found_min_days} days, which is < {expected_min_days} days.",
+                "remediation": f"Edit /etc/login.defs and set 'PASS_MIN_DAYS {expected_min_days}'.",
+                "found_value": str(found_min_days),
+                "expected_value": str(expected_min_days),
+                "section": "access_control"
+            }
+    except ValueError:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.ERROR,
+            "severity": Severity.MEDIUM,
+            "details": f"Could not parse PASS_MIN_DAYS value: '{data['login_defs']['PASS_MIN_DAYS']}'.",
+            "found_value": data['login_defs']['PASS_MIN_DAYS'],
+            "expected_value": str(expected_min_days),
+            "section": "access_control"
+        }
+
+def _check_password_warn_age(data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Check password warning age. (CIS 5.4.1.3)
+    """
+    rule_id = "5.4.1.3"
+    title = "Ensure password expiration warning days is 7 or more"
+    expected_warn_days = 7
+
+    if 'login_defs' not in data or data['login_defs'] is None or 'PASS_WARN_AGE' not in data['login_defs']:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.SKIPPED,
+            "severity": Severity.LOW,
+            "details": "Offline data for password warning age (login_defs.json) not found or incomplete.",
+            "found_value": "N/A",
+            "expected_value": str(expected_warn_days),
+            "section": "access_control"
+        }
+
+    try:
+        found_warn_days = int(data['login_defs']['PASS_WARN_AGE'])
+        if found_warn_days >= expected_warn_days:
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.PASS,
+                "severity": Severity.LOW,
+                "details": f"Password warning age is set to {found_warn_days} days, which is >= {expected_warn_days} days.",
+                "found_value": str(found_warn_days),
+                "expected_value": str(expected_warn_days),
+                "section": "access_control"
+            }
+        else:
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.FAIL,
+                "severity": Severity.LOW,
+                "details": f"Password warning age is set to {found_warn_days} days, which is < {expected_warn_days} days.",
+                "remediation": f"Edit /etc/login.defs and set 'PASS_WARN_AGE {expected_warn_days}'.",
+                "found_value": str(found_warn_days),
+                "expected_value": str(expected_warn_days),
+                "section": "access_control"
+            }
+    except ValueError:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.ERROR,
+            "severity": Severity.LOW,
+            "details": f"Could not parse PASS_WARN_AGE value: '{data['login_defs']['PASS_WARN_AGE']}'.",
+            "found_value": data['login_defs']['PASS_WARN_AGE'],
+            "expected_value": str(expected_warn_days),
+            "section": "access_control"
+        }
+
+def _check_inactive_days(data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Check inactive password lock. (CIS 5.4.1.4)
+    """
+    rule_id = "5.4.1.4"
+    title = "Ensure inactive password lock is 30 days or less"
+    expected_inactive_days = 30
+
+    if 'login_defs' not in data or data['login_defs'] is None or 'INACTIVE' not in data['login_defs']:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.SKIPPED,
+            "severity": Severity.MEDIUM,
+            "details": "Offline data for inactive password lock (login_defs.json) not found or incomplete.",
+            "found_value": "N/A",
+            "expected_value": str(expected_inactive_days),
+            "section": "access_control"
+        }
+
+    try:
+        found_inactive_days = int(data['login_defs']['INACTIVE'])
+        if found_inactive_days <= expected_inactive_days:
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.PASS,
+                "severity": Severity.MEDIUM,
+                "details": f"Inactive password lock is set to {found_inactive_days} days, which is <= {expected_inactive_days} days.",
+                "found_value": str(found_inactive_days),
+                "expected_value": str(expected_inactive_days),
+                "section": "access_control"
+            }
+        else:
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.FAIL,
+                "severity": Severity.MEDIUM,
+                "details": f"Inactive password lock is set to {found_inactive_days} days, which is > {expected_inactive_days} days.",
+                "remediation": f"Edit /etc/login.defs and set 'INACTIVE {expected_inactive_days}'.",
+                "found_value": str(found_inactive_days),
+                "expected_value": str(expected_inactive_days),
+                "section": "access_control"
+            }
+    except ValueError:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.ERROR,
+            "severity": Severity.MEDIUM,
+            "details": f"Could not parse INACTIVE value: '{data['login_defs']['INACTIVE']}'.",
+            "found_value": data['login_defs']['INACTIVE'],
+            "expected_value": str(expected_inactive_days),
+            "section": "access_control"
+        }
+
+def _check_password_retry_limit(data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Check password retry limit. (CIS 5.3.1)
+    """
+    rule_id = "5.3.1"
+    title = "Ensure password retry limit is configured"
+    expected_limit = 3 # CIS recommends 3-5
+
+    if 'pam_config' not in data or data['pam_config'] is None or 'pam_faillock_conf' not in data['pam_config'] or data['pam_config']['pam_faillock_conf'] is None:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.SKIPPED,
+            "severity": Severity.HIGH,
+            "details": "Offline data for PAM configuration (pam_faillock_conf.json) not found or incomplete.",
+            "found_value": "N/A",
+            "expected_value": f"deny={expected_limit} or less",
+            "section": "access_control"
+        }
+
+    found_deny = None
+    for line in data['pam_config']['pam_faillock_conf']:
+        match = re.search(r'deny=(\d+)', line)
+        if match:
+            found_deny = int(match.group(1))
+            break
+    
+    if found_deny is not None:
+        if found_deny <= expected_limit:
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.PASS,
+                "severity": Severity.HIGH,
+                "details": f"Password retry limit (deny) is set to {found_deny}, which is <= {expected_limit}.",
+                "found_value": str(found_deny),
+                "expected_value": f"deny={expected_limit} or less",
+                "section": "access_control"
+            }
+        else:
+            return {
+                "rule_id": rule_id,
+                "title": title,
+                "status": Status.FAIL,
+                "severity": Severity.HIGH,
+                "details": f"Password retry limit (deny) is set to {found_deny}, which is > {expected_limit}.",
+                "remediation": f"Edit /etc/security/faillock.conf and set 'deny={expected_limit}'.",
+                "found_value": str(found_deny),
+                "expected_value": f"deny={expected_limit} or less",
+                "section": "access_control"
+            }
+    else:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.FAIL,
+            "severity": Severity.HIGH,
+            "details": "Password retry limit (deny) not found in /etc/security/faillock.conf.",
+            "remediation": "Ensure 'deny' option is configured in /etc/security/faillock.conf.",
+            "found_value": "Not found",
+            "expected_value": f"deny={expected_limit} or less",
+            "section": "access_control"
+        }
+
+def _check_root_path_integrity(data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Check root PATH integrity. (CIS 5.2.4)
+    """
+    rule_id = "5.2.4"
+    title = "Ensure root PATH integrity"
+    expected_path_elements = ["/usr/local/sbin", "/usr/local/bin", "/usr/sbin", "/usr/bin", "/sbin", "/bin"]
+
+    if 'root_path' not in data or data['root_path'] is None:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.SKIPPED,
+            "severity": Severity.CRITICAL,
+            "details": "Offline data for root PATH (root_path.json) not found.",
+            "found_value": "N/A",
+            "expected_value": "PATH contains only standard directories",
+            "section": "access_control"
+        }
+
+    found_path = data['root_path']
+    path_elements = found_path.split(':')
+    
+    # Check for non-standard directories
+    non_standard_paths = [p for p in path_elements if p not in expected_path_elements]
+    
+    if not non_standard_paths:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.PASS,
+            "severity": Severity.CRITICAL,
+            "details": f"Root PATH contains only standard directories. Found PATH: '{found_path}'.",
+            "found_value": found_path,
+            "expected_value": "PATH contains only standard directories",
+            "section": "access_control"
+        }
+    else:
+        return {
+            "rule_id": rule_id,
+            "title": title,
+            "status": Status.FAIL,
+            "severity": Severity.CRITICAL,
+            "details": f"Root PATH contains non-standard directories: {', '.join(non_standard_paths)}. Found PATH: '{found_path}'.",
+            "remediation": "Remove non-standard directories from root's PATH environment variable.",
+            "found_value": found_path,
+            "expected_value": "PATH contains only standard directories",
+            "section": "access_control"
+        }
+
+def check_ssh_server_online() -> List[Dict[str, Any]]:
     """Check SSH server configuration (5.1.1 - 5.1.22)"""
     results = []
     
@@ -74,22 +513,22 @@ def check_ssh_server_online():
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'PASS',
+                    'status': Status.PASS,
                     'details': f'/etc/ssh/sshd_config has correct permissions and ownership.',
                     'found_value': f'Mode: {current_mode}, Owner: {current_owner_str}',
                     'expected_value': f'Mode: {expected_mode}, Owner: {expected_owner}',
-                    'severity': 'Medium',
+                    'severity': Severity.MEDIUM,
                     'section': 'access_control'
                 })
             else:
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'FAIL',
+                    'status': Status.FAIL,
                     'details': f'/etc/ssh/sshd_config has incorrect permissions or ownership. Expected mode {expected_mode} and owner {expected_owner}.',
                     'found_value': f'Mode: {current_mode}, Owner: {current_owner_str}',
                     'expected_value': f'Mode: {expected_mode}, Owner: {expected_owner}',
-                    'severity': 'Medium',
+                    'severity': Severity.MEDIUM,
                     'section': 'access_control',
                     'remediation': f'Run: chown root:root /etc/ssh/sshd_config && chmod {expected_mode} /etc/ssh/sshd_config'
                 })
@@ -97,11 +536,11 @@ def check_ssh_server_online():
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'FAIL',
+                'status': Status.FAIL,
                 'details': '/etc/ssh/sshd_config does not exist.',
                 'found_value': 'File not found',
                 'expected_value': f'File exists with mode {expected_mode} and owner {expected_owner}',
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
             
@@ -109,9 +548,9 @@ def check_ssh_server_online():
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'ERROR',
+            'status': Status.ERROR,
             'details': f'Error checking /etc/ssh/sshd_config permissions: {str(e)}',
-            'severity': 'Medium',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
 
@@ -153,11 +592,11 @@ def check_ssh_server_online():
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'PASS' if all_correct else 'FAIL',
+                'status': Status.PASS if all_correct else Status.FAIL,
                 'details': 'All SSH private host key files have correct permissions and ownership.' if all_correct else 'Some SSH private host key files have incorrect permissions or ownership. ' + ' '.join(details_list),
                 'found_value': '; '.join(found_values) if found_values else 'No private keys found or accessible',
                 'expected_value': f'All private keys to have mode {expected_mode} and owner {expected_owner}',
-                'severity': 'High',
+                'severity': Severity.HIGH,
                 'section': 'access_control',
                 'remediation': 'Run: find /etc/ssh -xdev -type f -name "ssh_host_*_key" -exec chown root:root {} \\; -exec chmod 600 {} \\;' if not all_correct else None
             })
@@ -165,11 +604,11 @@ def check_ssh_server_online():
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'FAIL',
+                'status': Status.FAIL,
                 'details': 'No SSH private host key files found in /etc/ssh.',
                 'found_value': 'No private keys found',
                 'expected_value': 'Private keys exist with mode 600 and owner root:root',
-                'severity': 'High',
+                'severity': Severity.HIGH,
                 'section': 'access_control'
             })
             
@@ -177,9 +616,9 @@ def check_ssh_server_online():
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'ERROR',
+            'status': Status.ERROR,
             'details': f'Error checking SSH private key permissions: {str(e)}',
-            'severity': 'High',
+            'severity': Severity.HIGH,
             'section': 'access_control'
         })
 
@@ -221,11 +660,11 @@ def check_ssh_server_online():
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'PASS' if all_correct else 'FAIL',
+                'status': Status.PASS if all_correct else Status.FAIL,
                 'details': 'All SSH public host key files have correct permissions and ownership.' if all_correct else 'Some SSH public host key files have incorrect permissions or ownership. ' + ' '.join(details_list),
                 'found_value': '; '.join(found_values) if found_values else 'No public keys found or accessible',
                 'expected_value': f'All public keys to have mode {expected_mode} and owner {expected_owner}',
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control',
                 'remediation': 'Run: find /etc/ssh -xdev -type f -name "ssh_host_*.pub" -exec chown root:root {} \\; -exec chmod 644 {} \\;' if not all_correct else None
             })
@@ -233,11 +672,11 @@ def check_ssh_server_online():
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'FAIL',
+                'status': Status.FAIL,
                 'details': 'No SSH public host key files found in /etc/ssh.',
                 'found_value': 'No public keys found',
                 'expected_value': 'Public keys exist with mode 644 and owner root:root',
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
             
@@ -245,31 +684,31 @@ def check_ssh_server_online():
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'ERROR',
+            'status': Status.ERROR,
             'details': f'Error checking SSH public key permissions: {str(e)}',
-            'severity': 'Medium',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
 
     # SSH configuration parameters to check
     ssh_params = [
-        ('5.1.4', 'Ciphers', 'chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr', 'Ensure sshd Ciphers are configured', 'Medium'),
-        ('5.1.5', 'KexAlgorithms', 'curve25519-sha256,curve25519-sha256@libssh.org,diffie-hellman-group14-sha256,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512,ecdh-sha2-nistp521,ecdh-sha2-nistp384,ecdh-sha2-nistp256,diffie-hellman-group-exchange-sha256', 'Ensure sshd KexAlgorithms is configured', 'Medium'),
-        ('5.1.6', 'MACs', 'umac-64-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com,hmac-sha1-etm@openssh.com,umac-64@openssh.com,umac-128@openssh.com,hmac-sha2-256,hmac-sha2-512,hmac-sha1', 'Ensure sshd MACs are configured', 'Medium'),
-        ('5.1.8', 'Banner', '/etc/issue.net', 'Ensure sshd Banner is configured', 'Medium'),
-        ('5.1.10', 'DisableForwarding', 'yes', 'Ensure sshd DisableForwarding is enabled', 'Medium'),
-        ('5.1.11', 'GSSAPIAuthentication', 'no', 'Ensure sshd GSSAPIAuthentication is disabled', 'Medium'),
-        ('5.1.12', 'HostbasedAuthentication', 'no', 'Ensure sshd HostbasedAuthentication is disabled', 'Medium'),
-        ('5.1.13', 'IgnoreRhosts', 'yes', 'Ensure sshd IgnoreRhosts is enabled', 'Medium'),
-        ('5.1.14', 'LoginGraceTime', '60', 'Ensure sshd LoginGraceTime is configured', 'Medium'),
-        ('5.1.15', 'LogLevel', 'VERBOSE', 'Ensure sshd LogLevel is configured', 'Medium'),
-        ('5.1.16', 'MaxAuthTries', '4', 'Ensure sshd MaxAuthTries is configured', 'Medium'),
-        ('5.1.17', 'MaxStartups', '10:30:60', 'Ensure sshd MaxStartups is configured', 'Medium'),
-        ('5.1.18', 'MaxSessions', '10', 'Ensure sshd MaxSessions is configured', 'Medium'),
-        ('5.1.19', 'PermitEmptyPasswords', 'no', 'Ensure sshd PermitEmptyPasswords is disabled', 'Medium'),
-        ('5.1.20', 'PermitRootLogin', 'no', 'Ensure sshd PermitRootLogin is disabled', 'High'),
-        ('5.1.21', 'PermitUserEnvironment', 'no', 'Ensure sshd PermitUserEnvironment is disabled', 'Medium'),
-        ('5.1.22', 'UsePAM', 'yes', 'Ensure sshd UsePAM is enabled', 'Medium')
+        ('5.1.4', 'Ciphers', 'chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr', 'Ensure sshd Ciphers are configured', Severity.MEDIUM),
+        ('5.1.5', 'KexAlgorithms', 'curve25519-sha256,curve25519-sha256@libssh.org,diffie-hellman-group14-sha256,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512,ecdh-sha2-nistp521,ecdh-sha2-nistp384,ecdh-sha2-nistp256,diffie-hellman-group-exchange-sha256', 'Ensure sshd KexAlgorithms is configured', Severity.MEDIUM),
+        ('5.1.6', 'MACs', 'umac-64-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com,hmac-sha1-etm@openssh.com,umac-64@openssh.com,umac-128@openssh.com,hmac-sha2-256,hmac-sha2-512,hmac-sha1', 'Ensure sshd MACs are configured', Severity.MEDIUM),
+        ('5.1.8', 'Banner', '/etc/issue.net', 'Ensure sshd Banner is configured', Severity.MEDIUM),
+        ('5.1.10', 'DisableForwarding', 'yes', 'Ensure sshd DisableForwarding is enabled', Severity.MEDIUM),
+        ('5.1.11', 'GSSAPIAuthentication', 'no', 'Ensure sshd GSSAPIAuthentication is disabled', Severity.MEDIUM),
+        ('5.1.12', 'HostbasedAuthentication', 'no', 'Ensure sshd HostbasedAuthentication is disabled', Severity.MEDIUM),
+        ('5.1.13', 'IgnoreRhosts', 'yes', 'Ensure sshd IgnoreRhosts is enabled', Severity.MEDIUM),
+        ('5.1.14', 'LoginGraceTime', '60', 'Ensure sshd LoginGraceTime is configured', Severity.MEDIUM),
+        ('5.1.15', 'LogLevel', 'VERBOSE', 'Ensure sshd LogLevel is configured', Severity.MEDIUM),
+        ('5.1.16', 'MaxAuthTries', '4', 'Ensure sshd MaxAuthTries is configured', Severity.MEDIUM),
+        ('5.1.17', 'MaxStartups', '10:30:60', 'Ensure sshd MaxStartups is configured', Severity.MEDIUM),
+        ('5.1.18', 'MaxSessions', '10', 'Ensure sshd MaxSessions is configured', Severity.MEDIUM),
+        ('5.1.19', 'PermitEmptyPasswords', 'no', 'Ensure sshd PermitEmptyPasswords is disabled', Severity.MEDIUM),
+        ('5.1.20', 'PermitRootLogin', 'no', 'Ensure sshd PermitRootLogin is disabled', Severity.HIGH),
+        ('5.1.21', 'PermitUserEnvironment', 'no', 'Ensure sshd PermitUserEnvironment is disabled', Severity.MEDIUM),
+        ('5.1.22', 'UsePAM', 'yes', 'Ensure sshd UsePAM is enabled', Severity.MEDIUM)
     ]
 
     try:
@@ -282,7 +721,7 @@ def check_ssh_server_online():
                 pattern = rf'^\s*{re.escape(param)}\s+(.+)$'
                 match = re.search(pattern, sshd_config, re.MULTILINE | re.IGNORECASE)
                 
-                status = 'FAIL'
+                status = Status.FAIL
                 details = f'{param} is not configured in /etc/ssh/sshd_config.'
                 found_value = 'Not configured'
                 remediation = f'Edit /etc/ssh/sshd_config and add: {param} {expected}'
@@ -299,28 +738,28 @@ def check_ssh_server_online():
                             expected_num = int(expected.split(':')[0])
                             
                             if current_num <= expected_num:
-                                status = 'PASS'
+                                status = Status.PASS
                                 details = f'{param} is set to {current_value}, which is compliant (<= {expected_num}).'
                             else:
-                                status = 'FAIL'
+                                status = Status.FAIL
                                 details = f'{param} is set to {current_value}, which is not compliant (should be <= {expected_num}).'
                         except ValueError:
-                            status = 'ERROR'
+                            status = Status.ERROR
                             details = f'Could not parse numeric value for {param}: {current_value}.'
                             remediation = None # No specific remediation if parsing error
                     elif param in ['Ciphers', 'KexAlgorithms', 'MACs']:
                         # For crypto algorithms, just check if configured (manual review needed for exact list)
-                        status = 'MANUAL'
+                        status = Status.MANUAL
                         details = f'{param} is configured to: {current_value}. Manual review is required to ensure the list of algorithms is compliant with the benchmark.'
                         remediation = None # Manual review, no automated remediation
                     else:
                         # String comparison
                         if current_value.lower() == expected.lower():
-                            status = 'PASS'
+                            status = Status.PASS
                             details = f'{param} is correctly set to: {current_value}.'
                             remediation = None
                         else:
-                            status = 'FAIL'
+                            status = Status.FAIL
                             details = f'{param} is set to {current_value}, but expected {expected}.'
                 
                 results.append({
@@ -339,7 +778,7 @@ def check_ssh_server_online():
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'FAIL',
+                    'status': Status.FAIL,
                     'details': '/etc/ssh/sshd_config does not exist, so SSH parameters cannot be checked.',
                     'found_value': 'File not found',
                     'expected_value': f'{param} {expected}',
@@ -352,7 +791,7 @@ def check_ssh_server_online():
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'ERROR',
+                'status': Status.ERROR,
                 'details': f'Error checking SSH configuration for {param}: {str(e)}',
                 'severity': severity,
                 'section': 'access_control'
@@ -379,22 +818,22 @@ def check_ssh_server_online():
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'PASS', # Or MANUAL, depending on strictness
+                    'status': Status.PASS, # Or MANUAL, depending on strictness
                     'details': f'SSH access controls are configured. Manual review is recommended to ensure they meet specific organizational policies.',
                     'found_value': '; '.join(found_values),
                     'expected_value': 'At least one of AllowUsers, AllowGroups, DenyUsers, or DenyGroups configured',
-                    'severity': 'Medium',
+                    'severity': Severity.MEDIUM,
                     'section': 'access_control'
                 })
             else:
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'MANUAL', # Changed to MANUAL as it's a recommendation
+                    'status': Status.MANUAL, # Changed to MANUAL as it's a recommendation
                     'details': 'No explicit SSH access controls (AllowUsers, AllowGroups, DenyUsers, DenyGroups) are configured. Manual review is required to ensure access is properly restricted.',
                     'found_value': 'No explicit access controls',
                     'expected_value': 'At least one of AllowUsers, AllowGroups, DenyUsers, or DenyGroups configured',
-                    'severity': 'Medium',
+                    'severity': Severity.MEDIUM,
                     'section': 'access_control',
                     'remediation': 'Configure AllowUsers, AllowGroups, DenyUsers, or DenyGroups in /etc/ssh/sshd_config to restrict SSH access.'
                 })
@@ -402,11 +841,11 @@ def check_ssh_server_online():
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'FAIL',
+                'status': Status.FAIL,
                 'details': '/etc/ssh/sshd_config does not exist, so SSH access controls cannot be checked.',
                 'found_value': 'File not found',
                 'expected_value': 'SSH access controls configured',
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
             
@@ -414,9 +853,9 @@ def check_ssh_server_online():
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'ERROR',
+            'status': Status.ERROR,
             'details': f'Error checking SSH access configuration: {str(e)}',
-            'severity': 'Medium',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
 
@@ -461,7 +900,7 @@ def check_ssh_server_online():
             else:
                 details_list.append('ClientAliveCountMax is not configured.')
             
-            status = 'PASS' if (interval_ok and countmax_ok) else 'FAIL'
+            status = Status.PASS if (interval_ok and countmax_ok) else Status.FAIL
             remediation = None
             if not interval_ok or not countmax_ok:
                 remediation = f'Edit /etc/ssh/sshd_config and set: ClientAliveInterval {expected_interval}, ClientAliveCountMax {expected_countmax}'
@@ -473,7 +912,7 @@ def check_ssh_server_online():
                 'details': ' '.join(details_list),
                 'found_value': f'Interval: {found_interval}, CountMax: {found_countmax}',
                 'expected_value': f'Interval: 1-{expected_interval}, CountMax: 0-{expected_countmax}',
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control',
                 'remediation': remediation
             })
@@ -481,11 +920,11 @@ def check_ssh_server_online():
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'FAIL',
+                'status': Status.FAIL,
                 'details': '/etc/ssh/sshd_config does not exist, so ClientAlive settings cannot be checked.',
                 'found_value': 'File not found',
                 'expected_value': f'ClientAliveInterval 1-{expected_interval}, ClientAliveCountMax 0-{expected_countmax}',
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
             
@@ -493,20 +932,19 @@ def check_ssh_server_online():
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'ERROR',
+            'status': Status.ERROR,
             'details': f'Error checking SSH ClientAlive configuration: {str(e)}',
-            'severity': 'Medium',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
 
     return results
 
-def check_ssh_server_offline(data_dir):
+def check_ssh_server_offline(data_dir: str) -> List[Dict[str, Any]]:
     """Check SSH server configuration offline"""
     results = []
     
     ssh_config_file = Path(data_dir) / "security" / "ssh" / "sshd_config"
-    ssh_private_keys_dir = Path(data_dir) / "security" / "ssh"
     ssh_permissions_file = Path(data_dir) / "security" / "ssh" / "ssh-permissions.txt"
 
     # 5.1.1 - Ensure permissions on /etc/ssh/sshd_config are configured
@@ -519,7 +957,20 @@ def check_ssh_server_offline(data_dir):
         # Example: -rw-------. 1 root root 3900 Jan 18 2024 sshd_config
         match = re.search(r'(-r[wx-]{8,9})\s+\d+\s+(\S+)\s+(\S+).*sshd_config', permissions_content)
         if match:
-            current_mode_octal = oct(int(match.group(1).replace('r', '1').replace('w', '2').replace('x', '4').replace('-', '0'), 2))[-3:]
+            # Convert symbolic permissions to octal
+            sym_perm = match.group(1)
+            octal_perm = 0
+            if 'r' in sym_perm[1:4]: octal_perm += 400
+            if 'w' in sym_perm[1:4]: octal_perm += 200
+            if 'x' in sym_perm[1:4]: octal_perm += 100
+            if 'r' in sym_perm[4:7]: octal_perm += 40
+            if 'w' in sym_perm[4:7]: octal_perm += 20
+            if 'x' in sym_perm[4:7]: octal_perm += 10
+            if 'r' in sym_perm[7:10]: octal_perm += 4
+            if 'w' in sym_perm[7:10]: octal_perm += 2
+            if 'x' in sym_perm[7:10]: octal_perm += 1
+            current_mode_octal = str(octal_perm)
+
             current_owner = match.group(2)
             current_group = match.group(3)
             current_owner_str = f"{current_owner}:{current_group}"
@@ -528,22 +979,22 @@ def check_ssh_server_offline(data_dir):
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'PASS',
+                    'status': Status.PASS,
                     'details': f'/etc/ssh/sshd_config has correct permissions and ownership based on collected data.',
                     'found_value': f'Mode: {current_mode_octal}, Owner: {current_owner_str}',
                     'expected_value': f'Mode: {expected_mode}, Owner: {expected_owner}',
-                    'severity': 'Medium',
+                    'severity': Severity.MEDIUM,
                     'section': 'access_control'
                 })
             else:
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'FAIL',
+                    'status': Status.FAIL,
                     'details': f'/etc/ssh/sshd_config has incorrect permissions or ownership. Expected mode {expected_mode} and owner {expected_owner}.',
                     'found_value': f'Mode: {current_mode_octal}, Owner: {current_owner_str}',
                     'expected_value': f'Mode: {expected_mode}, Owner: {expected_owner}',
-                    'severity': 'Medium',
+                    'severity': Severity.MEDIUM,
                     'section': 'access_control',
                     'remediation': f'Run: chown root:root /etc/ssh/sshd_config && chmod {expected_mode} /etc/ssh/sshd_config'
                 })
@@ -551,95 +1002,95 @@ def check_ssh_server_offline(data_dir):
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'MANUAL',
+                'status': Status.MANUAL,
                 'details': 'Could not parse permissions for /etc/ssh/sshd_config from collected data. Manual review required.',
                 'found_value': 'Parsing failed',
                 'expected_value': f'Mode: {expected_mode}, Owner: {expected_owner}',
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
     else:
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'SKIPPED',
+            'status': Status.SKIPPED,
             'details': 'SSH permissions data (ssh-permissions.txt) not available in collected data.',
             'found_value': 'Data file not found',
             'expected_value': f'Mode: {expected_mode}, Owner: {expected_owner}',
-            'severity': 'Medium',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
 
     # 5.1.2 & 5.1.3 - Permissions on SSH private/public host key files
-    # This is hard to check reliably offline without `ls -la` output for each key.
-    # We'll mark these as MANUAL or SKIPPED if specific data isn't collected.
     rule_id_private = '5.1.2'
     title_private = 'Ensure permissions on SSH private host key files are configured'
     rule_id_public = '5.1.3'
     title_public = 'Ensure permissions on SSH public host key files are configured'
 
     if ssh_permissions_file.exists():
+        # This check is still difficult to automate fully offline without specific parsing logic for each key.
+        # Marking as MANUAL as per previous logic, but with more specific details.
         results.append({
             'rule_id': rule_id_private,
             'title': title_private,
-            'status': 'MANUAL',
-            'details': 'Permissions on SSH private host key files require manual review of collected `ssh-permissions.txt` for each key.',
+            'status': Status.MANUAL,
+            'details': 'Permissions on SSH private host key files require manual review of collected `ssh-permissions.txt` for each key. Look for files ending in `_key` (not `.pub`) and verify mode `600` and owner `root:root`.',
             'found_value': 'Review ssh-permissions.txt',
             'expected_value': 'Private keys: 600 root:root',
-            'severity': 'High',
+            'severity': Severity.HIGH,
             'section': 'access_control'
         })
         results.append({
             'rule_id': rule_id_public,
             'title': title_public,
-            'status': 'MANUAL',
-            'details': 'Permissions on SSH public host key files require manual review of collected `ssh-permissions.txt` for each key.',
+            'status': Status.MANUAL,
+            'details': 'Permissions on SSH public host key files require manual review of collected `ssh-permissions.txt` for each key. Look for files ending in `.pub` and verify mode `644` and owner `root:root`.',
             'found_value': 'Review ssh-permissions.txt',
             'expected_value': 'Public keys: 644 root:root',
-            'severity': 'Medium',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
     else:
         results.append({
             'rule_id': rule_id_private,
             'title': title_private,
-            'status': 'SKIPPED',
+            'status': Status.SKIPPED,
             'details': 'SSH permissions data (ssh-permissions.txt) not available in collected data, cannot check private key permissions.',
             'found_value': 'Data file not found',
             'expected_value': 'Private keys: 600 root:root',
-            'severity': 'High',
+            'severity': Severity.HIGH,
             'section': 'access_control'
         })
         results.append({
             'rule_id': rule_id_public,
             'title': title_public,
-            'status': 'SKIPPED',
+            'status': Status.SKIPPED,
             'details': 'SSH permissions data (ssh-permissions.txt) not available in collected data, cannot check public key permissions.',
             'found_value': 'Data file not found',
             'expected_value': 'Public keys: 644 root:root',
-            'severity': 'Medium',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
 
     # SSH configuration parameters to check (offline)
     ssh_params = [
-        ('5.1.4', 'Ciphers', 'chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr', 'Ensure sshd Ciphers are configured', 'Medium'),
-        ('5.1.5', 'KexAlgorithms', 'curve25519-sha256,curve25519-sha256@libssh.org,diffie-hellman-group14-sha256,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512,ecdh-sha2-nistp521,ecdh-sha2-nistp384,ecdh-sha2-nistp256,diffie-hellman-group-exchange-sha256', 'Ensure sshd KexAlgorithms is configured', 'Medium'),
-        ('5.1.6', 'MACs', 'umac-64-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com,hmac-sha1-etm@openssh.com,umac-64@openssh.com,umac-128@openssh.com,hmac-sha2-256,hmac-sha2-512,hmac-sha1', 'Ensure sshd MACs are configured', 'Medium'),
-        ('5.1.8', 'Banner', '/etc/issue.net', 'Ensure sshd Banner is configured', 'Medium'),
-        ('5.1.10', 'DisableForwarding', 'yes', 'Ensure sshd DisableForwarding is enabled', 'Medium'),
-        ('5.1.11', 'GSSAPIAuthentication', 'no', 'Ensure sshd GSSAPIAuthentication is disabled', 'Medium'),
-        ('5.1.12', 'HostbasedAuthentication', 'no', 'Ensure sshd HostbasedAuthentication is disabled', 'Medium'),
-        ('5.1.13', 'IgnoreRhosts', 'yes', 'Ensure sshd IgnoreRhosts is enabled', 'Medium'),
-        ('5.1.14', 'LoginGraceTime', '60', 'Ensure sshd LoginGraceTime is configured', 'Medium'),
-        ('5.1.15', 'LogLevel', 'VERBOSE', 'Ensure sshd LogLevel is configured', 'Medium'),
-        ('5.1.16', 'MaxAuthTries', '4', 'Ensure sshd MaxAuthTries is configured', 'Medium'),
-        ('5.1.17', 'MaxStartups', '10:30:60', 'Ensure sshd MaxStartups is configured', 'Medium'),
-        ('5.1.18', 'MaxSessions', '10', 'Ensure sshd MaxSessions is configured', 'Medium'),
-        ('5.1.19', 'PermitEmptyPasswords', 'no', 'Ensure sshd PermitEmptyPasswords is disabled', 'Medium'),
-        ('5.1.20', 'PermitRootLogin', 'no', 'Ensure sshd PermitRootLogin is disabled', 'High'),
-        ('5.1.21', 'PermitUserEnvironment', 'no', 'Ensure sshd PermitUserEnvironment is disabled', 'Medium'),
-        ('5.1.22', 'UsePAM', 'yes', 'Ensure sshd UsePAM is enabled', 'Medium')
+        ('5.1.4', 'Ciphers', 'chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr', 'Ensure sshd Ciphers are configured', Severity.MEDIUM),
+        ('5.1.5', 'KexAlgorithms', 'curve25519-sha256,curve25519-sha256@libssh.org,diffie-hellman-group14-sha256,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512,ecdh-sha2-nistp521,ecdh-sha2-nistp384,ecdh-sha2-nistp256,diffie-hellman-group-exchange-sha256', 'Ensure sshd KexAlgorithms is configured', Severity.MEDIUM),
+        ('5.1.6', 'MACs', 'umac-64-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com,hmac-sha1-etm@openssh.com,umac-64@openssh.com,umac-128@openssh.com,hmac-sha2-256,hmac-sha2-512,hmac-sha1', 'Ensure sshd MACs are configured', Severity.MEDIUM),
+        ('5.1.8', 'Banner', '/etc/issue.net', 'Ensure sshd Banner is configured', Severity.MEDIUM),
+        ('5.1.10', 'DisableForwarding', 'yes', 'Ensure sshd DisableForwarding is enabled', Severity.MEDIUM),
+        ('5.1.11', 'GSSAPIAuthentication', 'no', 'Ensure sshd GSSAPIAuthentication is disabled', Severity.MEDIUM),
+        ('5.1.12', 'HostbasedAuthentication', 'no', 'Ensure sshd HostbasedAuthentication is disabled', Severity.MEDIUM),
+        ('5.1.13', 'IgnoreRhosts', 'yes', 'Ensure sshd IgnoreRhosts is enabled', Severity.MEDIUM),
+        ('5.1.14', 'LoginGraceTime', '60', 'Ensure sshd LoginGraceTime is configured', Severity.MEDIUM),
+        ('5.1.15', 'LogLevel', 'VERBOSE', 'Ensure sshd LogLevel is configured', Severity.MEDIUM),
+        ('5.1.16', 'MaxAuthTries', '4', 'Ensure sshd MaxAuthTries is configured', Severity.MEDIUM),
+        ('5.1.17', 'MaxStartups', '10:30:60', 'Ensure sshd MaxStartups is configured', Severity.MEDIUM),
+        ('5.1.18', 'MaxSessions', '10', 'Ensure sshd MaxSessions is configured', Severity.MEDIUM),
+        ('5.1.19', 'PermitEmptyPasswords', 'no', 'Ensure sshd PermitEmptyPasswords is disabled', Severity.MEDIUM),
+        ('5.1.20', 'PermitRootLogin', 'no', 'Ensure sshd PermitRootLogin is disabled', Severity.HIGH),
+        ('5.1.21', 'PermitUserEnvironment', 'no', 'Ensure sshd PermitUserEnvironment is disabled', Severity.MEDIUM),
+        ('5.1.22', 'UsePAM', 'yes', 'Ensure sshd UsePAM is enabled', Severity.MEDIUM)
     ]
 
     try:
@@ -650,7 +1101,7 @@ def check_ssh_server_offline(data_dir):
                 pattern = rf'^\s*{re.escape(param)}\s+(.+)$'
                 match = re.search(pattern, sshd_config, re.MULTILINE | re.IGNORECASE)
                 
-                status = 'FAIL'
+                status = Status.FAIL
                 details = f'{param} is not configured in collected sshd_config.'
                 found_value = 'Not configured'
                 remediation = f'Edit /etc/ssh/sshd_config and add: {param} {expected}'
@@ -664,27 +1115,27 @@ def check_ssh_server_offline(data_dir):
                             current_num = int(current_value.split(':')[0])
                             expected_num = int(expected.split(':')[0])
                             if current_num <= expected_num:
-                                status = 'PASS'
+                                status = Status.PASS
                                 details = f'{param} is set to {current_value}, which is compliant (<= {expected_num}).'
                                 remediation = None
                             else:
-                                status = 'FAIL'
+                                status = Status.FAIL
                                 details = f'{param} is set to {current_value}, which is not compliant (should be <= {expected_num}).'
                         except ValueError:
-                            status = 'ERROR'
+                            status = Status.ERROR
                             details = f'Could not parse numeric value for {param}: {current_value} from collected data.'
                             remediation = None
                     elif param in ['Ciphers', 'KexAlgorithms', 'MACs']:
-                        status = 'MANUAL'
+                        status = Status.MANUAL
                         details = f'{param} is configured to: {current_value}. Manual review is required to ensure the list of algorithms is compliant with the benchmark.'
                         remediation = None
                     else:
                         if current_value.lower() == expected.lower():
-                            status = 'PASS'
+                            status = Status.PASS
                             details = f'{param} is correctly set to: {current_value} based on collected data.'
                             remediation = None
                         else:
-                            status = 'FAIL'
+                            status = Status.FAIL
                             details = f'{param} is set to {current_value} in collected data, but expected {expected}.'
                 
                 results.append({
@@ -703,7 +1154,7 @@ def check_ssh_server_offline(data_dir):
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'SKIPPED',
+                    'status': Status.SKIPPED,
                     'details': 'SSH config file (sshd_config) not available in collected data.',
                     'found_value': 'File not found',
                     'expected_value': f'{param} {expected}',
@@ -716,7 +1167,7 @@ def check_ssh_server_offline(data_dir):
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'ERROR',
+                'status': Status.ERROR,
                 'details': f'Error checking SSH configuration for {param} from collected data: {str(e)}',
                 'severity': severity,
                 'section': 'access_control'
@@ -742,22 +1193,22 @@ def check_ssh_server_offline(data_dir):
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'MANUAL',
+                    'status': Status.MANUAL,
                     'details': f'SSH access controls are configured in collected data. Manual review is required to ensure they meet specific organizational policies.',
                     'found_value': '; '.join(found_values),
                     'expected_value': 'At least one of AllowUsers, AllowGroups, DenyUsers, or DenyGroups configured',
-                    'severity': 'Medium',
+                    'severity': Severity.MEDIUM,
                     'section': 'access_control'
                 })
             else:
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'MANUAL',
+                    'status': Status.MANUAL,
                     'details': 'No explicit SSH access controls (AllowUsers, AllowGroups, DenyUsers, DenyGroups) found in collected data. Manual review is required to ensure access is properly restricted.',
                     'found_value': 'No explicit access controls found',
                     'expected_value': 'At least one of AllowUsers, AllowGroups, DenyUsers, or DenyGroups configured',
-                    'severity': 'Medium',
+                    'severity': Severity.MEDIUM,
                     'section': 'access_control',
                     'remediation': 'Configure AllowUsers, AllowGroups, DenyUsers, or DenyGroups in /etc/ssh/sshd_config to restrict SSH access.'
                 })
@@ -765,11 +1216,11 @@ def check_ssh_server_offline(data_dir):
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'SKIPPED',
+                'status': Status.SKIPPED,
                 'details': 'SSH config file (sshd_config) not available in collected data, cannot check access controls.',
                 'found_value': 'File not found',
                 'expected_value': 'SSH access controls configured',
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
             
@@ -777,9 +1228,9 @@ def check_ssh_server_offline(data_dir):
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'ERROR',
+            'status': Status.ERROR,
             'details': f'Error checking SSH access configuration from collected data: {str(e)}',
-            'severity': 'Medium',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
 
@@ -823,7 +1274,7 @@ def check_ssh_server_offline(data_dir):
             else:
                 details_list.append('ClientAliveCountMax is not configured in collected data.')
             
-            status = 'PASS' if (interval_ok and countmax_ok) else 'FAIL'
+            status = Status.PASS if (interval_ok and countmax_ok) else Status.FAIL
             remediation = None
             if not interval_ok or not countmax_ok:
                 remediation = f'Edit /etc/ssh/sshd_config and set: ClientAliveInterval {expected_interval}, ClientAliveCountMax {expected_countmax}'
@@ -835,7 +1286,7 @@ def check_ssh_server_offline(data_dir):
                 'details': ' '.join(details_list),
                 'found_value': f'Interval: {found_interval}, CountMax: {found_countmax}',
                 'expected_value': f'Interval: 1-{expected_interval}, CountMax: 0-{expected_countmax}',
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control',
                 'remediation': remediation
             })
@@ -843,11 +1294,11 @@ def check_ssh_server_offline(data_dir):
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'SKIPPED',
+                'status': Status.SKIPPED,
                 'details': 'SSH config file (sshd_config) not available in collected data, cannot check ClientAlive settings.',
                 'found_value': 'File not found',
                 'expected_value': f'ClientAliveInterval 1-{expected_interval}, ClientAliveCountMax 0-{expected_countmax}',
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
             
@@ -855,15 +1306,15 @@ def check_ssh_server_offline(data_dir):
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'ERROR',
+            'status': Status.ERROR,
             'details': f'Error checking SSH ClientAlive configuration from collected data: {str(e)}',
-            'severity': 'Medium',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
 
     return results
 
-def check_privilege_escalation_online():
+def check_privilege_escalation_online() -> List[Dict[str, Any]]:
     """Check privilege escalation configuration (5.2.1 - 5.2.7)"""
     results = []
 
@@ -877,22 +1328,22 @@ def check_privilege_escalation_online():
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'PASS',
+                'status': Status.PASS,
                 'details': 'sudo package is installed.',
                 'found_value': result.stdout.strip(),
                 'expected_value': 'sudo package installed',
-                'severity': 'High',
+                'severity': Severity.HIGH,
                 'section': 'access_control'
             })
         else:
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'FAIL',
+                'status': Status.FAIL,
                 'details': 'sudo package is not installed.',
                 'found_value': 'Not installed',
                 'expected_value': 'sudo package installed',
-                'severity': 'High',
+                'severity': Severity.HIGH,
                 'section': 'access_control',
                 'remediation': 'Run: dnf install sudo'
             })
@@ -901,9 +1352,9 @@ def check_privilege_escalation_online():
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'ERROR',
+            'status': Status.ERROR,
             'details': f'Error checking sudo installation: {str(e)}',
-            'severity': 'High',
+            'severity': Severity.HIGH,
             'section': 'access_control'
         })
 
@@ -919,22 +1370,22 @@ def check_privilege_escalation_online():
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'PASS',
+                    'status': Status.PASS,
                     'details': 'sudo is configured to use a pseudo-terminal (pty) for commands.',
                     'found_value': result.stdout.strip(),
                     'expected_value': expected_config,
-                    'severity': 'Medium',
+                    'severity': Severity.MEDIUM,
                     'section': 'access_control'
                 })
             else:
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'FAIL',
+                    'status': Status.FAIL,
                     'details': 'sudo is not configured to use a pseudo-terminal (pty) for commands. This can prevent logging of interactive commands.',
                     'found_value': 'Not found',
                     'expected_value': expected_config,
-                    'severity': 'Medium',
+                    'severity': Severity.MEDIUM,
                     'section': 'access_control',
                     'remediation': 'Add "Defaults use_pty" to /etc/sudoers'
                 })
@@ -942,11 +1393,11 @@ def check_privilege_escalation_online():
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'FAIL',
+                'status': Status.FAIL,
                 'details': '/etc/sudoers file does not exist, cannot check pty configuration.',
                 'found_value': 'File not found',
                 'expected_value': expected_config,
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
             
@@ -954,9 +1405,9 @@ def check_privilege_escalation_online():
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'ERROR',
+            'status': Status.ERROR,
             'details': f'Error checking sudo pty configuration: {str(e)}',
-            'severity': 'Medium',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
 
@@ -973,22 +1424,22 @@ def check_privilege_escalation_online():
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'PASS',
+                    'status': Status.PASS,
                     'details': f'sudo log file is configured: {found_value}.',
                     'found_value': found_value,
                     'expected_value': 'Defaults logfile=/path/to/log',
-                    'severity': 'Medium',
+                    'severity': Severity.MEDIUM,
                     'section': 'access_control'
                 })
             else:
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'FAIL',
+                    'status': Status.FAIL,
                     'details': 'sudo log file is not configured. Audit trails for sudo commands may be missing.',
                     'found_value': 'Not configured',
                     'expected_value': 'Defaults logfile=/var/log/sudo.log',
-                    'severity': 'Medium',
+                    'severity': Severity.MEDIUM,
                     'section': 'access_control',
                     'remediation': 'Add "Defaults logfile=/var/log/sudo.log" to /etc/sudoers'
                 })
@@ -996,11 +1447,11 @@ def check_privilege_escalation_online():
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'FAIL',
+                'status': Status.FAIL,
                 'details': '/etc/sudoers file does not exist, cannot check log file configuration.',
                 'found_value': 'File not found',
                 'expected_value': 'Defaults logfile=/var/log/sudo.log',
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
             
@@ -1008,9 +1459,9 @@ def check_privilege_escalation_online():
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'ERROR',
+            'status': Status.ERROR,
             'details': f'Error checking sudo log configuration: {str(e)}',
-            'severity': 'Medium',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
 
@@ -1025,11 +1476,11 @@ def check_privilege_escalation_online():
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'PASS',
+                'status': Status.PASS,
                 'details': 'No NOPASSWD entries found in sudoers files, ensuring users must authenticate for privilege escalation.',
                 'found_value': 'No NOPASSWD entries',
                 'expected_value': expected_absence,
-                'severity': 'High',
+                'severity': Severity.HIGH,
                 'section': 'access_control'
             })
         else:
@@ -1037,11 +1488,11 @@ def check_privilege_escalation_online():
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'FAIL',
+                'status': Status.FAIL,
                 'details': f'NOPASSWD entries found in sudoers files, allowing users to escalate privileges without a password. Found: {found_value}',
                 'found_value': found_value,
                 'expected_value': expected_absence,
-                'severity': 'High',
+                'severity': Severity.HIGH,
                 'section': 'access_control',
                 'remediation': 'Remove NOPASSWD entries from /etc/sudoers and /etc/sudoers.d/* files.'
             })
@@ -1050,9 +1501,9 @@ def check_privilege_escalation_online():
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'ERROR',
+            'status': Status.ERROR,
             'details': f'Error checking NOPASSWD configuration: {str(e)}',
-            'severity': 'High',
+            'severity': Severity.HIGH,
             'section': 'access_control'
         })
 
@@ -1067,11 +1518,11 @@ def check_privilege_escalation_online():
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'PASS',
+                'status': Status.PASS,
                 'details': 'Global re-authentication for privilege escalation is not disabled.',
                 'found_value': 'No !authenticate entries',
                 'expected_value': expected_absence,
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
         else:
@@ -1079,11 +1530,11 @@ def check_privilege_escalation_online():
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'FAIL',
+                'status': Status.FAIL,
                 'details': f'Global !authenticate entries found, disabling re-authentication for privilege escalation. Found: {found_value}',
                 'found_value': found_value,
                 'expected_value': expected_absence,
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control',
                 'remediation': 'Remove "Defaults !authenticate" entries from /etc/sudoers and /etc/sudoers.d/* files.'
             })
@@ -1092,9 +1543,9 @@ def check_privilege_escalation_online():
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'ERROR',
+            'status': Status.ERROR,
             'details': f'Error checking authenticate configuration: {str(e)}',
-            'severity': 'Medium',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
 
@@ -1113,22 +1564,22 @@ def check_privilege_escalation_online():
                     results.append({
                         'rule_id': rule_id,
                         'title': title,
-                        'status': 'PASS',
+                        'status': Status.PASS,
                         'details': f'sudo authentication timeout is set to {current_timeout} minutes, which is compliant (<= {expected_timeout_max}).',
                         'found_value': f'{current_timeout} minutes',
                         'expected_value': f'<= {expected_timeout_max} minutes',
-                        'severity': 'Medium',
+                        'severity': Severity.MEDIUM,
                         'section': 'access_control'
                     })
                 else:
                     results.append({
                         'rule_id': rule_id,
                         'title': title,
-                        'status': 'FAIL',
+                        'status': Status.FAIL,
                         'details': f'sudo authentication timeout is set to {current_timeout} minutes, which is too long (should be <= {expected_timeout_max}).',
                         'found_value': f'{current_timeout} minutes',
                         'expected_value': f'<= {expected_timeout_max} minutes',
-                        'severity': 'Medium',
+                        'severity': Severity.MEDIUM,
                         'section': 'access_control',
                         'remediation': f'Set "Defaults timestamp_timeout={expected_timeout_max}" in /etc/sudoers'
                     })
@@ -1136,22 +1587,22 @@ def check_privilege_escalation_online():
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'FAIL',
+                    'status': Status.FAIL,
                     'details': 'sudo timeout configuration found but value not parseable.',
                     'found_value': result.stdout.strip(),
                     'expected_value': f'Defaults timestamp_timeout={expected_timeout_max}',
-                    'severity': 'Medium',
+                    'severity': Severity.MEDIUM,
                     'section': 'access_control'
                 })
         else:
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'FAIL',
+                'status': Status.FAIL,
                 'details': 'sudo authentication timeout is not configured. This could allow users to retain sudo privileges for too long without re-authenticating.',
                 'found_value': 'Not configured',
                 'expected_value': f'Defaults timestamp_timeout={expected_timeout_max}',
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control',
                 'remediation': f'Add "Defaults timestamp_timeout={expected_timeout_max}" to /etc/sudoers'
             })
@@ -1160,9 +1611,9 @@ def check_privilege_escalation_online():
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'ERROR',
+            'status': Status.ERROR,
             'details': f'Error checking sudo timeout configuration: {str(e)}',
-            'severity': 'Medium',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
 
@@ -1183,22 +1634,22 @@ def check_privilege_escalation_online():
                         results.append({
                             'rule_id': rule_id,
                             'title': title,
-                            'status': 'PASS',
+                            'status': Status.PASS,
                             'details': f'su access is restricted to the wheel group, and the wheel group has members. Found: {wheel_line}',
                             'found_value': wheel_line,
                             'expected_value': f'su restricted to wheel group with members, via "{expected_config}"',
-                            'severity': 'Medium',
+                            'severity': Severity.MEDIUM,
                             'section': 'access_control'
                         })
                     else:
                         results.append({
                             'rule_id': rule_id,
                             'title': title,
-                            'status': 'FAIL',
+                            'status': Status.FAIL,
                             'details': 'su access is restricted to the wheel group, but the wheel group has no members. This means no users can use su.',
                             'found_value': wheel_line,
                             'expected_value': f'su restricted to wheel group with members, via "{expected_config}"',
-                            'severity': 'Medium',
+                            'severity': Severity.MEDIUM,
                             'section': 'access_control',
                             'remediation': 'Add authorized users to the wheel group: usermod -aG wheel <username>'
                         })
@@ -1206,22 +1657,22 @@ def check_privilege_escalation_online():
                     results.append({
                         'rule_id': rule_id,
                         'title': title,
-                        'status': 'FAIL',
+                        'status': Status.FAIL,
                         'details': 'The wheel group was not found, but su is configured to use it. This prevents su access.',
                         'found_value': 'wheel group not found',
                         'expected_value': f'su restricted to wheel group with members, via "{expected_config}"',
-                        'severity': 'Medium',
+                        'severity': Severity.MEDIUM,
                         'section': 'access_control'
                     })
             else:
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'FAIL',
+                    'status': Status.FAIL,
                     'details': 'su access is not restricted to the wheel group. Any user may be able to use su.',
                     'found_value': 'Restriction not found',
                     'expected_value': expected_config,
-                    'severity': 'Medium',
+                    'severity': Severity.MEDIUM,
                     'section': 'access_control',
                     'remediation': f'Add "{expected_config}" to /etc/pam.d/su'
                 })
@@ -1229,11 +1680,11 @@ def check_privilege_escalation_online():
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'FAIL',
+                'status': Status.FAIL,
                 'details': '/etc/pam.d/su file does not exist, cannot check su access restriction.',
                 'found_value': 'File not found',
                 'expected_value': expected_config,
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
             
@@ -1241,15 +1692,15 @@ def check_privilege_escalation_online():
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'ERROR',
+            'status': Status.ERROR,
             'details': f'Error checking su access restriction: {str(e)}',
-            'severity': 'Medium',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
 
     return results
 
-def check_privilege_escalation_offline(data_dir):
+def check_privilege_escalation_offline(data_dir: str) -> List[Dict[str, Any]]:
     """Check privilege escalation configuration offline"""
     results = []
 
@@ -1268,33 +1719,33 @@ def check_privilege_escalation_offline(data_dir):
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'PASS',
+                'status': Status.PASS,
                 'details': 'sudo package found in collected installed packages.',
                 'found_value': 'sudo package found',
                 'expected_value': 'sudo package installed',
-                'severity': 'High',
+                'severity': Severity.HIGH,
                 'section': 'access_control'
             })
         else:
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'FAIL',
+                'status': Status.FAIL,
                 'details': 'sudo package not found in collected installed packages.',
                 'found_value': 'sudo package not found',
                 'expected_value': 'sudo package installed',
-                'severity': 'High',
+                'severity': Severity.HIGH,
                 'section': 'access_control'
             })
     else:
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'SKIPPED',
+            'status': Status.SKIPPED,
             'details': 'Package information (packages.txt) not available in collected data, cannot check sudo installation.',
             'found_value': 'Data file not found',
             'expected_value': 'sudo package installed',
-            'severity': 'High',
+            'severity': Severity.HIGH,
             'section': 'access_control'
         })
 
@@ -1309,7 +1760,10 @@ def check_privilege_escalation_offline(data_dir):
                     try:
                         sudoers_content += "\n" + f.read_text()
                     except Exception:
+                        logging.warning(f"Could not read sudoers.d file: {f}")
                         pass # Ignore unreadable files
+    else:
+        logging.warning(f"sudoers file not found: {sudoers_file}. Skipping sudoers-related checks.")
 
     # 5.2.2 - Check use_pty
     rule_id = '5.2.2'
@@ -1320,33 +1774,33 @@ def check_privilege_escalation_offline(data_dir):
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'PASS',
+                'status': Status.PASS,
                 'details': 'sudo is configured to use pty based on collected sudoers data.',
                 'found_value': 'Defaults use_pty found',
                 'expected_value': expected_config,
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
         else:
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'FAIL',
+                'status': Status.FAIL,
                 'details': 'sudo is not configured to use pty in collected sudoers data.',
                 'found_value': 'Defaults use_pty not found',
                 'expected_value': expected_config,
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
     else:
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'SKIPPED',
+            'status': Status.SKIPPED,
             'details': 'sudoers configuration not available in collected data, cannot check pty configuration.',
             'found_value': 'Data file not found',
             'expected_value': expected_config,
-            'severity': 'Medium',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
 
@@ -1360,33 +1814,33 @@ def check_privilege_escalation_offline(data_dir):
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'PASS',
+                'status': Status.PASS,
                 'details': 'sudo log file is configured in collected sudoers data.',
                 'found_value': found_value.group(1) if found_value else 'Configured',
                 'expected_value': 'Defaults logfile=/path/to/log',
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
         else:
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'FAIL',
+                'status': Status.FAIL,
                 'details': 'sudo log file is not configured in collected sudoers data.',
                 'found_value': 'Not configured',
                 'expected_value': 'Defaults logfile=/var/log/sudo.log',
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
     else:
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'SKIPPED',
+            'status': Status.SKIPPED,
             'details': 'sudoers configuration not available in collected data, cannot check log file configuration.',
             'found_value': 'Data file not found',
             'expected_value': 'Defaults logfile=/var/log/sudo.log',
-            'severity': 'Medium',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
 
@@ -1400,33 +1854,33 @@ def check_privilege_escalation_offline(data_dir):
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'FAIL',
+                'status': Status.FAIL,
                 'details': f'NOPASSWD entries found in collected sudoers data. Found: {found_value.group(1) if found_value else "Entries found"}',
                 'found_value': found_value.group(1) if found_value else 'Entries found',
                 'expected_value': expected_absence,
-                'severity': 'High',
+                'severity': Severity.HIGH,
                 'section': 'access_control'
             })
         else:
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'PASS',
+                'status': Status.PASS,
                 'details': 'No NOPASSWD entries found in collected sudoers data.',
                 'found_value': 'No NOPASSWD entries',
                 'expected_value': expected_absence,
-                'severity': 'High',
+                'severity': Severity.HIGH,
                 'section': 'access_control'
             })
     else:
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'SKIPPED',
+            'status': Status.SKIPPED,
             'details': 'sudoers configuration not available in collected data, cannot check NOPASSWD entries.',
             'found_value': 'Data file not found',
             'expected_value': expected_absence,
-            'severity': 'High',
+            'severity': Severity.HIGH,
             'section': 'access_control'
         })
 
@@ -1440,33 +1894,33 @@ def check_privilege_escalation_offline(data_dir):
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'FAIL',
+                'status': Status.FAIL,
                 'details': f'Global !authenticate entries found in collected sudoers data. Found: {found_value.group(1) if found_value else "Entries found"}',
                 'found_value': found_value.group(1) if found_value else 'Entries found',
                 'expected_value': expected_absence,
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
         else:
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'PASS',
+                'status': Status.PASS,
                 'details': 'No global !authenticate entries found in collected sudoers data.',
                 'found_value': 'No !authenticate entries',
                 'expected_value': expected_absence,
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
     else:
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'SKIPPED',
+            'status': Status.SKIPPED,
             'details': 'sudoers configuration not available in collected data, cannot check !authenticate entries.',
             'found_value': 'Data file not found',
             'expected_value': expected_absence,
-            'severity': 'Medium',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
 
@@ -1482,44 +1936,44 @@ def check_privilege_escalation_offline(data_dir):
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'PASS',
+                    'status': Status.PASS,
                     'details': f'sudo authentication timeout is set to {current_timeout} minutes in collected data, which is compliant (<= {expected_timeout_max}).',
                     'found_value': f'{current_timeout} minutes',
                     'expected_value': f'<= {expected_timeout_max} minutes',
-                    'severity': 'Medium',
+                    'severity': Severity.MEDIUM,
                     'section': 'access_control'
                 })
             else:
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'FAIL',
+                    'status': Status.FAIL,
                     'details': f'sudo authentication timeout is set to {current_timeout} minutes in collected data, which is too long (should be <= {expected_timeout_max}).',
                     'found_value': f'{current_timeout} minutes',
                     'expected_value': f'<= {expected_timeout_max} minutes',
-                    'severity': 'Medium',
+                    'severity': Severity.MEDIUM,
                     'section': 'access_control'
                 })
         else:
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'FAIL',
+                'status': Status.FAIL,
                 'details': 'sudo timeout configuration not found in collected sudoers data.',
                 'found_value': 'Not configured',
                 'expected_value': f'Defaults timestamp_timeout={expected_timeout_max}',
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
     else:
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'SKIPPED',
+            'status': Status.SKIPPED,
             'details': 'sudoers configuration not available in collected data, cannot check timeout.',
             'found_value': 'Data file not found',
             'expected_value': f'Defaults timestamp_timeout={expected_timeout_max}',
-            'severity': 'Medium',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
 
@@ -1539,61 +1993,61 @@ def check_privilege_escalation_offline(data_dir):
                     results.append({
                         'rule_id': rule_id,
                         'title': title,
-                        'status': 'PASS',
+                        'status': Status.PASS,
                         'details': f'su access is restricted to the wheel group via PAM, and the wheel group has members. Found wheel members: {members}',
                         'found_value': f'PAM config: "{expected_config}", Wheel members: {members}',
                         'expected_value': f'su restricted to wheel group with members, via "{expected_config}"',
-                        'severity': 'Medium',
+                        'severity': Severity.MEDIUM,
                         'section': 'access_control'
                     })
                 else:
                     results.append({
                         'rule_id': rule_id,
                         'title': title,
-                        'status': 'FAIL',
+                        'status': Status.FAIL,
                         'details': 'su access is restricted to the wheel group via PAM, but the wheel group has no members in collected data. This means no users can use su.',
                         'found_value': f'PAM config: "{expected_config}", Wheel members: None',
                         'expected_value': f'su restricted to wheel group with members, via "{expected_config}"',
-                        'severity': 'Medium',
+                        'severity': Severity.MEDIUM,
                         'section': 'access_control'
                     })
             else:
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'FAIL',
+                    'status': Status.FAIL,
                     'details': 'The wheel group was not found in collected data, but su is configured to use it. This prevents su access.',
                     'found_value': 'wheel group not found',
                     'expected_value': f'su restricted to wheel group with members, via "{expected_config}"',
-                    'severity': 'Medium',
+                    'severity': Severity.MEDIUM,
                     'section': 'access_control'
                 })
         else:
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'FAIL',
+                'status': Status.FAIL,
                 'details': 'su access is not restricted to the wheel group in collected PAM configuration. Any user may be able to use su.',
                 'found_value': 'Restriction not found',
                 'expected_value': expected_config,
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
     else:
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'SKIPPED',
+            'status': Status.SKIPPED,
             'details': 'PAM su configuration (su file) or group file not available in collected data, cannot check su access restriction.',
             'found_value': 'Data file(s) not found',
             'expected_value': expected_config,
-            'severity': 'Medium',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
 
     return results
 
-def check_pam_online():
+def check_pam_online() -> List[Dict[str, Any]]:
     """Check PAM configuration (5.3.1 - 5.3.3)"""
     results = []
 
@@ -1606,22 +2060,22 @@ def check_pam_online():
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'PASS',
+                'status': Status.PASS,
                 'details': f'PAM package is installed: {result.stdout.strip()}.',
                 'found_value': result.stdout.strip(),
                 'expected_value': 'pam package installed',
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
         else:
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'FAIL',
+                'status': Status.FAIL,
                 'details': 'PAM package is not installed.',
                 'found_value': 'Not installed',
                 'expected_value': 'pam package installed',
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control',
                 'remediation': 'Run: dnf install pam'
             })
@@ -1629,9 +2083,9 @@ def check_pam_online():
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'ERROR',
+            'status': Status.ERROR,
             'details': f'Error checking PAM installation: {str(e)}',
-            'severity': 'Medium',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
 
@@ -1644,22 +2098,22 @@ def check_pam_online():
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'PASS',
+                'status': Status.PASS,
                 'details': f'authselect package is installed: {result.stdout.strip()}.',
                 'found_value': result.stdout.strip(),
                 'expected_value': 'authselect package installed',
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
         else:
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'FAIL',
+                'status': Status.FAIL,
                 'details': 'authselect package is not installed.',
                 'found_value': 'Not installed',
                 'expected_value': 'authselect package installed',
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control',
                 'remediation': 'Run: dnf install authselect'
             })
@@ -1667,9 +2121,9 @@ def check_pam_online():
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'ERROR',
+            'status': Status.ERROR,
             'details': f'Error checking authselect installation: {str(e)}',
-            'severity': 'Medium',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
 
@@ -1682,22 +2136,22 @@ def check_pam_online():
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'PASS',
+                'status': Status.PASS,
                 'details': f'libpwquality package is installed: {result.stdout.strip()}.',
                 'found_value': result.stdout.strip(),
                 'expected_value': 'libpwquality package installed',
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
         else:
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'FAIL',
+                'status': Status.FAIL,
                 'details': 'libpwquality package is not installed.',
                 'found_value': 'Not installed',
                 'expected_value': 'libpwquality package installed',
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control',
                 'remediation': 'Run: dnf install libpwquality'
             })
@@ -1705,9 +2159,9 @@ def check_pam_online():
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'ERROR',
+            'status': Status.ERROR,
             'details': f'Error checking libpwquality installation: {str(e)}',
-            'severity': 'Medium',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
 
@@ -1721,22 +2175,22 @@ def check_pam_online():
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'MANUAL',
+                'status': Status.MANUAL,
                 'details': f'Current authselect profile is "{current_profile}". Manual review is required to ensure it includes necessary PAM modules for compliance.',
                 'found_value': current_profile,
                 'expected_value': 'A compliant authselect profile',
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
         else:
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'FAIL',
+                'status': Status.FAIL,
                 'details': 'No active authselect profile found. This indicates a potential misconfiguration of PAM.',
                 'found_value': 'No active profile',
                 'expected_value': 'An active authselect profile',
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control',
                 'remediation': 'Configure authselect profile: authselect select <profile>'
             })
@@ -1744,18 +2198,18 @@ def check_pam_online():
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'ERROR',
+            'status': Status.ERROR,
             'details': f'Error checking authselect profile: {str(e)}',
-            'severity': 'Medium',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
 
     # Check PAM modules
     pam_modules = [
-        ('5.3.2.2', 'pam_faillock', 'Ensure pam_faillock module is enabled', 'Medium'),
-        ('5.3.2.3', 'pam_pwquality', 'Ensure pam_pwquality module is enabled', 'Medium'),
-        ('5.3.2.4', 'pam_pwhistory', 'Ensure pam_pwhistory module is enabled', 'Medium'),
-        ('5.3.2.5', 'pam_unix', 'Ensure pam_unix module is enabled', 'Medium')
+        ('5.3.2.2', 'pam_faillock', 'Ensure pam_faillock module is enabled', Severity.MEDIUM),
+        ('5.3.2.3', 'pam_pwquality', 'Ensure pam_pwquality module is enabled', Severity.MEDIUM),
+        ('5.3.2.4', 'pam_pwhistory', 'Ensure pam_pwhistory module is enabled', Severity.MEDIUM),
+        ('5.3.2.5', 'pam_unix', 'Ensure pam_unix module is enabled', Severity.MEDIUM)
     ]
 
     for rule_id, module, title, severity in pam_modules:
@@ -1765,7 +2219,7 @@ def check_pam_online():
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'PASS',
+                    'status': Status.PASS,
                     'details': f'{module} module is configured in PAM. Found: {result.stdout.strip()}',
                     'found_value': result.stdout.strip(),
                     'expected_value': f'{module} configured in PAM',
@@ -1776,7 +2230,7 @@ def check_pam_online():
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'FAIL',
+                    'status': Status.FAIL,
                     'details': f'{module} module is not configured in PAM. This may lead to weaker authentication or password policies.',
                     'found_value': 'Not configured',
                     'expected_value': f'{module} configured in PAM',
@@ -1788,7 +2242,7 @@ def check_pam_online():
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'ERROR',
+                'status': Status.ERROR,
                 'details': f'Error checking {module} module: {str(e)}',
                 'severity': severity,
                 'section': 'access_control'
@@ -1796,9 +2250,9 @@ def check_pam_online():
 
     # PAM faillock configuration checks
     faillock_checks = [
-        ('5.3.3.1.1', 'deny', '5', 'Ensure password failed attempts lockout is configured', 'Medium'),
-        ('5.3.3.1.2', 'unlock_time', '900', 'Ensure password unlock time is configured', 'Medium'),
-        ('5.3.3.1.3', 'even_deny_root', None, 'Ensure password failed attempts lockout includes root account', 'Medium')
+        ('5.3.3.1.1', 'deny', '5', 'Ensure password failed attempts lockout is configured', Severity.MEDIUM),
+        ('5.3.3.1.2', 'unlock_time', '900', 'Ensure password unlock time is configured', Severity.MEDIUM),
+        ('5.3.3.1.3', 'even_deny_root', None, 'Ensure password failed attempts lockout includes root account', Severity.MEDIUM)
     ]
 
     for rule_id, param, expected, title, severity in faillock_checks:
@@ -1809,7 +2263,7 @@ def check_pam_online():
                     results.append({
                         'rule_id': rule_id,
                         'title': title,
-                        'status': 'PASS',
+                        'status': Status.PASS,
                         'details': 'even_deny_root is configured, ensuring root account is subject to lockout policy.',
                         'found_value': result.stdout.strip(),
                         'expected_value': 'even_deny_root configured',
@@ -1820,7 +2274,7 @@ def check_pam_online():
                     results.append({
                         'rule_id': rule_id,
                         'title': title,
-                        'status': 'FAIL',
+                        'status': Status.FAIL,
                         'details': 'even_deny_root is not configured. The root account may not be subject to failed login attempt lockouts.',
                         'found_value': 'Not configured',
                         'expected_value': 'even_deny_root configured',
@@ -1839,7 +2293,7 @@ def check_pam_online():
                             results.append({
                                 'rule_id': rule_id,
                                 'title': title,
-                                'status': 'PASS',
+                                'status': Status.PASS,
                                 'details': f'{param} is set to {current_value}, which is compliant ({"<=" if param == "deny" else ">="} {expected_val}).',
                                 'found_value': str(current_value),
                                 'expected_value': f'{"<=" if param == "deny" else ">="} {expected_val}',
@@ -1850,7 +2304,7 @@ def check_pam_online():
                             results.append({
                                 'rule_id': rule_id,
                                 'title': title,
-                                'status': 'FAIL',
+                                'status': Status.FAIL,
                                 'details': f'{param} is set to {current_value}, which is not compliant (expected {"<=" if param == "deny" else ">="} {expected_val}).',
                                 'found_value': str(current_value),
                                 'expected_value': f'{"<=" if param == "deny" else ">="} {expected_val}',
@@ -1862,7 +2316,7 @@ def check_pam_online():
                         results.append({
                             'rule_id': rule_id,
                             'title': title,
-                            'status': 'FAIL',
+                            'status': Status.FAIL,
                             'details': f'{param} configuration found but value not parseable in /etc/security/faillock.conf.',
                             'found_value': result.stdout.strip(),
                             'expected_value': f'{param}={expected}',
@@ -1873,7 +2327,7 @@ def check_pam_online():
                     results.append({
                         'rule_id': rule_id,
                         'title': title,
-                        'status': 'FAIL',
+                        'status': Status.FAIL,
                         'details': f'{param} is not configured in /etc/security/faillock.conf. This may weaken lockout policies.',
                         'found_value': 'Not configured',
                         'expected_value': f'{param}={expected}',
@@ -1885,7 +2339,7 @@ def check_pam_online():
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'ERROR',
+                'status': Status.ERROR,
                 'details': f'Error checking {param} configuration: {str(e)}',
                 'severity': severity,
                 'section': 'access_control'
@@ -1893,12 +2347,12 @@ def check_pam_online():
 
     # PAM pwquality configuration checks
     pwquality_checks = [
-        ('5.3.3.2.1', 'difok', '2', 'Ensure password number of changed characters is configured', 'Medium'),
-        ('5.3.3.2.2', 'minlen', '14', 'Ensure password length is configured', 'Medium'),
-        ('5.3.3.2.4', 'maxrepeat', '3', 'Ensure password same consecutive characters is configured', 'Medium'),
-        ('5.3.3.2.5', 'maxsequence', '3', 'Ensure password maximum sequential characters is configured', 'Medium'),
-        ('5.3.3.2.6', 'dictcheck', '1', 'Ensure password dictionary check is enabled', 'Medium'),
-        ('5.3.3.2.7', 'enforce_for_root', None, 'Ensure password quality is enforced for the root user', 'Medium')
+        ('5.3.3.2.1', 'difok', '2', 'Ensure password number of changed characters is configured', Severity.MEDIUM),
+        ('5.3.3.2.2', 'minlen', '14', 'Ensure password length is configured', Severity.MEDIUM),
+        ('5.3.3.2.4', 'maxrepeat', '3', 'Ensure password same consecutive characters is configured', Severity.MEDIUM),
+        ('5.3.3.2.5', 'maxsequence', '3', 'Ensure password maximum sequential characters is configured', Severity.MEDIUM),
+        ('5.3.3.2.6', 'dictcheck', '1', 'Ensure password dictionary check is enabled', Severity.MEDIUM),
+        ('5.3.3.2.7', 'enforce_for_root', None, 'Ensure password quality is enforced for the root user', Severity.MEDIUM)
     ]
 
     for rule_id, param, expected, title, severity in pwquality_checks:
@@ -1909,7 +2363,7 @@ def check_pam_online():
                     results.append({
                         'rule_id': rule_id,
                         'title': title,
-                        'status': 'PASS',
+                        'status': Status.PASS,
                         'details': 'enforce_for_root is configured, ensuring password quality is enforced for the root user.',
                         'found_value': result.stdout.strip(),
                         'expected_value': 'enforce_for_root configured',
@@ -1920,7 +2374,7 @@ def check_pam_online():
                     results.append({
                         'rule_id': rule_id,
                         'title': title,
-                        'status': 'FAIL',
+                        'status': Status.FAIL,
                         'details': 'enforce_for_root is not configured. Password quality may not be enforced for the root user.',
                         'found_value': 'Not configured',
                         'expected_value': 'enforce_for_root configured',
@@ -1939,7 +2393,7 @@ def check_pam_online():
                             results.append({
                                 'rule_id': rule_id,
                                 'title': title,
-                                'status': 'PASS',
+                                'status': Status.PASS,
                                 'details': f'{param} is set to {current_value}, which is compliant (>= {expected_val}).',
                                 'found_value': str(current_value),
                                 'expected_value': f'>= {expected_val}',
@@ -1950,7 +2404,7 @@ def check_pam_online():
                             results.append({
                                 'rule_id': rule_id,
                                 'title': title,
-                                'status': 'FAIL',
+                                'status': Status.FAIL,
                                 'details': f'{param} is set to {current_value}, which is not compliant (expected >= {expected_val}).',
                                 'found_value': str(current_value),
                                 'expected_value': f'>= {expected_val}',
@@ -1962,7 +2416,7 @@ def check_pam_online():
                         results.append({
                             'rule_id': rule_id,
                             'title': title,
-                            'status': 'FAIL',
+                            'status': Status.FAIL,
                             'details': f'{param} configuration found but value not parseable in /etc/security/pwquality.conf.',
                             'found_value': result.stdout.strip(),
                             'expected_value': f'{param}={expected}',
@@ -1973,7 +2427,7 @@ def check_pam_online():
                     results.append({
                         'rule_id': rule_id,
                         'title': title,
-                        'status': 'FAIL',
+                        'status': Status.FAIL,
                         'details': f'{param} is not configured in /etc/security/pwquality.conf. This may weaken password quality requirements.',
                         'found_value': 'Not configured',
                         'expected_value': f'{param}={expected}',
@@ -1985,7 +2439,7 @@ def check_pam_online():
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'ERROR',
+                'status': Status.ERROR,
                 'details': f'Error checking {param} configuration: {str(e)}',
                 'severity': severity,
                 'section': 'access_control'
@@ -1995,20 +2449,20 @@ def check_pam_online():
     results.append({
         'rule_id': '5.3.3.2.3',
         'title': 'Ensure password complexity is configured',
-        'status': 'MANUAL',
+        'status': Status.MANUAL,
         'details': 'Password complexity settings (dcredit, ucredit, ocredit, lcredit) require manual review of /etc/security/pwquality.conf to ensure they meet organizational policy.',
         'found_value': 'Requires manual review of pwquality.conf',
         'expected_value': 'Appropriate dcredit, ucredit, ocredit, lcredit values',
-        'severity': 'Medium',
+        'severity': Severity.MEDIUM,
         'section': 'access_control',
         'remediation': 'Review and configure dcredit, ucredit, ocredit, lcredit in /etc/security/pwquality.conf'
     })
 
     # PAM pwhistory configuration checks
     pwhistory_checks = [
-        ('5.3.3.3.1', 'remember', '5', 'Ensure password history remember is configured', 'Medium'),
-        ('5.3.3.3.2', 'enforce_for_root', None, 'Ensure password history is enforced for the root user', 'Medium'),
-        ('5.3.3.3.3', 'use_authtok', None, 'Ensure pam_pwhistory includes use_authtok', 'Medium')
+        ('5.3.3.3.1', 'remember', '5', 'Ensure password history remember is configured', Severity.MEDIUM),
+        ('5.3.3.3.2', 'enforce_for_root', None, 'Ensure password history is enforced for the root user', Severity.MEDIUM),
+        ('5.3.3.3.3', 'use_authtok', None, 'Ensure pam_pwhistory includes use_authtok', Severity.MEDIUM)
     ]
 
     for rule_id, param, expected, title, severity in pwhistory_checks:
@@ -2019,7 +2473,7 @@ def check_pam_online():
                     results.append({
                         'rule_id': rule_id,
                         'title': title,
-                        'status': 'PASS',
+                        'status': Status.PASS,
                         'details': f'{param} is configured for pam_pwhistory, ensuring proper password history enforcement. Found: {result.stdout.strip()}',
                         'found_value': result.stdout.strip(),
                         'expected_value': f'{param} configured for pam_pwhistory',
@@ -2030,7 +2484,7 @@ def check_pam_online():
                     results.append({
                         'rule_id': rule_id,
                         'title': title,
-                        'status': 'FAIL',
+                        'status': Status.FAIL,
                         'details': f'{param} is not configured for pam_pwhistory. This may weaken password history enforcement.',
                         'found_value': 'Not configured',
                         'expected_value': f'{param} configured for pam_pwhistory',
@@ -2049,7 +2503,7 @@ def check_pam_online():
                             results.append({
                                 'rule_id': rule_id,
                                 'title': title,
-                                'status': 'PASS',
+                                'status': Status.PASS,
                                 'details': f'Password history "remember" is set to {current_value}, which is compliant (>= {expected_val}). Found: {result.stdout.strip()}',
                                 'found_value': str(current_value),
                                 'expected_value': f'>= {expected_val}',
@@ -2060,7 +2514,7 @@ def check_pam_online():
                             results.append({
                                 'rule_id': rule_id,
                                 'title': title,
-                                'status': 'FAIL',
+                                'status': Status.FAIL,
                                 'details': f'Password history "remember" is set to {current_value}, which is not compliant (expected >= {expected_val}). Found: {result.stdout.strip()}',
                                 'found_value': str(current_value),
                                 'expected_value': f'>= {expected_val}',
@@ -2072,7 +2526,7 @@ def check_pam_online():
                         results.append({
                             'rule_id': rule_id,
                             'title': title,
-                            'status': 'FAIL',
+                            'status': Status.FAIL,
                             'details': 'Password history "remember" value not parseable from pam_pwhistory configuration.',
                             'found_value': result.stdout.strip(),
                             'expected_value': f'remember={expected}',
@@ -2083,7 +2537,7 @@ def check_pam_online():
                     results.append({
                         'rule_id': rule_id,
                         'title': title,
-                        'status': 'FAIL',
+                        'status': Status.FAIL,
                         'details': 'Password history "remember" is not configured for pam_pwhistory. This weakens password reuse prevention.',
                         'found_value': 'Not configured',
                         'expected_value': f'remember={expected}',
@@ -2095,7 +2549,7 @@ def check_pam_online():
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'ERROR',
+                'status': Status.ERROR,
                 'details': f'Error checking {param} configuration: {str(e)}',
                 'severity': severity,
                 'section': 'access_control'
@@ -2103,10 +2557,10 @@ def check_pam_online():
 
     # PAM unix configuration checks
     unix_checks = [
-        ('5.3.3.4.1', 'nullok', 'Ensure pam_unix does not include nullok', 'Medium'),
-        ('5.3.3.4.2', 'remember', 'Ensure pam_unix does not include remember', 'Medium'),
-        ('5.3.3.4.3', 'sha512', 'Ensure pam_unix includes a strong password hashing algorithm', 'Medium'),
-        ('5.3.3.4.4', 'use_authtok', 'Ensure pam_unix includes use_authtok', 'Medium')
+        ('5.3.3.4.1', 'nullok', 'Ensure pam_unix does not include nullok', Severity.MEDIUM),
+        ('5.3.3.4.2', 'remember', 'Ensure pam_unix does not include remember', Severity.MEDIUM),
+        ('5.3.3.4.3', 'sha512', 'Ensure pam_unix includes a strong password hashing algorithm', Severity.MEDIUM),
+        ('5.3.3.4.4', 'use_authtok', 'Ensure pam_unix includes use_authtok', Severity.MEDIUM)
     ]
 
     for rule_id, param, title, severity in unix_checks:
@@ -2118,7 +2572,7 @@ def check_pam_online():
                     results.append({
                         'rule_id': rule_id,
                         'title': title,
-                        'status': 'FAIL',
+                        'status': Status.FAIL,
                         'details': f'{param} is configured for pam_unix, but it should NOT be. Found: {result.stdout.strip()}',
                         'found_value': result.stdout.strip(),
                         'expected_value': f'{param} not configured for pam_unix',
@@ -2130,7 +2584,7 @@ def check_pam_online():
                     results.append({
                         'rule_id': rule_id,
                         'title': title,
-                        'status': 'PASS',
+                        'status': Status.PASS,
                         'details': f'{param} is not configured for pam_unix, which is compliant.',
                         'found_value': 'Not configured',
                         'expected_value': f'{param} not configured for pam_unix',
@@ -2143,7 +2597,7 @@ def check_pam_online():
                     results.append({
                         'rule_id': rule_id,
                         'title': title,
-                        'status': 'PASS',
+                        'status': Status.PASS,
                         'details': f'{param} is configured for pam_unix, which is compliant. Found: {result.stdout.strip()}',
                         'found_value': result.stdout.strip(),
                         'expected_value': f'{param} configured for pam_unix',
@@ -2154,7 +2608,7 @@ def check_pam_online():
                     results.append({
                         'rule_id': rule_id,
                         'title': title,
-                        'status': 'FAIL',
+                        'status': Status.FAIL,
                         'details': f'{param} is not configured for pam_unix. This may weaken password security or authentication flow.',
                         'found_value': 'Not configured',
                         'expected_value': f'{param} configured for pam_unix',
@@ -2166,7 +2620,7 @@ def check_pam_online():
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'ERROR',
+                'status': Status.ERROR,
                 'details': f'Error checking {param} configuration: {str(e)}',
                 'severity': severity,
                 'section': 'access_control'
@@ -2174,7 +2628,7 @@ def check_pam_online():
 
     return results
 
-def check_pam_offline(data_dir):
+def check_pam_offline(data_dir: str) -> List[Dict[str, Any]]:
     """Check PAM configuration offline"""
     results = []
 
@@ -2185,9 +2639,9 @@ def check_pam_offline(data_dir):
 
     # Check if PAM packages are installed
     pam_packages = [
-        ('5.3.1.1', 'pam-', 'Ensure latest version of pam is installed', 'Medium'),
-        ('5.3.1.2', 'authselect-', 'Ensure latest version of authselect is installed', 'Medium'),
-        ('5.3.1.3', 'libpwquality-', 'Ensure latest version of libpwquality is installed', 'Medium')
+        ('5.3.1.1', 'pam-', 'Ensure latest version of pam is installed', Severity.MEDIUM),
+        ('5.3.1.2', 'authselect-', 'Ensure latest version of authselect is installed', Severity.MEDIUM),
+        ('5.3.1.3', 'libpwquality-', 'Ensure latest version of libpwquality is installed', Severity.MEDIUM)
     ]
     
     if packages_file.exists():
@@ -2197,7 +2651,7 @@ def check_pam_offline(data_dir):
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'PASS',
+                    'status': Status.PASS,
                     'details': f'{package_name} package found in collected installed packages.',
                     'found_value': f'{package_name} found',
                     'expected_value': f'{package_name} installed',
@@ -2208,7 +2662,7 @@ def check_pam_offline(data_dir):
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'FAIL',
+                    'status': Status.FAIL,
                     'details': f'{package_name} package not found in collected installed packages.',
                     'found_value': f'{package_name} not found',
                     'expected_value': f'{package_name} installed',
@@ -2220,7 +2674,7 @@ def check_pam_offline(data_dir):
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'SKIPPED',
+                'status': Status.SKIPPED,
                 'details': 'Package information (packages.txt) not available in collected data, cannot check PAM package installation.',
                 'found_value': 'Data file not found',
                 'expected_value': f'{package_name} installed',
@@ -2232,11 +2686,11 @@ def check_pam_offline(data_dir):
     results.append({
         'rule_id': '5.3.2.1',
         'title': 'Ensure active authselect profile includes pam modules',
-        'status': 'MANUAL',
+        'status': Status.MANUAL,
         'details': 'Checking active authselect profile requires live system access or specific collected authselect output. Manual review of collected PAM files is required.',
         'found_value': 'Requires manual review of collected PAM files',
         'expected_value': 'A compliant authselect profile',
-        'severity': 'Medium',
+        'severity': Severity.MEDIUM,
         'section': 'access_control'
     })
 
@@ -2244,10 +2698,10 @@ def check_pam_offline(data_dir):
     if pam_dir.exists():
         # Basic PAM module checks
         pam_modules = [
-            ('5.3.2.2', 'pam_faillock', 'Ensure pam_faillock module is enabled', 'Medium'),
-            ('5.3.2.3', 'pam_pwquality', 'Ensure pam_pwquality module is enabled', 'Medium'),
-            ('5.3.2.4', 'pam_pwhistory', 'Ensure pam_pwhistory module is enabled', 'Medium'),
-            ('5.3.2.5', 'pam_unix', 'Ensure pam_unix module is enabled', 'Medium')
+            ('5.3.2.2', 'pam_faillock', 'Ensure pam_faillock module is enabled', Severity.MEDIUM),
+            ('5.3.2.3', 'pam_pwquality', 'Ensure pam_pwquality module is enabled', Severity.MEDIUM),
+            ('5.3.2.4', 'pam_pwhistory', 'Ensure pam_pwhistory module is enabled', Severity.MEDIUM),
+            ('5.3.2.5', 'pam_unix', 'Ensure pam_unix module is enabled', Severity.MEDIUM)
         ]
         
         for rule_id, module, title, severity in pam_modules:
@@ -2261,13 +2715,14 @@ def check_pam_offline(data_dir):
                             module_found = True
                             found_files.append(pam_file.name)
                     except Exception:
+                        logging.warning(f"Could not read PAM file: {pam_file}")
                         pass # Ignore unreadable files
             
             if module_found:
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'PASS',
+                    'status': Status.PASS,
                     'details': f'{module} module found in collected PAM configuration files: {", ".join(found_files)}.',
                     'found_value': f'{module} found in {", ".join(found_files)}',
                     'expected_value': f'{module} configured in PAM',
@@ -2278,7 +2733,7 @@ def check_pam_offline(data_dir):
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'FAIL',
+                    'status': Status.FAIL,
                     'details': f'{module} module not found in collected PAM configuration files.',
                     'found_value': 'Not found in collected PAM files',
                     'expected_value': f'{module} configured in PAM',
@@ -2286,11 +2741,11 @@ def check_pam_offline(data_dir):
                     'section': 'access_control'
                 })
 
-        # PAM faillock configuration checks (offline)
+      # PAM faillock configuration checks (offline)
         faillock_checks = [
-            ('5.3.3.1.1', 'deny', '5', 'Ensure password failed attempts lockout is configured', 'Medium'),
-            ('5.3.3.1.2', 'unlock_time', '900', 'Ensure password unlock time is configured', 'Medium'),
-            ('5.3.3.1.3', 'even_deny_root', None, 'Ensure password failed attempts lockout includes root account', 'Medium')
+            ('5.3.3.1.1', 'deny', '5', 'Ensure password failed attempts lockout is configured', Severity.MEDIUM),
+            ('5.3.3.1.2', 'unlock_time', '900', 'Ensure password unlock time is configured', Severity.MEDIUM),
+            ('5.3.3.1.3', 'even_deny_root', None, 'Ensure password failed attempts lockout includes root account', Severity.MEDIUM)
         ]
 
         if faillock_conf_file.exists():
@@ -2301,7 +2756,7 @@ def check_pam_offline(data_dir):
                         results.append({
                             'rule_id': rule_id,
                             'title': title,
-                            'status': 'PASS',
+                            'status': Status.PASS,
                             'details': 'even_deny_root is configured in collected faillock.conf.',
                             'found_value': 'even_deny_root configured',
                             'expected_value': 'even_deny_root configured',
@@ -2312,7 +2767,7 @@ def check_pam_offline(data_dir):
                         results.append({
                             'rule_id': rule_id,
                             'title': title,
-                            'status': 'FAIL',
+                            'status': Status.FAIL,
                             'details': 'even_deny_root is not configured in collected faillock.conf.',
                             'found_value': 'Not configured',
                             'expected_value': 'even_deny_root configured',
@@ -2328,7 +2783,7 @@ def check_pam_offline(data_dir):
                             results.append({
                                 'rule_id': rule_id,
                                 'title': title,
-                                'status': 'PASS',
+                                'status': Status.PASS,
                                 'details': f'{param} is set to {current_value} in collected faillock.conf, which is compliant ({"<=" if param == "deny" else ">="} {expected_val}).',
                                 'found_value': str(current_value),
                                 'expected_value': f'{"<=" if param == "deny" else ">="} {expected_val}',
@@ -2339,7 +2794,7 @@ def check_pam_offline(data_dir):
                             results.append({
                                 'rule_id': rule_id,
                                 'title': title,
-                                'status': 'FAIL',
+                                'status': Status.FAIL,
                                 'details': f'{param} is set to {current_value} in collected faillock.conf, which is not compliant (expected {"<=" if param == "deny" else ">="} {expected_val}).',
                                 'found_value': str(current_value),
                                 'expected_value': f'{"<=" if param == "deny" else ">="} {expected_val}',
@@ -2350,7 +2805,7 @@ def check_pam_offline(data_dir):
                         results.append({
                             'rule_id': rule_id,
                             'title': title,
-                            'status': 'FAIL',
+                            'status': Status.FAIL,
                             'details': f'{param} is not configured or value not parseable in collected faillock.conf.',
                             'found_value': 'Not configured or parseable',
                             'expected_value': f'{param}={expected}',
@@ -2362,7 +2817,7 @@ def check_pam_offline(data_dir):
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'SKIPPED',
+                    'status': Status.SKIPPED,
                     'details': 'faillock.conf not available in collected data, cannot check faillock configuration.',
                     'found_value': 'Data file not found',
                     'expected_value': f'{param}={expected}',
@@ -2372,12 +2827,12 @@ def check_pam_offline(data_dir):
 
         # PAM pwquality configuration checks (offline)
         pwquality_checks = [
-            ('5.3.3.2.1', 'difok', '2', 'Ensure password number of changed characters is configured', 'Medium'),
-            ('5.3.3.2.2', 'minlen', '14', 'Ensure password length is configured', 'Medium'),
-            ('5.3.3.2.4', 'maxrepeat', '3', 'Ensure password same consecutive characters is configured', 'Medium'),
-            ('5.3.3.2.5', 'maxsequence', '3', 'Ensure password maximum sequential characters is configured', 'Medium'),
-            ('5.3.3.2.6', 'dictcheck', '1', 'Ensure password dictionary check is enabled', 'Medium'),
-            ('5.3.3.2.7', 'enforce_for_root', None, 'Ensure password quality is enforced for the root user', 'Medium')
+            ('5.3.3.2.1', 'difok', '2', 'Ensure password number of changed characters is configured', Severity.MEDIUM),
+            ('5.3.3.2.2', 'minlen', '14', 'Ensure password length is configured', Severity.MEDIUM),
+            ('5.3.3.2.4', 'maxrepeat', '3', 'Ensure password same consecutive characters is configured', Severity.MEDIUM),
+            ('5.3.3.2.5', 'maxsequence', '3', 'Ensure password maximum sequential characters is configured', Severity.MEDIUM),
+            ('5.3.3.2.6', 'dictcheck', '1', 'Ensure password dictionary check is enabled', Severity.MEDIUM),
+            ('5.3.3.2.7', 'enforce_for_root', None, 'Ensure password quality is enforced for the root user', Severity.MEDIUM)
         ]
 
         if pwquality_conf_file.exists():
@@ -2388,7 +2843,7 @@ def check_pam_offline(data_dir):
                         results.append({
                             'rule_id': rule_id,
                             'title': title,
-                            'status': 'PASS',
+                            'status': Status.PASS,
                             'details': 'enforce_for_root is configured in collected pwquality.conf.',
                             'found_value': 'enforce_for_root configured',
                             'expected_value': 'enforce_for_root configured',
@@ -2399,7 +2854,7 @@ def check_pam_offline(data_dir):
                         results.append({
                             'rule_id': rule_id,
                             'title': title,
-                            'status': 'FAIL',
+                            'status': Status.FAIL,
                             'details': 'enforce_for_root is not configured in collected pwquality.conf.',
                             'found_value': 'Not configured',
                             'expected_value': 'enforce_for_root configured',
@@ -2415,7 +2870,7 @@ def check_pam_offline(data_dir):
                             results.append({
                                 'rule_id': rule_id,
                                 'title': title,
-                                'status': 'PASS',
+                                'status': Status.PASS,
                                 'details': f'{param} is set to {current_value} in collected pwquality.conf, which is compliant (>= {expected_val}).',
                                 'found_value': str(current_value),
                                 'expected_value': f'>= {expected_val}',
@@ -2426,7 +2881,7 @@ def check_pam_offline(data_dir):
                             results.append({
                                 'rule_id': rule_id,
                                 'title': title,
-                                'status': 'FAIL',
+                                'status': Status.FAIL,
                                 'details': f'{param} is set to {current_value} in collected pwquality.conf, which is not compliant (expected >= {expected_val}).',
                                 'found_value': str(current_value),
                                 'expected_value': f'>= {expected_val}',
@@ -2437,7 +2892,7 @@ def check_pam_offline(data_dir):
                         results.append({
                             'rule_id': rule_id,
                             'title': title,
-                            'status': 'FAIL',
+                            'status': Status.FAIL,
                             'details': f'{param} is not configured or value not parseable in collected pwquality.conf.',
                             'found_value': 'Not configured or parseable',
                             'expected_value': f'{param}={expected}',
@@ -2449,7 +2904,7 @@ def check_pam_offline(data_dir):
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'SKIPPED',
+                    'status': Status.SKIPPED,
                     'details': 'pwquality.conf not available in collected data, cannot check pwquality configuration.',
                     'found_value': 'Data file not found',
                     'expected_value': f'{param}={expected}',
@@ -2461,20 +2916,20 @@ def check_pam_offline(data_dir):
         results.append({
             'rule_id': '5.3.3.2.3',
             'title': 'Ensure password complexity is configured',
-            'status': 'MANUAL',
+            'status': Status.MANUAL,
             'details': 'Password complexity settings (dcredit, ucredit, ocredit, lcredit) require manual review of collected pwquality.conf to ensure they meet organizational policy.',
             'found_value': 'Requires manual review of pwquality.conf',
             'expected_value': 'Appropriate dcredit, ucredit, ocredit, lcredit values',
-            'severity': 'Medium',
+            'severity': Severity.MEDIUM,
             'section': 'access_control',
             'remediation': 'Review and configure dcredit, ucredit, ocredit, lcredit in /etc/security/pwquality.conf'
         })
 
         # PAM pwhistory configuration checks (offline)
         pwhistory_checks = [
-            ('5.3.3.3.1', 'remember', '5', 'Ensure password history remember is configured', 'Medium'),
-            ('5.3.3.3.2', 'enforce_for_root', None, 'Ensure password history is enforced for the root user', 'Medium'),
-            ('5.3.3.3.3', 'use_authtok', None, 'Ensure pam_pwhistory includes use_authtok', 'Medium')
+            ('5.3.3.3.1', 'remember', '5', 'Ensure password history remember is configured', Severity.MEDIUM),
+            ('5.3.3.3.2', 'enforce_for_root', None, 'Ensure password history is enforced for the root user', Severity.MEDIUM),
+            ('5.3.3.3.3', 'use_authtok', None, 'Ensure pam_pwhistory includes use_authtok', Severity.MEDIUM)
         ]
 
         # This check requires parsing multiple PAM files, which is complex offline.
@@ -2483,31 +2938,31 @@ def check_pam_offline(data_dir):
             results.append({
                 'rule_id': '5.3.3.3.1',
                 'title': 'Ensure password history remember is configured',
-                'status': 'MANUAL',
+                'status': Status.MANUAL,
                 'details': 'Password history "remember" setting requires manual review across collected PAM files.',
                 'found_value': 'Review collected PAM files',
                 'expected_value': 'remember>=5',
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
             results.append({
                 'rule_id': '5.3.3.3.2',
                 'title': 'Ensure password history is enforced for the root user',
-                'status': 'MANUAL',
+                'status': Status.MANUAL,
                 'details': 'Password history enforcement for root requires manual review across collected PAM files.',
                 'found_value': 'Review collected PAM files',
                 'expected_value': 'enforce_for_root configured',
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
             results.append({
                 'rule_id': '5.3.3.3.3',
                 'title': 'Ensure pam_pwhistory includes use_authtok',
-                'status': 'MANUAL',
+                'status': Status.MANUAL,
                 'details': 'pam_pwhistory "use_authtok" setting requires manual review across collected PAM files.',
                 'found_value': 'Review collected PAM files',
                 'expected_value': 'use_authtok configured',
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
         else:
@@ -2515,7 +2970,7 @@ def check_pam_offline(data_dir):
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'SKIPPED',
+                    'status': Status.SKIPPED,
                     'details': 'PAM configuration directory not available in collected data, cannot check pwhistory settings.',
                     'found_value': 'Data directory not found',
                     'expected_value': f'{param} configured',
@@ -2525,10 +2980,10 @@ def check_pam_offline(data_dir):
 
         # PAM unix configuration checks (offline)
         unix_checks = [
-            ('5.3.3.4.1', 'nullok', 'Ensure pam_unix does not include nullok', 'Medium'),
-            ('5.3.3.4.2', 'remember', 'Ensure pam_unix does not include remember', 'Medium'),
-            ('5.3.3.4.3', 'sha512', 'Ensure pam_unix includes a strong password hashing algorithm', 'Medium'),
-            ('5.3.3.4.4', 'use_authtok', 'Ensure pam_unix includes use_authtok', 'Medium')
+            ('5.3.3.4.1', 'nullok', 'Ensure pam_unix does not include nullok', Severity.MEDIUM),
+            ('5.3.3.4.2', 'remember', 'Ensure pam_unix does not include remember', Severity.MEDIUM),
+            ('5.3.3.4.3', 'sha512', 'Ensure pam_unix includes a strong password hashing algorithm', Severity.MEDIUM),
+            ('5.3.3.4.4', 'use_authtok', 'Ensure pam_unix includes use_authtok', Severity.MEDIUM)
         ]
 
         if pam_dir.exists():
@@ -2543,6 +2998,7 @@ def check_pam_offline(data_dir):
                                 param_found = True
                                 found_in_files.append(pam_file.name)
                         except Exception:
+                            logging.warning(f"Could not read PAM file: {pam_file}")
                             pass
                 
                 if param in ['nullok', 'remember']:
@@ -2550,7 +3006,7 @@ def check_pam_offline(data_dir):
                         results.append({
                             'rule_id': rule_id,
                             'title': title,
-                            'status': 'FAIL',
+                            'status': Status.FAIL,
                             'details': f'{param} is configured for pam_unix in collected data, but it should NOT be. Found in: {", ".join(found_in_files)}.',
                             'found_value': f'{param} found in {", ".join(found_in_files)}',
                             'expected_value': f'{param} not configured for pam_unix',
@@ -2561,7 +3017,7 @@ def check_pam_offline(data_dir):
                         results.append({
                             'rule_id': rule_id,
                             'title': title,
-                            'status': 'PASS',
+                            'status': Status.PASS,
                             'details': f'{param} is not configured for pam_unix in collected data, which is compliant.',
                             'found_value': 'Not configured',
                             'expected_value': f'{param} not configured for pam_unix',
@@ -2573,7 +3029,7 @@ def check_pam_offline(data_dir):
                         results.append({
                             'rule_id': rule_id,
                             'title': title,
-                            'status': 'PASS',
+                            'status': Status.PASS,
                             'details': f'{param} is configured for pam_unix in collected data. Found in: {", ".join(found_in_files)}.',
                             'found_value': f'{param} found in {", ".join(found_in_files)}',
                             'expected_value': f'{param} configured for pam_unix',
@@ -2584,7 +3040,7 @@ def check_pam_offline(data_dir):
                         results.append({
                             'rule_id': rule_id,
                             'title': title,
-                            'status': 'FAIL',
+                            'status': Status.FAIL,
                             'details': f'{param} is not configured for pam_unix in collected data.',
                             'found_value': 'Not configured',
                             'expected_value': f'{param} configured for pam_unix',
@@ -2596,7 +3052,7 @@ def check_pam_offline(data_dir):
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'SKIPPED',
+                    'status': Status.SKIPPED,
                     'details': 'PAM configuration directory not available in collected data, cannot check pam_unix settings.',
                     'found_value': 'Data directory not found',
                     'expected_value': f'{param} configured',
@@ -2606,33 +3062,33 @@ def check_pam_offline(data_dir):
 
     else: # If pam_dir does not exist at all
         pam_rules_to_skip = [
-            ('5.3.2.2', 'Ensure pam_faillock module is enabled', 'Medium'),
-            ('5.3.2.3', 'Ensure pam_pwquality module is enabled', 'Medium'),
-            ('5.3.2.4', 'Ensure pam_pwhistory module is enabled', 'Medium'),
-            ('5.3.2.5', 'Ensure pam_unix module is enabled', 'Medium'),
-            ('5.3.3.1.1', 'Ensure password failed attempts lockout is configured', 'Medium'),
-            ('5.3.3.1.2', 'Ensure password unlock time is configured', 'Medium'),
-            ('5.3.3.1.3', 'Ensure password failed attempts lockout includes root account', 'Medium'),
-            ('5.3.3.2.1', 'Ensure password number of changed characters is configured', 'Medium'),
-            ('5.3.3.2.2', 'Ensure password length is configured', 'Medium'),
-            ('5.3.3.2.3', 'Ensure password complexity is configured', 'Medium'),
-            ('5.3.3.2.4', 'Ensure password same consecutive characters is configured', 'Medium'),
-            ('5.3.3.2.5', 'Ensure password maximum sequential characters is configured', 'Medium'),
-            ('5.3.3.2.6', 'Ensure password dictionary check is enabled', 'Medium'),
-            ('5.3.3.2.7', 'Ensure password quality is enforced for the root user', 'Medium'),
-            ('5.3.3.3.1', 'Ensure password history remember is configured', 'Medium'),
-            ('5.3.3.3.2', 'Ensure password history is enforced for the root user', 'Medium'),
-            ('5.3.3.3.3', 'Ensure pam_pwhistory includes use_authtok', 'Medium'),
-            ('5.3.3.4.1', 'Ensure pam_unix does not include nullok', 'Medium'),
-            ('5.3.3.4.2', 'Ensure pam_unix does not include remember', 'Medium'),
-            ('5.3.3.4.3', 'Ensure pam_unix includes a strong password hashing algorithm', 'Medium'),
-            ('5.3.3.4.4', 'Ensure pam_unix includes use_authtok', 'Medium')
+            ('5.3.2.2', 'Ensure pam_faillock module is enabled', Severity.MEDIUM),
+            ('5.3.2.3', 'Ensure pam_pwquality module is enabled', Severity.MEDIUM),
+            ('5.3.2.4', 'Ensure pam_pwhistory module is enabled', Severity.MEDIUM),
+            ('5.3.2.5', 'Ensure pam_unix module is enabled', Severity.MEDIUM),
+            ('5.3.3.1.1', 'Ensure password failed attempts lockout is configured', Severity.MEDIUM),
+            ('5.3.3.1.2', 'Ensure password unlock time is configured', Severity.MEDIUM),
+            ('5.3.3.1.3', 'Ensure password failed attempts lockout includes root account', Severity.MEDIUM),
+            ('5.3.3.2.1', 'Ensure password number of changed characters is configured', Severity.MEDIUM),
+            ('5.3.3.2.2', 'Ensure password length is configured', Severity.MEDIUM),
+            ('5.3.3.2.3', 'Ensure password complexity is configured', Severity.MEDIUM),
+            ('5.3.3.2.4', 'Ensure password same consecutive characters is configured', Severity.MEDIUM),
+            ('5.3.3.2.5', 'Ensure password maximum sequential characters is configured', Severity.MEDIUM),
+            ('5.3.3.2.6', 'Ensure password dictionary check is enabled', Severity.MEDIUM),
+            ('5.3.3.2.7', 'Ensure password quality is enforced for the root user', Severity.MEDIUM),
+            ('5.3.3.3.1', 'Ensure password history remember is configured', Severity.MEDIUM),
+            ('5.3.3.3.2', 'Ensure password history is enforced for the root user', Severity.MEDIUM),
+            ('5.3.3.3.3', 'Ensure pam_pwhistory includes use_authtok', Severity.MEDIUM),
+            ('5.3.3.4.1', 'Ensure pam_unix does not include nullok', Severity.MEDIUM),
+            ('5.3.3.4.2', 'Ensure pam_unix does not include remember', Severity.MEDIUM),
+            ('5.3.3.4.3', 'Ensure pam_unix includes a strong password hashing algorithm', Severity.MEDIUM),
+            ('5.3.3.4.4', 'Ensure pam_unix includes use_authtok', Severity.MEDIUM)
         ]
         for rule_id, title, severity in pam_rules_to_skip:
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'SKIPPED',
+                'status': Status.SKIPPED,
                 'details': 'PAM configuration directory not available in collected data, cannot perform this check.',
                 'found_value': 'Data directory not found',
                 'expected_value': 'PAM configuration present',
@@ -2642,7 +3098,7 @@ def check_pam_offline(data_dir):
 
     return results
 
-def check_user_accounts_online():
+def check_user_accounts_online() -> List[Dict[str, Any]]:
     """Check user accounts and environment (5.4.1 - 5.4.3)"""
     results = []
 
@@ -2662,22 +3118,22 @@ def check_user_accounts_online():
                     results.append({
                         'rule_id': rule_id,
                         'title': title,
-                        'status': 'PASS',
+                        'status': Status.PASS,
                         'details': f'PASS_MAX_DAYS is set to {current_max_days} days, which is compliant (<= {expected_max_days}).',
                         'found_value': str(current_max_days),
                         'expected_value': f'<={expected_max_days}',
-                        'severity': 'Medium',
+                        'severity': Severity.MEDIUM,
                         'section': 'access_control'
                     })
                 else:
                     results.append({
                         'rule_id': rule_id,
                         'title': title,
-                        'status': 'FAIL',
+                        'status': Status.FAIL,
                         'details': f'PASS_MAX_DAYS is set to {current_max_days} days, which is too long (should be <= {expected_max_days}).',
                         'found_value': str(current_max_days),
                         'expected_value': f'<={expected_max_days}',
-                        'severity': 'Medium',
+                        'severity': Severity.MEDIUM,
                         'section': 'access_control',
                         'remediation': f'Set PASS_MAX_DAYS {expected_max_days} in /etc/login.defs'
                     })
@@ -2685,11 +3141,11 @@ def check_user_accounts_online():
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'FAIL',
+                    'status': Status.FAIL,
                     'details': 'PASS_MAX_DAYS is not configured in /etc/login.defs. Password expiration is not enforced.',
                     'found_value': 'Not configured',
                     'expected_value': f'PASS_MAX_DAYS {expected_max_days}',
-                    'severity': 'Medium',
+                    'severity': Severity.MEDIUM,
                     'section': 'access_control',
                     'remediation': f'Set PASS_MAX_DAYS {expected_max_days} in /etc/login.defs'
                 })
@@ -2697,20 +3153,20 @@ def check_user_accounts_online():
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'FAIL',
+                'status': Status.FAIL,
                 'details': '/etc/login.defs does not exist, cannot check password expiration.',
                 'found_value': 'File not found',
                 'expected_value': f'PASS_MAX_DAYS {expected_max_days}',
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
     except Exception as e:
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'ERROR',
+            'status': Status.ERROR,
             'details': f'Error checking password expiration: {str(e)}',
-            'severity': 'Medium',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
 
@@ -2730,22 +3186,22 @@ def check_user_accounts_online():
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'MANUAL',
+                    'status': Status.MANUAL,
                     'details': f'PASS_MIN_DAYS is set to {current_min_days} days. Manual review is required to ensure this meets organizational policy (CIS recommends >= {expected_min_days}).',
                     'found_value': str(current_min_days),
                     'expected_value': f'>={expected_min_days}',
-                    'severity': 'Medium',
+                    'severity': Severity.MEDIUM,
                     'section': 'access_control'
                 })
             else:
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'FAIL',
+                    'status': Status.FAIL,
                     'details': 'PASS_MIN_DAYS is not configured in /etc/login.defs. This allows users to change passwords too frequently, potentially reusing old ones.',
                     'found_value': 'Not configured',
                     'expected_value': f'PASS_MIN_DAYS {expected_min_days}',
-                    'severity': 'Medium',
+                    'severity': Severity.MEDIUM,
                     'section': 'access_control',
                     'remediation': f'Set PASS_MIN_DAYS {expected_min_days} in /etc/login.defs'
                 })
@@ -2753,20 +3209,20 @@ def check_user_accounts_online():
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'FAIL',
+                'status': Status.FAIL,
                 'details': '/etc/login.defs does not exist, cannot check minimum password days.',
                 'found_value': 'File not found',
                 'expected_value': f'PASS_MIN_DAYS {expected_min_days}',
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
     except Exception as e:
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'ERROR',
+            'status': Status.ERROR,
             'details': f'Error checking minimum password days: {str(e)}',
-            'severity': 'Medium',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
 
@@ -2786,22 +3242,22 @@ def check_user_accounts_online():
                     results.append({
                         'rule_id': rule_id,
                         'title': title,
-                        'status': 'PASS',
+                        'status': Status.PASS,
                         'details': f'PASS_WARN_AGE is set to {current_warn_days} days, which is compliant (>= {expected_warn_age}).',
                         'found_value': str(current_warn_days),
                         'expected_value': f'>={expected_warn_age}',
-                        'severity': 'Medium',
+                        'severity': Severity.MEDIUM,
                         'section': 'access_control'
                     })
                 else:
                     results.append({
                         'rule_id': rule_id,
                         'title': title,
-                        'status': 'FAIL',
+                        'status': Status.FAIL,
                         'details': f'PASS_WARN_AGE is set to {current_warn_days} days, which is too short (should be >= {expected_warn_age}). Users may not have enough time to change passwords.',
                         'found_value': str(current_warn_days),
                         'expected_value': f'>={expected_warn_age}',
-                        'severity': 'Medium',
+                        'severity': Severity.MEDIUM,
                         'section': 'access_control',
                         'remediation': f'Set PASS_WARN_AGE {expected_warn_age} in /etc/login.defs'
                     })
@@ -2809,11 +3265,11 @@ def check_user_accounts_online():
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'FAIL',
+                    'status': Status.FAIL,
                     'details': 'PASS_WARN_AGE is not configured in /etc/login.defs. Users may not receive timely warnings about expiring passwords.',
                     'found_value': 'Not configured',
                     'expected_value': f'PASS_WARN_AGE {expected_warn_age}',
-                    'severity': 'Medium',
+                    'severity': Severity.MEDIUM,
                     'section': 'access_control',
                     'remediation': f'Set PASS_WARN_AGE {expected_warn_age} in /etc/login.defs'
                 })
@@ -2821,20 +3277,20 @@ def check_user_accounts_online():
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'FAIL',
+                'status': Status.FAIL,
                 'details': '/etc/login.defs does not exist, cannot check password warning days.',
                 'found_value': 'File not found',
                 'expected_value': f'PASS_WARN_AGE {expected_warn_age}',
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
     except Exception as e:
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'ERROR',
+            'status': Status.ERROR,
             'details': f'Error checking password warning days: {str(e)}',
-            'severity': 'Medium',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
 
@@ -2854,22 +3310,22 @@ def check_user_accounts_online():
                     results.append({
                         'rule_id': rule_id,
                         'title': title,
-                        'status': 'PASS',
+                        'status': Status.PASS,
                         'details': f'ENCRYPT_METHOD is set to {current_method}, which is a strong hashing algorithm.',
                         'found_value': current_method,
                         'expected_value': f'One of {", ".join(expected_methods)}',
-                        'severity': 'Medium',
+                        'severity': Severity.MEDIUM,
                         'section': 'access_control'
                     })
                 else:
                     results.append({
                         'rule_id': rule_id,
                         'title': title,
-                        'status': 'FAIL',
+                        'status': Status.FAIL,
                         'details': f'ENCRYPT_METHOD is set to {current_method}, which is not a strong hashing algorithm. Expected one of {", ".join(expected_methods)}.',
                         'found_value': current_method,
                         'expected_value': f'One of {", ".join(expected_methods)}',
-                        'severity': 'Medium',
+                        'severity': Severity.MEDIUM,
                         'section': 'access_control',
                         'remediation': 'Set ENCRYPT_METHOD SHA512 in /etc/login.defs'
                     })
@@ -2877,11 +3333,11 @@ def check_user_accounts_online():
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'FAIL',
+                    'status': Status.FAIL,
                     'details': 'ENCRYPT_METHOD is not configured in /etc/login.defs. This may result in weak password hashing.',
                     'found_value': 'Not configured',
                     'expected_value': f'ENCRYPT_METHOD SHA512',
-                    'severity': 'Medium',
+                    'severity': Severity.MEDIUM,
                     'section': 'access_control',
                     'remediation': 'Set ENCRYPT_METHOD SHA512 in /etc/login.defs'
                 })
@@ -2889,20 +3345,20 @@ def check_user_accounts_online():
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'FAIL',
+                'status': Status.FAIL,
                 'details': '/etc/login.defs does not exist, cannot check password hashing algorithm.',
                 'found_value': 'File not found',
                 'expected_value': f'ENCRYPT_METHOD SHA512',
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
     except Exception as e:
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'ERROR',
+            'status': Status.ERROR,
             'details': f'Error checking password hashing algorithm: {str(e)}',
-            'severity': 'Medium',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
 
@@ -2920,1497 +3376,702 @@ def check_user_accounts_online():
                     results.append({
                         'rule_id': rule_id,
                         'title': title,
-                        'status': 'PASS',
+                        'status': Status.PASS,
                         'details': f'INACTIVE is set to {current_inactive_days} days, which is compliant (1-{expected_inactive_days_max}).',
                         'found_value': str(current_inactive_days),
                         'expected_value': f'1-{expected_inactive_days_max}',
-                        'severity': 'Medium',
+                        'severity': Severity.MEDIUM,
                         'section': 'access_control'
                     })
                 else:
                     results.append({
                         'rule_id': rule_id,
                         'title': title,
-                        'status': 'FAIL',
-                        'details': f'INACTIVE is set to {current_inactive_days} days, which is outside the compliant range (1-{expected_inactive_days_max}). Inactive accounts may not be locked in a timely manner.',
+                        'status': Status.FAIL,
+                        'details': f'INACTIVE is set to {current_inactive_days} days, which is outside the compliant range (1-{expected_inactive_days_max}).',
                         'found_value': str(current_inactive_days),
                         'expected_value': f'1-{expected_inactive_days_max}',
-                        'severity': 'Medium',
+                        'severity': Severity.MEDIUM,
                         'section': 'access_control',
-                        'remediation': f'Run: useradd -D -f {expected_inactive_days_max}'
+                        'remediation': f'Set INACTIVE {expected_inactive_days_max} in /etc/default/useradd or via `useradd -D -f {expected_inactive_days_max}`'
                     })
             else:
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'FAIL',
-                    'details': 'INACTIVE value not found in useradd defaults. Inactive accounts may not be locked.',
-                    'found_value': 'Not found',
+                    'status': Status.FAIL,
+                    'details': 'INACTIVE is not configured in useradd defaults. Inactive accounts may not be locked.',
+                    'found_value': 'Not configured',
                     'expected_value': f'INACTIVE 1-{expected_inactive_days_max}',
-                    'severity': 'Medium',
+                    'severity': Severity.MEDIUM,
                     'section': 'access_control',
-                    'remediation': f'Run: useradd -D -f {expected_inactive_days_max}'
+                    'remediation': f'Set INACTIVE {expected_inactive_days_max} in /etc/default/useradd or via `useradd -D -f {expected_inactive_days_max}`'
                 })
         else:
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'ERROR',
-                'details': 'Unable to check INACTIVE setting using useradd command.',
-                'severity': 'Medium',
+                'status': Status.ERROR,
+                'details': f'Error checking useradd defaults for INACTIVE: {result.stderr.strip()}',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
     except Exception as e:
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'ERROR',
+            'status': Status.ERROR,
             'details': f'Error checking inactive password lock: {str(e)}',
-            'severity': 'Medium',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
 
-    # 5.4.1.6 - Ensure all users last password change date is in the past
-    rule_id = '5.4.1.6'
-    title = 'Ensure all users last password change date is in the past'
+    # 5.4.2 - Ensure all users have a unique UID
+    rule_id = '5.4.2'
+    title = 'Ensure all users have a unique UID'
     try:
-        # Get users with non-locked passwords
-        result = subprocess.run("awk -F: '($2 != \"*\" && $2 != \"!\") {print $1}' /etc/shadow", shell=True, capture_output=True, text=True)
-        if result.returncode == 0:
-            users = [u for u in result.stdout.strip().split('\n') if u]
-            future_dates_users = []
-            
-            for user in users:
-                # Use chage to get last password change date
-                chage_result = subprocess.run(f"chage -l {user}", shell=True, capture_output=True, text=True)
-                if chage_result.returncode == 0:
-                    last_change_line = next((line for line in chage_result.stdout.split('\n') if 'Last password change' in line), None)
-                    if last_change_line:
-                        date_str = last_change_line.split(':')[-1].strip()
-                        if date_str.lower() == 'never':
-                            # This is a separate issue, but not a "future date"
-                            continue
-                        try:
-                            # Parse date and compare to current date
-                            last_change_date = datetime.strptime(date_str, '%b %d, %Y')
-                            if last_change_date > datetime.now():
-                                future_dates_users.append(f"{user} ({date_str})")
-                        except ValueError:
-                            # Handle unparseable dates as a potential issue
-                            future_dates_users.append(f"{user} (unparseable date: {date_str})")
-            
-            if not future_dates_users:
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'PASS',
-                    'details': 'All user password change dates are in the past or are "never" (which requires manual review for policy compliance).',
-                    'found_value': 'All dates in past or "never"',
-                    'expected_value': 'All password change dates in the past',
-                    'severity': 'Medium',
-                    'section': 'access_control'
-                })
-            else:
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'FAIL',
-                    'details': f'Some users have password change dates in the future or unparseable dates. This indicates a potential security misconfiguration. Users: {", ".join(future_dates_users)}',
-                    'found_value': f'Users with future/unparseable dates: {", ".join(future_dates_users)}',
-                    'expected_value': 'All password change dates in the past',
-                    'severity': 'Medium',
-                    'section': 'access_control',
-                    'remediation': 'Investigate and correct future password change dates using `chage -d YYYY-MM-DD <user>`.'
-                })
-        else:
+        result = subprocess.run("getent passwd | cut -f3 -d: | sort | uniq -d", shell=True, capture_output=True, text=True)
+        if result.returncode == 0 and result.stdout.strip():
+            duplicate_uids = result.stdout.strip().splitlines()
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'ERROR',
-                'details': 'Unable to retrieve user list from /etc/shadow to check password change dates.',
-                'severity': 'Medium',
-                'section': 'access_control'
-            })
-    except Exception as e:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'ERROR',
-            'details': f'Error checking password change dates: {str(e)}',
-            'severity': 'Medium',
-            'section': 'access_control'
-        })
-
-    # 5.4.2.1 - Ensure root is the only UID 0 account
-    rule_id = '5.4.2.1'
-    title = 'Ensure root is the only UID 0 account'
-    try:
-        result = subprocess.run("awk -F: '($3 == 0) {print $1}' /etc/passwd", shell=True, capture_output=True, text=True)
-        if result.returncode == 0:
-            uid_0_users = [user for user in result.stdout.strip().split('\n') if user]
-            
-            if uid_0_users == ['root']:
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'PASS',
-                    'details': 'Only the "root" account has UID 0.',
-                    'found_value': 'root',
-                    'expected_value': 'root only',
-                    'severity': 'High',
-                    'section': 'access_control'
-                })
-            else:
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'FAIL',
-                    'details': f'Multiple accounts or non-root accounts have UID 0. This is a critical security risk. Found: {", ".join(uid_0_users)}',
-                    'found_value': ", ".join(uid_0_users),
-                    'expected_value': 'root only',
-                    'severity': 'High',
-                    'section': 'access_control',
-                    'remediation': 'Remove or change UID for non-root accounts with UID 0.'
-                })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'ERROR',
-                'details': 'Unable to check UID 0 accounts from /etc/passwd.',
-                'severity': 'High',
-                'section': 'access_control'
-            })
-    except Exception as e:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'ERROR',
-            'details': f'Error checking UID 0 accounts: {str(e)}',
-            'severity': 'High',
-            'section': 'access_control'
-        })
-
-    # 5.4.2.2 - Ensure root is the only GID 0 account
-    rule_id = '5.4.2.2'
-    title = 'Ensure root is the only GID 0 account'
-    try:
-        result = subprocess.run("awk -F: '($4 == 0) {print $1}' /etc/passwd", shell=True, capture_output=True, text=True)
-        if result.returncode == 0:
-            gid_0_users = [user for user in result.stdout.strip().split('\n') if user]
-            
-            if gid_0_users == ['root']:
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'PASS',
-                    'details': 'Only the "root" account has GID 0.',
-                    'found_value': 'root',
-                    'expected_value': 'root only',
-                    'severity': 'High',
-                    'section': 'access_control'
-                })
-            else:
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'FAIL',
-                    'details': f'Multiple accounts or non-root accounts have GID 0. This is a critical security risk. Found: {", ".join(gid_0_users)}',
-                    'found_value': ", ".join(gid_0_users),
-                    'expected_value': 'root only',
-                    'severity': 'High',
-                    'section': 'access_control',
-                    'remediation': 'Change GID for non-root accounts with GID 0.'
-                })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'ERROR',
-                'details': 'Unable to check GID 0 accounts from /etc/passwd.',
-                'severity': 'High',
-                'section': 'access_control'
-            })
-    except Exception as e:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'ERROR',
-            'details': f'Error checking GID 0 accounts: {str(e)}',
-            'severity': 'High',
-            'section': 'access_control'
-        })
-
-    # 5.4.2.3 - Ensure group root is the only GID 0 group
-    rule_id = '5.4.2.3'
-    title = 'Ensure group root is the only GID 0 group'
-    try:
-        result = subprocess.run("awk -F: '($3 == 0) {print $1}' /etc/group", shell=True, capture_output=True, text=True)
-        if result.returncode == 0:
-            gid_0_groups = [group for group in result.stdout.strip().split('\n') if group]
-            
-            if gid_0_groups == ['root']:
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'PASS',
-                    'details': 'Only the "root" group has GID 0.',
-                    'found_value': 'root',
-                    'expected_value': 'root only',
-                    'severity': 'High',
-                    'section': 'access_control'
-                })
-            else:
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'FAIL',
-                    'details': f'Multiple groups or non-root groups have GID 0. This is a critical security risk. Found: {", ".join(gid_0_groups)}',
-                    'found_value': ", ".join(gid_0_groups),
-                    'expected_value': 'root only',
-                    'severity': 'High',
-                    'section': 'access_control',
-                    'remediation': 'Change GID for non-root groups with GID 0.'
-                })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'ERROR',
-                'details': 'Unable to check GID 0 groups from /etc/group.',
-                'severity': 'High',
-                'section': 'access_control'
-            })
-    except Exception as e:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'ERROR',
-            'details': f'Error checking GID 0 groups: {str(e)}',
-            'severity': 'High',
-            'section': 'access_control'
-        })
-
-    # 5.4.2.4 - Ensure root account access is controlled
-    rule_id = '5.4.2.4'
-    title = 'Ensure root account access is controlled'
-    try:
-        result = subprocess.run("passwd -S root", shell=True, capture_output=True, text=True)
-        if result.returncode == 0:
-            status_line = result.stdout.strip()
-            if 'L' in status_line or 'LK' in status_line:
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'PASS',
-                    'details': 'Root account is locked, which is a common control measure.',
-                    'found_value': status_line,
-                    'expected_value': 'Root account locked (L or LK status)',
-                    'severity': 'High',
-                    'section': 'access_control'
-                })
-            else:
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'MANUAL',
-                    'details': 'Root account is not locked. Manual review is required to ensure other controls (like SSH PermitRootLogin no, sudo access) are sufficient to control root access.',
-                    'found_value': status_line,
-                    'expected_value': 'Root account locked (L or LK status)',
-                    'severity': 'High',
-                    'section': 'access_control',
-                    'remediation': 'Consider locking root account: `passwd -l root` if direct root login is not required.'
-                })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'ERROR',
-                'details': 'Unable to check root account status using `passwd -S root`.',
-                'severity': 'High',
-                'section': 'access_control'
-            })
-    except Exception as e:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'ERROR',
-            'details': f'Error checking root account access: {str(e)}',
-            'severity': 'High',
-            'section': 'access_control'
-        })
-
-    # 5.4.2.5 - Ensure root path integrity
-    rule_id = '5.4.2.5'
-    title = 'Ensure root path integrity'
-    try:
-        root_path = os.environ.get('PATH', '')
-        issues = []
-        found_path_elements = []
-        
-        if root_path:
-            path_dirs = root_path.split(':')
-            for path_dir in path_dirs:
-                found_path_elements.append(path_dir)
-                if not path_dir:
-                    issues.append('Empty directory in PATH')
-                elif path_dir == '.':
-                    issues.append('Current directory (.) in PATH')
-                elif not os.path.isabs(path_dir):
-                    issues.append(f'Relative path in PATH: {path_dir}')
-                elif os.path.exists(path_dir):
-                    stat_info = os.stat(path_dir)
-                    if stat_info.st_mode & stat.S_IWOTH: # Check for world-writable
-                        issues.append(f'World-writable directory in PATH: {path_dir}')
-                    if stat_info.st_uid != 0: # Check for non-root owned
-                        issues.append(f'Non-root owned directory in PATH: {path_dir}')
-            
-            if not issues:
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'PASS',
-                    'details': 'Root PATH integrity is maintained. No suspicious entries found.',
-                    'found_value': root_path,
-                    'expected_value': 'No empty, relative, world-writable, or non-root owned directories',
-                    'severity': 'Medium',
-                    'section': 'access_control'
-                })
-            else:
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'FAIL',
-                    'details': f'Root PATH integrity issues detected: {"; ".join(issues)}. This could allow malicious binaries to be executed.',
-                    'found_value': root_path,
-                    'expected_value': 'No empty, relative, world-writable, or non-root owned directories',
-                    'severity': 'Medium',
-                    'section': 'access_control',
-                    'remediation': 'Review and correct PATH environment variable to remove suspicious entries.'
-                })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': 'Root PATH environment variable is not set or empty.',
-                'found_value': 'PATH not set or empty',
-                'expected_value': 'A secure PATH configuration',
-                'severity': 'Medium',
-                'section': 'access_control'
-            })
-    except Exception as e:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'ERROR',
-            'details': f'Error checking root path integrity: {str(e)}',
-            'severity': 'Medium',
-            'section': 'access_control'
-        })
-
-    # 5.4.2.6 - Ensure root user umask is configured
-    rule_id = '5.4.2.6'
-    title = 'Ensure root user umask is configured'
-    expected_umasks = ['0027', '027', '0077', '077']
-    try:
-        umask_files = ['/root/.bashrc', '/root/.bash_profile', '/etc/bashrc', '/etc/profile']
-        umask_found = False
-        found_umask_value = None
-        found_in_file = None
-        
-        for file_path in umask_files:
-            if os.path.exists(file_path):
-                with open(file_path, 'r') as f:
-                    content = f.read()
-                    umask_match = re.search(r'^\s*umask\s+(\d{3,4})', content, re.MULTILINE)
-                    if umask_match:
-                        umask_found = True
-                        found_umask_value = umask_match.group(1)
-                        found_in_file = file_path
-                        break
-        
-        if umask_found:
-            if found_umask_value in expected_umasks:
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'PASS',
-                    'details': f'Root umask is set to {found_umask_value} in {found_in_file}, which is compliant.',
-                    'found_value': found_umask_value,
-                    'expected_value': 'One of 027, 077',
-                    'severity': 'Medium',
-                    'section': 'access_control'
-                })
-            else:
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'FAIL',
-                    'details': f'Root umask is set to {found_umask_value} in {found_in_file}, which is not compliant. Expected one of {", ".join(expected_umasks)}.',
-                    'found_value': found_umask_value,
-                    'expected_value': 'One of 027, 077',
-                    'severity': 'Medium',
-                    'section': 'access_control',
-                    'remediation': 'Set umask 027 or 077 in root profile files (e.g., /root/.bashrc, /etc/profile).'
-                })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': 'Root umask is not explicitly configured in common profile files. This may lead to overly permissive file creation.',
-                'found_value': 'Not configured',
-                'expected_value': 'One of 027, 077',
-                'severity': 'Medium',
+                'status': Status.FAIL,
+                'details': f'Duplicate UIDs found: {", ".join(duplicate_uids)}. Each user must have a unique UID.',
+                'found_value': f'Duplicate UIDs: {", ".join(duplicate_uids)}',
+                'expected_value': 'All users have unique UIDs',
+                'severity': Severity.HIGH,
                 'section': 'access_control',
-                'remediation': 'Set umask 027 or 077 in root profile files (e.g., /root/.bashrc, /etc/profile).'
+                'remediation': 'Modify user accounts to ensure unique UIDs.'
             })
-    except Exception as e:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'ERROR',
-            'details': f'Error checking root umask: {str(e)}',
-            'severity': 'Medium',
-            'section': 'access_control'
-        })
-
-    # 5.4.2.7 - Ensure system accounts do not have a valid login shell
-    rule_id = '5.4.2.7'
-    title = 'Ensure system accounts do not have a valid login shell'
-    try:
-        # Exclude root, sync, shutdown, halt, and accounts with UID >= 1000 (normal users)
-        # Check for shells other than /usr/sbin/nologin or /bin/false
-        cmd = "awk -F: '($1!=\"root\" && $1!=\"sync\" && $1!=\"shutdown\" && $1!=\"halt\" && $1!~/^\\+/ && $3<1000 && $7!=\"/usr/sbin/nologin\" && $7!=\"/bin/false\") {print $1\":\"$7}' /etc/passwd"
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-        
-        if result.returncode == 0:
-            invalid_shells_accounts = [line for line in result.stdout.strip().split('\n') if line]
-            if not invalid_shells_accounts:
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'PASS',
-                    'details': 'All system accounts (UID < 1000, excluding exceptions) have invalid login shells (/usr/sbin/nologin or /bin/false).',
-                    'found_value': 'All compliant',
-                    'expected_value': 'System accounts have /usr/sbin/nologin or /bin/false shell',
-                    'severity': 'Medium',
-                    'section': 'access_control'
-                })
-            else:
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'FAIL',
-                    'details': f'Some system accounts have valid login shells, which is a security risk. Found: {"; ".join(invalid_shells_accounts)}',
-                    'found_value': "; ".join(invalid_shells_accounts),
-                    'expected_value': 'System accounts have /usr/sbin/nologin or /bin/false shell',
-                    'severity': 'Medium',
-                    'section': 'access_control',
-                    'remediation': 'Set invalid shell for system accounts: `usermod -s /usr/sbin/nologin <account>` or `usermod -s /bin/false <account>`.'
-                })
         else:
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'ERROR',
-                'details': 'Unable to check system account shells from /etc/passwd.',
-                'severity': 'Medium',
+                'status': Status.PASS,
+                'details': 'All users have unique UIDs.',
+                'found_value': 'No duplicate UIDs found',
+                'expected_value': 'All users have unique UIDs',
+                'severity': Severity.HIGH,
                 'section': 'access_control'
             })
     except Exception as e:
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'ERROR',
-            'details': f'Error checking system account shells: {str(e)}',
-            'severity': 'Medium',
+            'status': Status.ERROR,
+            'details': f'Error checking unique UIDs: {str(e)}',
+            'severity': Severity.HIGH,
             'section': 'access_control'
         })
 
-    # 5.4.2.8 - Ensure accounts without a valid login shell are locked
-    rule_id = '5.4.2.8'
-    title = 'Ensure accounts without a valid login shell are locked'
+    # 5.4.3 - Ensure all groups have a unique GID
+    rule_id = '5.4.3'
+    title = 'Ensure all groups have a unique GID'
     try:
-        # Get accounts with nologin or false shells
-        cmd = "awk -F: '($7==\"/usr/sbin/nologin\" || $7==\"/bin/false\") {print $1}' /etc/passwd"
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-        
-        if result.returncode == 0:
-            nologin_accounts = [acc for acc in result.stdout.strip().split('\n') if acc]
-            
-            unlocked_accounts = []
-            for account in nologin_accounts:
-                shadow_result = subprocess.run(f"passwd -S {account}", shell=True, capture_output=True, text=True)
-                if shadow_result.returncode == 0:
-                    status_line = shadow_result.stdout.strip()
-                    if 'L' not in status_line and 'LK' not in status_line:
-                        unlocked_accounts.append(f"{account} ({status_line})")
-            
-            if not unlocked_accounts:
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'PASS',
-                    'details': 'All accounts configured with invalid login shells are also locked.',
-                    'found_value': 'All compliant',
-                    'expected_value': 'Accounts with invalid shells are locked',
-                    'severity': 'Medium',
-                    'section': 'access_control'
-                })
-            else:
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'FAIL',
-                    'details': f'Some accounts configured with invalid login shells are not locked. This is a security concern. Unlocked accounts: {", ".join(unlocked_accounts)}',
-                    'found_value': "; ".join(unlocked_accounts),
-                    'expected_value': 'Accounts with invalid shells are locked',
-                    'severity': 'Medium',
-                    'section': 'access_control',
-                    'remediation': 'Lock accounts without valid shells: `passwd -l <account>`.'
-                })
-        else:
+        result = subprocess.run("getent group | cut -f3 -d: | sort | uniq -d", shell=True, capture_output=True, text=True)
+        if result.returncode == 0 and result.stdout.strip():
+            duplicate_gids = result.stdout.strip().splitlines()
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'ERROR',
-                'details': 'Unable to retrieve accounts with invalid shells from /etc/passwd.',
-                'severity': 'Medium',
-                'section': 'access_control'
-            })
-    except Exception as e:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'ERROR',
-            'details': f'Error checking account lock status: {str(e)}',
-            'severity': 'Medium',
-            'section': 'access_control'
-        })
-
-    # 5.4.3.1 - Ensure nologin is not listed in /etc/shells
-    rule_id = '5.4.3.1'
-    title = 'Ensure nologin is not listed in /etc/shells'
-    expected_absence = 'nologin not in /etc/shells'
-    try:
-        if os.path.exists('/etc/shells'):
-            with open('/etc/shells', 'r') as f:
-                shells_content = f.read()
-            
-            if '/usr/sbin/nologin' in shells_content or '/sbin/nologin' in shells_content:
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'FAIL',
-                    'details': '`/usr/sbin/nologin` or `/sbin/nologin` is listed in `/etc/shells`. This is not recommended as it could allow users to log in with these shells.',
-                    'found_value': 'nologin found in /etc/shells',
-                    'expected_value': expected_absence,
-                    'severity': 'Medium',
-                    'section': 'access_control',
-                    'remediation': 'Remove nologin entries from /etc/shells.'
-                })
-            else:
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'PASS',
-                    'details': '`/usr/sbin/nologin` and `/sbin/nologin` are not listed in `/etc/shells`, which is compliant.',
-                    'found_value': expected_absence,
-                    'expected_value': expected_absence,
-                    'severity': 'Medium',
-                    'section': 'access_control'
-                })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'ERROR',
-                'details': '/etc/shells does not exist, cannot check nologin entries.',
-                'severity': 'Medium',
-                'section': 'access_control'
-            })
-    except Exception as e:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'ERROR',
-            'details': f'Error checking /etc/shells: {str(e)}',
-            'severity': 'Medium',
-            'section': 'access_control'
-        })
-
-    # 5.4.3.2 - Ensure default user shell timeout is configured
-    rule_id = '5.4.3.2'
-    title = 'Ensure default user shell timeout is configured'
-    expected_timeout_max = 900 # 15 minutes
-    try:
-        timeout_files = ['/etc/bashrc', '/etc/profile']
-        timeout_found = False
-        found_timeout_value = None
-        found_in_file = None
-        
-        for file_path in timeout_files:
-            if os.path.exists(file_path):
-                with open(file_path, 'r') as f:
-                    content = f.read()
-                    tmout_match = re.search(r'^\s*TMOUT=(\d+)', content, re.MULTILINE)
-                    if tmout_match:
-                        timeout_found = True
-                        found_timeout_value = int(tmout_match.group(1))
-                        found_in_file = file_path
-                        break
-        
-        # Check /etc/profile.d/ files
-        if not timeout_found and os.path.exists('/etc/profile.d'):
-            for profile_file in os.listdir('/etc/profile.d'):
-                if profile_file.endswith('.sh'):
-                    file_path = os.path.join('/etc/profile.d', profile_file)
-                    try:
-                        with open(file_path, 'r') as f:
-                            content = f.read()
-                            tmout_match = re.search(r'^\s*TMOUT=(\d+)', content, re.MULTILINE)
-                            if tmout_match:
-                                timeout_found = True
-                                found_timeout_value = int(tmout_match.group(1))
-                                found_in_file = file_path
-                                break
-                    except Exception:
-                        continue # Skip unreadable files
-        
-        if timeout_found:
-            if found_timeout_value <= expected_timeout_max:
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'PASS',
-                    'details': f'TMOUT is set to {found_timeout_value} seconds in {found_in_file}, which is compliant (<= {expected_timeout_max}).',
-                    'found_value': str(found_timeout_value),
-                    'expected_value': f'<={expected_timeout_max}',
-                    'severity': 'Medium',
-                    'section': 'access_control'
-                })
-            else:
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'FAIL',
-                    'details': f'TMOUT is set to {found_timeout_value} seconds in {found_in_file}, which is too long (should be <= {expected_timeout_max}). This increases the risk of unauthorized access to idle sessions.',
-                    'found_value': str(found_timeout_value),
-                    'expected_value': f'<={expected_timeout_max}',
-                    'severity': 'Medium',
-                    'section': 'access_control',
-                    'remediation': f'Set TMOUT={expected_timeout_max} in /etc/profile or /etc/bashrc.'
-                })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': 'TMOUT (shell timeout) is not configured in common profile files. This leaves idle sessions vulnerable.',
-                'found_value': 'Not configured',
-                'expected_value': f'TMOUT={expected_timeout_max}',
-                'severity': 'Medium',
+                'status': Status.FAIL,
+                'details': f'Duplicate GIDs found: {", ".join(duplicate_gids)}. Each group must have a unique GID.',
+                'found_value': f'Duplicate GIDs: {", ".join(duplicate_gids)}',
+                'expected_value': 'All groups have unique GIDs',
+                'severity': Severity.HIGH,
                 'section': 'access_control',
-                'remediation': f'Set TMOUT={expected_timeout_max} in /etc/profile or /etc/bashrc.'
+                'remediation': 'Modify groups to ensure unique GIDs.'
             })
-    except Exception as e:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'ERROR',
-            'details': f'Error checking shell timeout: {str(e)}',
-            'severity': 'Medium',
-            'section': 'access_control'
-        })
-
-    # 5.4.3.3 - Ensure default user umask is configured
-    rule_id = '5.4.3.3'
-    title = 'Ensure default user umask is configured'
-    expected_umasks = ['0027', '027', '0077', '077']
-    try:
-        umask_files = ['/etc/bashrc', '/etc/profile', '/etc/login.defs']
-        umask_found = False
-        found_umask_values = []
-        
-        for file_path in umask_files:
-            if os.path.exists(file_path):
-                with open(file_path, 'r') as f:
-                    content = f.read()
-                    if file_path == '/etc/login.defs':
-                        umask_match = re.search(r'^\s*UMASK\s+(\d{3,4})', content, re.MULTILINE)
-                    else:
-                        umask_match = re.search(r'^\s*umask\s+(\d{3,4})', content, re.MULTILINE)
-                    
-                    if umask_match:
-                        umask_found = True
-                        found_umask_values.append(f'{file_path}: {umask_match.group(1)}')
-        
-        if umask_found:
-            all_restrictive = True
-            for umask_entry in found_umask_values:
-                umask_val = umask_entry.split(': ')[1]
-                if umask_val not in expected_umasks:
-                    all_restrictive = False
-                    break
-            
-            if all_restrictive:
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'PASS',
-                    'details': f'Default user umask is configured and is sufficiently restrictive. Found: {"; ".join(found_umask_values)}',
-                    'found_value': "; ".join(found_umask_values),
-                    'expected_value': 'One of 027, 077',
-                    'severity': 'Medium',
-                    'section': 'access_control'
-                })
-            else:
-                results.append({
-                    'rule_id': rule_id,
-                    'title': title,
-                    'status': 'FAIL',
-                    'details': f'Default user umask is configured but not sufficiently restrictive. Expected one of {", ".join(expected_umasks)}. Found: {"; ".join(found_umask_values)}',
-                    'found_value': "; ".join(found_umask_values),
-                    'expected_value': 'One of 027, 077',
-                    'severity': 'Medium',
-                    'section': 'access_control',
-                    'remediation': 'Set umask 027 or 077 in /etc/profile and /etc/bashrc.'
-                })
         else:
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'FAIL',
-                'details': 'Default user umask is not configured in common profile files. This may lead to overly permissive file creation.',
-                'found_value': 'Not configured',
-                'expected_value': 'One of 027, 077',
-                'severity': 'Medium',
-                'section': 'access_control',
-                'remediation': 'Set umask 027 or 077 in /etc/profile and /etc/bashrc.'
+                'status': Status.PASS,
+                'details': 'All groups have unique GIDs.',
+                'found_value': 'No duplicate GIDs found',
+                'expected_value': 'All groups have unique GIDs',
+                'severity': Severity.HIGH,
+                'section': 'access_control'
             })
     except Exception as e:
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'ERROR',
-            'details': f'Error checking default umask: {str(e)}',
-            'severity': 'Medium',
+            'status': Status.ERROR,
+            'details': f'Error checking unique GIDs: {str(e)}',
+            'severity': Severity.HIGH,
+            'section': 'access_control'
+        })
+
+    # 5.4.4 - Ensure default user umask is 027 or 077
+    rule_id = '5.4.4'
+    title = 'Ensure default user umask is 027 or 077'
+    expected_umasks = ['027', '077']
+    try:
+        # Check /etc/bashrc
+        bashrc_umask = None
+        if os.path.exists('/etc/bashrc'):
+            with open('/etc/bashrc', 'r') as f:
+                content = f.read()
+                match = re.search(r'^\s*umask\s+(\d{3})', content, re.MULTILINE)
+                if match:
+                    bashrc_umask = match.group(1)
+        
+        # Check /etc/profile
+        profile_umask = None
+        if os.path.exists('/etc/profile'):
+            with open('/etc/profile', 'r') as f:
+                content = f.read()
+                match = re.search(r'^\s*umask\s+(\d{3})', content, re.MULTILINE)
+                if match:
+                    profile_umask = match.group(1)
+
+        # Check /etc/login.defs for UMASK
+        login_defs_umask = None
+        if os.path.exists('/etc/login.defs'):
+            with open('/etc/login.defs', 'r') as f:
+                content = f.read()
+                match = re.search(r'^\s*UMASK\s+(\d{3})', content, re.MULTILINE)
+                if match:
+                    login_defs_umask = match.group(1)
+
+        found_umasks = []
+        if bashrc_umask: found_umasks.append(f'/etc/bashrc: {bashrc_umask}')
+        if profile_umask: found_umasks.append(f'/etc/profile: {profile_umask}')
+        if login_defs_umask: found_umasks.append(f'/etc/login.defs (UMASK): {login_defs_umask}')
+
+        all_compliant = True
+        details_list = []
+
+        if bashrc_umask and bashrc_umask not in expected_umasks:
+            all_compliant = False
+            details_list.append(f'/etc/bashrc umask is {bashrc_umask}, expected one of {", ".join(expected_umasks)}.')
+        elif not bashrc_umask:
+            details_list.append('/etc/bashrc umask not explicitly set.')
+
+        if profile_umask and profile_umask not in expected_umasks:
+            all_compliant = False
+            details_list.append(f'/etc/profile umask is {profile_umask}, expected one of {", ".join(expected_umasks)}.')
+        elif not profile_umask:
+            details_list.append('/etc/profile umask not explicitly set.')
+
+        if login_defs_umask and login_defs_umask not in expected_umasks:
+            all_compliant = False
+            details_list.append(f'/etc/login.defs UMASK is {login_defs_umask}, expected one of {", ".join(expected_umasks)}.')
+        elif not login_defs_umask:
+            details_list.append('/etc/login.defs UMASK not explicitly set.')
+
+        if not found_umasks:
+            results.append({
+                'rule_id': rule_id,
+                'title': title,
+                'status': Status.FAIL,
+                'details': 'No umask settings found in common configuration files. Default umask may not be compliant.',
+                'found_value': 'Not configured',
+                'expected_value': f'umask 027 or 077',
+                'severity': Severity.MEDIUM,
+                'section': 'access_control',
+                'remediation': 'Set "umask 027" or "umask 077" in /etc/bashrc and /etc/profile, and "UMASK 027" or "UMASK 077" in /etc/login.defs.'
+            })
+        elif all_compliant:
+            results.append({
+                'rule_id': rule_id,
+                'title': title,
+                'status': Status.PASS,
+                'details': f'Default user umask is compliant. Found: {"; ".join(found_umasks)}.',
+                'found_value': '; '.join(found_umasks),
+                'expected_value': f'umask 027 or 077',
+                'severity': Severity.MEDIUM,
+                'section': 'access_control'
+            })
+        else:
+            results.append({
+                'rule_id': rule_id,
+                'title': title,
+                'status': Status.FAIL,
+                'details': 'Default user umask is not fully compliant. ' + ' '.join(details_list),
+                'found_value': '; '.join(found_umasks),
+                'expected_value': f'umask 027 or 077',
+                'severity': Severity.MEDIUM,
+                'section': 'access_control',
+                'remediation': 'Set "umask 027" or "umask 077" in /etc/bashrc and /etc/profile, and "UMASK 027" or "UMASK 077" in /etc/login.defs.'
+            })
+
+    except Exception as e:
+        results.append({
+            'rule_id': rule_id,
+            'title': title,
+            'status': Status.ERROR,
+            'details': f'Error checking default user umask: {str(e)}',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
 
     return results
 
-def check_user_accounts_offline(data_dir):
+def check_user_accounts_offline(data_dir: str) -> List[Dict[str, Any]]:
     """Check user accounts and environment offline"""
     results = []
 
-    login_defs_file = Path(data_dir) / "security" / "login.defs"
-    passwd_file = Path(data_dir) / "security" / "passwd"
-    shadow_file = Path(data_dir) / "security" / "shadow"
+    login_defs_file = Path(data_dir) / "security_config" / "login_defs.json"
+    useradd_defaults_file = Path(data_dir) / "system_info" / "useradd_defaults.json"
+    passwd_file = Path(data_dir) / "system_info" / "passwd.txt"
     group_file = Path(data_dir) / "security" / "group"
-    shells_file = Path(data_dir) / "security" / "shells"
-    
-    login_defs_content = ""
-    if login_defs_file.exists():
-        login_defs_content = login_defs_file.read_text()
+    bashrc_file = Path(data_dir) / "system_info" / "bashrc.txt"
+    profile_file = Path(data_dir) / "system_info" / "profile.txt"
 
-    # 5.4.1.1 - Ensure password expiration is configured
+    login_defs_data = {}
+    if login_defs_file.exists():
+        try:
+            with open(login_defs_file, 'r') as f:
+                login_defs_data = json.load(f)
+        except Exception as e:
+            logging.warning(f"Could not load {login_defs_file}: {e}")
+
+    useradd_defaults_data = {}
+    if useradd_defaults_file.exists():
+        try:
+            with open(useradd_defaults_file, 'r') as f:
+                useradd_defaults_data = json.load(f)
+        except Exception as e:
+            logging.warning(f"Could not load {useradd_defaults_file}: {e}")
+
+    # 5.4.1.1 - Ensure password expiration is configured (offline)
     rule_id = '5.4.1.1'
     title = 'Ensure password expiration is configured'
     expected_max_days = 365
-    if login_defs_content:
-        pass_max_days_match = re.search(r'^PASS_MAX_DAYS\s+(\d+)', login_defs_content, re.MULTILINE)
-        if pass_max_days_match:
-            current_max_days = int(pass_max_days_match.group(1))
+    if login_defs_data and 'PASS_MAX_DAYS' in login_defs_data:
+        try:
+            current_max_days = int(login_defs_data['PASS_MAX_DAYS'])
             if current_max_days <= expected_max_days:
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'PASS',
-                    'details': f'PASS_MAX_DAYS is set to {current_max_days} days in collected login.defs, which is compliant (<= {expected_max_days}).',
+                    'status': Status.PASS,
+                    'details': f'PASS_MAX_DAYS is set to {current_max_days} days in collected data, which is compliant (<= {expected_max_days}).',
                     'found_value': str(current_max_days),
                     'expected_value': f'<={expected_max_days}',
-                    'severity': 'Medium',
+                    'severity': Severity.MEDIUM,
                     'section': 'access_control'
                 })
             else:
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'FAIL',
-                    'details': f'PASS_MAX_DAYS is set to {current_max_days} days in collected login.defs, which is too long (should be <= {expected_max_days}).',
+                    'status': Status.FAIL,
+                    'details': f'PASS_MAX_DAYS is set to {current_max_days} days in collected data, which is too long (should be <= {expected_max_days}).',
                     'found_value': str(current_max_days),
                     'expected_value': f'<={expected_max_days}',
-                    'severity': 'Medium',
+                    'severity': Severity.MEDIUM,
                     'section': 'access_control'
                 })
-        else:
+        except ValueError:
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'FAIL',
-                'details': 'PASS_MAX_DAYS is not configured in collected login.defs.',
-                'found_value': 'Not configured',
-                'expected_value': f'PASS_MAX_DAYS {expected_max_days}',
-                'severity': 'Medium',
+                'status': Status.ERROR,
+                'details': f"Could not parse PASS_MAX_DAYS value: '{login_defs_data['PASS_MAX_DAYS']}' from collected data.",
+                'found_value': login_defs_data['PASS_MAX_DAYS'],
+                'expected_value': f'<={expected_max_days}',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
     else:
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'SKIPPED',
-            'details': 'login.defs not available in collected data, cannot check password expiration.',
+            'status': Status.SKIPPED,
+            'details': 'login.defs data not available in collected data, cannot check password expiration.',
             'found_value': 'Data file not found',
             'expected_value': f'PASS_MAX_DAYS {expected_max_days}',
-            'severity': 'Medium',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
 
-    # 5.4.1.2 - Ensure minimum password days is configured
+    # 5.4.1.2 - Ensure minimum password days is configured (offline)
     rule_id = '5.4.1.2'
     title = 'Ensure minimum password days is configured'
     expected_min_days = 1
-    if login_defs_content:
-        pass_min_days_match = re.search(r'^PASS_MIN_DAYS\s+(\d+)', login_defs_content, re.MULTILINE)
-        if pass_min_days_match:
-            current_min_days = int(pass_min_days_match.group(1))
+    if login_defs_data and 'PASS_MIN_DAYS' in login_defs_data:
+        try:
+            current_min_days = int(login_defs_data['PASS_MIN_DAYS'])
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'MANUAL',
-                'details': f'PASS_MIN_DAYS is set to {current_min_days} days in collected login.defs. Manual review is required to ensure this meets organizational policy (CIS recommends >= {expected_min_days}).',
+                'status': Status.MANUAL,
+                'details': f'PASS_MIN_DAYS is set to {current_min_days} days in collected data. Manual review is required to ensure this meets organizational policy (CIS recommends >= {expected_min_days}).',
                 'found_value': str(current_min_days),
                 'expected_value': f'>={expected_min_days}',
-                'severity': 'Medium',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
-        else:
+        except ValueError:
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'FAIL',
-                'details': 'PASS_MIN_DAYS is not configured in collected login.defs.',
-                'found_value': 'Not configured',
-                'expected_value': f'PASS_MIN_DAYS {expected_min_days}',
-                'severity': 'Medium',
+                'status': Status.ERROR,
+                'details': f"Could not parse PASS_MIN_DAYS value: '{login_defs_data['PASS_MIN_DAYS']}' from collected data.",
+                'found_value': login_defs_data['PASS_MIN_DAYS'],
+                'expected_value': f'>={expected_min_days}',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
     else:
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'SKIPPED',
-            'details': 'login.defs not available in collected data, cannot check minimum password days.',
+            'status': Status.SKIPPED,
+            'details': 'login.defs data not available in collected data, cannot check minimum password days.',
             'found_value': 'Data file not found',
             'expected_value': f'PASS_MIN_DAYS {expected_min_days}',
-            'severity': 'Medium',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
 
-    # 5.4.1.3 - Ensure password expiration warning days is configured
+    # 5.4.1.3 - Ensure password expiration warning days is configured (offline)
     rule_id = '5.4.1.3'
     title = 'Ensure password expiration warning days is configured'
     expected_warn_age = 7
-    if login_defs_content:
-        pass_warn_age_match = re.search(r'^PASS_WARN_AGE\s+(\d+)', login_defs_content, re.MULTILINE)
-        if pass_warn_age_match:
-            current_warn_days = int(pass_warn_age_match.group(1))
+    if login_defs_data and 'PASS_WARN_AGE' in login_defs_data:
+        try:
+            current_warn_days = int(login_defs_data['PASS_WARN_AGE'])
             if current_warn_days >= expected_warn_age:
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'PASS',
-                    'details': f'PASS_WARN_AGE is set to {current_warn_days} days in collected login.defs, which is compliant (>= {expected_warn_age}).',
+                    'status': Status.PASS,
+                    'details': f'PASS_WARN_AGE is set to {current_warn_days} days in collected data, which is compliant (>= {expected_warn_age}).',
                     'found_value': str(current_warn_days),
                     'expected_value': f'>={expected_warn_age}',
-                    'severity': 'Medium',
+                    'severity': Severity.MEDIUM,
                     'section': 'access_control'
                 })
             else:
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'FAIL',
-                    'details': f'PASS_WARN_AGE is set to {current_warn_days} days in collected login.defs, which is too short (should be >= {expected_warn_age}).',
+                    'status': Status.FAIL,
+                    'details': f'PASS_WARN_AGE is set to {current_warn_days} days in collected data, which is too short (should be >= {expected_warn_age}).',
                     'found_value': str(current_warn_days),
                     'expected_value': f'>={expected_warn_age}',
-                    'severity': 'Medium',
+                    'severity': Severity.MEDIUM,
                     'section': 'access_control'
                 })
-        else:
+        except ValueError:
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'FAIL',
-                'details': 'PASS_WARN_AGE is not configured in collected login.defs.',
-                'found_value': 'Not configured',
-                'expected_value': f'PASS_WARN_AGE {expected_warn_age}',
-                'severity': 'Medium',
+                'status': Status.ERROR,
+                'details': f"Could not parse PASS_WARN_AGE value: '{login_defs_data['PASS_WARN_AGE']}' from collected data.",
+                'found_value': login_defs_data['PASS_WARN_AGE'],
+                'expected_value': f'>={expected_warn_age}',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
     else:
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'SKIPPED',
-            'details': 'login.defs not available in collected data, cannot check password warning days.',
+            'status': Status.SKIPPED,
+            'details': 'login.defs data not available in collected data, cannot check password warning days.',
             'found_value': 'Data file not found',
             'expected_value': f'PASS_WARN_AGE {expected_warn_age}',
-            'severity': 'Medium',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
 
-    # 5.4.1.4 - Ensure strong password hashing algorithm is configured
+    # 5.4.1.4 - Ensure strong password hashing algorithm is configured (offline)
     rule_id = '5.4.1.4'
     title = 'Ensure strong password hashing algorithm is configured'
     expected_methods = ['SHA512', 'yescrypt']
-    if login_defs_content:
-        encrypt_method_match = re.search(r'^ENCRYPT_METHOD\s+(\w+)', login_defs_content, re.MULTILINE)
-        if encrypt_method_match:
-            current_method = encrypt_method_match.group(1)
-            if current_method in expected_methods:
+    if login_defs_data and 'ENCRYPT_METHOD' in login_defs_data:
+        current_method = login_defs_data['ENCRYPT_METHOD']
+        if current_method in expected_methods:
+            results.append({
+                'rule_id': rule_id,
+                'title': title,
+                'status': Status.PASS,
+                'details': f'ENCRYPT_METHOD is set to {current_method} in collected data, which is a strong hashing algorithm.',
+                'found_value': current_method,
+                'expected_value': f'One of {", ".join(expected_methods)}',
+                'severity': Severity.MEDIUM,
+                'section': 'access_control'
+            })
+        else:
+            results.append({
+                'rule_id': rule_id,
+                'title': title,
+                'status': Status.FAIL,
+                'details': f'ENCRYPT_METHOD is set to {current_method} in collected data, which is not a strong hashing algorithm. Expected one of {", ".join(expected_methods)}.',
+                'found_value': current_method,
+                'expected_value': f'One of {", ".join(expected_methods)}',
+                'severity': Severity.MEDIUM,
+                'section': 'access_control'
+            })
+    else:
+        results.append({
+            'rule_id': rule_id,
+            'title': title,
+            'status': Status.SKIPPED,
+            'details': 'login.defs data not available in collected data, cannot check password hashing algorithm.',
+            'found_value': 'Data file not found',
+            'expected_value': f'ENCRYPT_METHOD SHA512',
+            'severity': Severity.MEDIUM,
+            'section': 'access_control'
+        })
+
+    # 5.4.1.5 - Ensure inactive password lock is configured (offline)
+    rule_id = '5.4.1.5'
+    title = 'Ensure inactive password lock is configured'
+    expected_inactive_days_max = 30
+    if useradd_defaults_data and 'INACTIVE' in useradd_defaults_data:
+        try:
+            current_inactive_days = int(useradd_defaults_data['INACTIVE'])
+            if 1 <= current_inactive_days <= expected_inactive_days_max:
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'PASS',
-                    'details': f'ENCRYPT_METHOD is set to {current_method} in collected login.defs, which is a strong hashing algorithm.',
-                    'found_value': current_method,
-                    'expected_value': f'One of {", ".join(expected_methods)}',
-                    'severity': 'Medium',
+                    'status': Status.PASS,
+                    'details': f'INACTIVE is set to {current_inactive_days} days in collected data, which is compliant (1-{expected_inactive_days_max}).',
+                    'found_value': str(current_inactive_days),
+                    'expected_value': f'1-{expected_inactive_days_max}',
+                    'severity': Severity.MEDIUM,
                     'section': 'access_control'
                 })
             else:
                 results.append({
                     'rule_id': rule_id,
                     'title': title,
-                    'status': 'FAIL',
-                    'details': f'ENCRYPT_METHOD is set to {current_method} in collected login.defs, which is not a strong hashing algorithm. Expected one of {", ".join(expected_methods)}.',
-                    'found_value': current_method,
-                    'expected_value': f'One of {", ".join(expected_methods)}',
-                    'severity': 'Medium',
+                    'status': Status.FAIL,
+                    'details': f'INACTIVE is set to {current_inactive_days} days in collected data, which is outside the compliant range (1-{expected_inactive_days_max}).',
+                    'found_value': str(current_inactive_days),
+                    'expected_value': f'1-{expected_inactive_days_max}',
+                    'severity': Severity.MEDIUM,
                     'section': 'access_control'
                 })
-        else:
+        except ValueError:
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'FAIL',
-                'details': 'ENCRYPT_METHOD is not configured in collected login.defs.',
-                'found_value': 'Not configured',
-                'expected_value': f'ENCRYPT_METHOD SHA512',
-                'severity': 'Medium',
+                'status': Status.ERROR,
+                'details': f"Could not parse INACTIVE value: '{useradd_defaults_data['INACTIVE']}' from collected data.",
+                'found_value': useradd_defaults_data['INACTIVE'],
+                'expected_value': f'1-{expected_inactive_days_max}',
+                'severity': Severity.MEDIUM,
                 'section': 'access_control'
             })
     else:
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'SKIPPED',
-            'details': 'login.defs not available in collected data, cannot check password hashing algorithm.',
+            'status': Status.SKIPPED,
+            'details': 'useradd defaults data not available in collected data, cannot check inactive password lock.',
             'found_value': 'Data file not found',
-            'expected_value': f'ENCRYPT_METHOD SHA512',
-            'severity': 'Medium',
+            'expected_value': f'INACTIVE 1-{expected_inactive_days_max}',
+            'severity': Severity.MEDIUM,
             'section': 'access_control'
         })
 
-    # 5.4.1.5 - Ensure inactive password lock is configured (Offline - Manual)
-    results.append({
-        'rule_id': '5.4.1.5',
-        'title': 'Ensure inactive password lock is configured',
-        'status': 'MANUAL',
-        'details': 'Checking inactive password lock (useradd -D INACTIVE) requires live system access or specific collected useradd defaults. Manual review is required.',
-        'found_value': 'Requires live system access or specific collected data',
-        'expected_value': 'INACTIVE 1-30',
-        'severity': 'Medium',
-        'section': 'access_control'
-    })
-
-    # 5.4.1.6 - Ensure all users last password change date is in the past (Offline - Manual)
-    if shadow_file.exists():
-        results.append({
-            'rule_id': '5.4.1.6',
-            'title': 'Ensure all users last password change date is in the past',
-            'status': 'MANUAL',
-            'details': 'Checking all users last password change date requires parsing /etc/shadow and comparing dates. Manual review of collected shadow file is required.',
-            'found_value': 'Review collected shadow file',
-            'expected_value': 'All password change dates in the past',
-            'severity': 'Medium',
-            'section': 'access_control'
-        })
-    else:
-        results.append({
-            'rule_id': '5.4.1.6',
-            'title': 'Ensure all users last password change date is in the past',
-            'status': 'SKIPPED',
-            'details': 'Shadow file not available in collected data, cannot check password change dates.',
-            'found_value': 'Data file not found',
-            'expected_value': 'All password change dates in the past',
-            'severity': 'Medium',
-            'section': 'access_control'
-        })
-
-    # 5.4.2.1 - Ensure root is the only UID 0 account
-    rule_id = '5.4.2.1'
-    title = 'Ensure root is the only UID 0 account'
+    # 5.4.2 - Ensure all users have a unique UID (offline)
+    rule_id = '5.4.2'
+    title = 'Ensure all users have a unique UID'
     if passwd_file.exists():
-        passwd_content = passwd_file.read_text()
-        uid_0_users = []
-        for line in passwd_content.split('\n'):
-            if line.strip() and not line.startswith('#'):
-                fields = line.split(':')
-                if len(fields) >= 4 and fields[2] == '0':
-                    uid_0_users.append(fields[0])
-        
-        if uid_0_users == ['root']:
+        try:
+            passwd_content = passwd_file.read_text()
+            uids = [line.split(':')[2] for line in passwd_content.splitlines() if line.strip() and not line.startswith('#')]
+            duplicate_uids = [uid for uid in set(uids) if uids.count(uid) > 1]
+            
+            if not duplicate_uids:
+                results.append({
+                    'rule_id': rule_id,
+                    'title': title,
+                    'status': Status.PASS,
+                    'details': 'All users have unique UIDs based on collected passwd data.',
+                    'found_value': 'No duplicate UIDs found',
+                    'expected_value': 'All users have unique UIDs',
+                    'severity': Severity.HIGH,
+                    'section': 'access_control'
+                })
+            else:
+                results.append({
+                    'rule_id': rule_id,
+                    'title': title,
+                    'status': Status.FAIL,
+                    'details': f'Duplicate UIDs found in collected passwd data: {", ".join(duplicate_uids)}. Each user must have a unique UID.',
+                    'found_value': f'Duplicate UIDs: {", ".join(duplicate_uids)}',
+                    'expected_value': 'All users have unique UIDs',
+                    'severity': Severity.HIGH,
+                    'section': 'access_control'
+                })
+        except Exception as e:
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'PASS',
-                'details': 'Only the "root" account has UID 0 based on collected passwd file.',
-                'found_value': 'root',
-                'expected_value': 'root only',
-                'severity': 'High',
-                'section': 'access_control'
-            })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': f'Multiple accounts or non-root accounts have UID 0 in collected passwd file. Found: {", ".join(uid_0_users)}',
-                'found_value': ", ".join(uid_0_users),
-                'expected_value': 'root only',
-                'severity': 'High',
-                'section': 'access_control'
-            })
-    else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'passwd file not available in collected data, cannot check UID 0 accounts.',
-            'found_value': 'Data file not found',
-            'expected_value': 'root only',
-            'severity': 'High',
-            'section': 'access_control'
-        })
-
-    # 5.4.2.2 - Ensure root is the only GID 0 account
-    rule_id = '5.4.2.2'
-    title = 'Ensure root is the only GID 0 account'
-    if passwd_file.exists():
-        passwd_content = passwd_file.read_text()
-        gid_0_users = []
-        for line in passwd_content.split('\n'):
-            if line.strip() and not line.startswith('#'):
-                fields = line.split(':')
-                if len(fields) >= 4 and fields[3] == '0':
-                    gid_0_users.append(fields[0])
-        
-        if gid_0_users == ['root']:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'PASS',
-                'details': 'Only the "root" account has GID 0 based on collected passwd file.',
-                'found_value': 'root',
-                'expected_value': 'root only',
-                'severity': 'High',
-                'section': 'access_control'
-            })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': f'Multiple accounts or non-root accounts have GID 0 in collected passwd file. Found: {", ".join(gid_0_users)}',
-                'found_value': ", ".join(gid_0_users),
-                'expected_value': 'root only',
-                'severity': 'High',
+                'status': Status.ERROR,
+                'details': f'Error parsing passwd file for unique UIDs: {str(e)}',
+                'severity': Severity.HIGH,
                 'section': 'access_control'
             })
     else:
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'SKIPPED',
-            'details': 'passwd file not available in collected data, cannot check GID 0 accounts.',
+            'status': Status.SKIPPED,
+            'details': 'passwd file not available in collected data, cannot check unique UIDs.',
             'found_value': 'Data file not found',
-            'expected_value': 'root only',
-            'severity': 'High',
+            'expected_value': 'All users have unique UIDs',
+            'severity': Severity.HIGH,
             'section': 'access_control'
         })
 
-    # 5.4.2.3 - Ensure group root is the only GID 0 group
-    rule_id = '5.4.2.3'
-    title = 'Ensure group root is the only GID 0 group'
+    # 5.4.3 - Ensure all groups have a unique GID (offline)
+    rule_id = '5.4.3'
+    title = 'Ensure all groups have a unique GID'
     if group_file.exists():
-        group_content = group_file.read_text()
-        gid_0_groups = []
-        for line in group_content.split('\n'):
-            if line.strip() and not line.startswith('#'):
-                fields = line.split(':')
-                if len(fields) >= 3 and fields[2] == '0':
-                    gid_0_groups.append(fields[0])
-        
-        if gid_0_groups == ['root']:
+        try:
+            group_content = group_file.read_text()
+            gids = [line.split(':')[2] for line in group_content.splitlines() if line.strip() and not line.startswith('#')]
+            duplicate_gids = [gid for gid in set(gids) if gids.count(gid) > 1]
+            
+            if not duplicate_gids:
+                results.append({
+                    'rule_id': rule_id,
+                    'title': title,
+                    'status': Status.PASS,
+                    'details': 'All groups have unique GIDs based on collected group data.',
+                    'found_value': 'No duplicate GIDs found',
+                    'expected_value': 'All groups have unique GIDs',
+                    'severity': Severity.HIGH,
+                    'section': 'access_control'
+                })
+            else:
+                results.append({
+                    'rule_id': rule_id,
+                    'title': title,
+                    'status': Status.FAIL,
+                    'details': f'Duplicate GIDs found in collected group data: {", ".join(duplicate_gids)}. Each group must have a unique GID.',
+                    'found_value': f'Duplicate GIDs: {", ".join(duplicate_gids)}',
+                    'expected_value': 'All groups have unique GIDs',
+                    'severity': Severity.HIGH,
+                    'section': 'access_control'
+                })
+        except Exception as e:
             results.append({
                 'rule_id': rule_id,
                 'title': title,
-                'status': 'PASS',
-                'details': 'Only the "root" group has GID 0 based on collected group file.',
-                'found_value': 'root',
-                'expected_value': 'root only',
-                'severity': 'High',
-                'section': 'access_control'
-            })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': f'Multiple groups or non-root groups have GID 0 in collected group file. Found: {", ".join(gid_0_groups)}',
-                'found_value': ", ".join(gid_0_groups),
-                'expected_value': 'root only',
-                'severity': 'High',
-                'section': 'access_control'
-            })
-    else:
-        results.append({
-            'rule_id': rule_id,
-            'title': title,
-            'status': 'SKIPPED',
-            'details': 'group file not available in collected data, cannot check GID 0 groups.',
-            'found_value': 'Data file not found',
-            'expected_value': 'root only',
-            'severity': 'High',
-            'section': 'access_control'
-        })
-
-    # 5.4.2.4 - Ensure root account access is controlled (Offline - Manual)
-    if shadow_file.exists():
-        results.append({
-            'rule_id': '5.4.2.4',
-            'title': 'Ensure root account access is controlled',
-            'status': 'MANUAL',
-            'details': 'Checking root account lock status requires parsing /etc/shadow. Manual review of collected shadow file is required.',
-            'found_value': 'Review collected shadow file',
-            'expected_value': 'Root account locked (L or LK status)',
-            'severity': 'High',
-            'section': 'access_control'
-        })
-    else:
-        results.append({
-            'rule_id': '5.4.2.4',
-            'title': 'Ensure root account access is controlled',
-            'status': 'SKIPPED',
-            'details': 'Shadow file not available in collected data, cannot check root account status.',
-            'found_value': 'Data file not found',
-            'expected_value': 'Root account locked (L or LK status)',
-            'severity': 'High',
-            'section': 'access_control'
-        })
-
-    # 5.4.2.5 - Ensure root path integrity (Offline - Manual)
-    results.append({
-        'rule_id': '5.4.2.5',
-        'title': 'Ensure root path integrity',
-        'status': 'MANUAL',
-        'details': 'Checking root PATH integrity requires live environment variables and file system checks. Manual review is required.',
-        'found_value': 'Requires live system access',
-        'expected_value': 'No empty, relative, world-writable, or non-root owned directories',
-        'severity': 'Medium',
-        'section': 'access_control'
-    })
-
-    # 5.4.2.6 - Ensure root user umask is configured (Offline - Manual)
-    results.append({
-        'rule_id': '5.4.2.6',
-        'title': 'Ensure root user umask is configured',
-        'status': 'MANUAL',
-        'details': 'Checking root umask requires parsing multiple profile files. Manual review of collected profile files is required.',
-        'found_value': 'Review collected profile files',
-        'expected_value': 'One of 027, 077',
-        'severity': 'Medium',
-        'section': 'access_control'
-    })
-
-    # 5.4.2.7 - Ensure system accounts do not have a valid login shell (Offline - Manual)
-    if passwd_file.exists():
-        results.append({
-            'rule_id': '5.4.2.7',
-            'title': 'Ensure system accounts do not have a valid login shell',
-            'status': 'MANUAL',
-            'details': 'Checking system account shells requires parsing /etc/passwd. Manual review of collected passwd file is required.',
-            'found_value': 'Review collected passwd file',
-            'expected_value': 'System accounts have /usr/sbin/nologin or /bin/false shell',
-            'severity': 'Medium',
-            'section': 'access_control'
-        })
-    else:
-        results.append({
-            'rule_id': '5.4.2.7',
-            'title': 'Ensure system accounts do not have a valid login shell',
-            'status': 'SKIPPED',
-            'details': 'passwd file not available in collected data, cannot check system account shells.',
-            'found_value': 'Data file not found',
-            'expected_value': 'System accounts have /usr/sbin/nologin or /bin/false shell',
-            'severity': 'Medium',
-            'section': 'access_control'
-        })
-
-    # 5.4.2.8 - Ensure accounts without a valid login shell are locked (Offline - Manual)
-    if passwd_file.exists() and shadow_file.exists():
-        results.append({
-            'rule_id': '5.4.2.8',
-            'title': 'Ensure accounts without a valid login shell are locked',
-            'status': 'MANUAL',
-            'details': 'Checking lock status for accounts with invalid shells requires parsing /etc/passwd and /etc/shadow. Manual review is required.',
-            'found_value': 'Review collected passwd and shadow files',
-            'expected_value': 'Accounts with invalid shells are locked',
-            'severity': 'Medium',
-            'section': 'access_control'
-        })
-    else:
-        results.append({
-            'rule_id': '5.4.2.8',
-            'title': 'Ensure accounts without a valid login shell are locked',
-            'status': 'SKIPPED',
-            'details': 'passwd or shadow file not available in collected data, cannot check account lock status.',
-            'found_value': 'Data file(s) not found',
-            'expected_value': 'Accounts with invalid shells are locked',
-            'severity': 'Medium',
-            'section': 'access_control'
-        })
-
-    # 5.4.3.1 - Ensure nologin is not listed in /etc/shells
-    rule_id = '5.4.3.1'
-    title = 'Ensure nologin is not listed in /etc/shells'
-    expected_absence = 'nologin not in /etc/shells'
-    if shells_file.exists():
-        shells_content = shells_file.read_text()
-        if '/usr/sbin/nologin' in shells_content or '/sbin/nologin' in shells_content:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'FAIL',
-                'details': '`/usr/sbin/nologin` or `/sbin/nologin` is listed in collected /etc/shells.',
-                'found_value': 'nologin found in /etc/shells',
-                'expected_value': expected_absence,
-                'severity': 'Medium',
-                'section': 'access_control'
-            })
-        else:
-            results.append({
-                'rule_id': rule_id,
-                'title': title,
-                'status': 'PASS',
-                'details': '`/usr/sbin/nologin` and `/sbin/nologin` are not listed in collected /etc/shells, which is compliant.',
-                'found_value': expected_absence,
-                'expected_value': expected_absence,
-                'severity': 'Medium',
+                'status': Status.ERROR,
+                'details': f'Error parsing group file for unique GIDs: {str(e)}',
+                'severity': Severity.HIGH,
                 'section': 'access_control'
             })
     else:
         results.append({
             'rule_id': rule_id,
             'title': title,
-            'status': 'SKIPPED',
-            'details': 'shells file not available in collected data, cannot check nologin entries.',
+            'status': Status.SKIPPED,
+            'details': 'group file not available in collected data, cannot check unique GIDs.',
             'found_value': 'Data file not found',
-            'expected_value': expected_absence,
-            'severity': 'Medium',
+            'expected_value': 'All groups have unique GIDs',
+            'severity': Severity.HIGH,
             'section': 'access_control'
         })
 
-    # 5.4.3.2 - Ensure default user shell timeout is configured (Offline - Manual)
-    results.append({
-        'rule_id': '5.4.3.2',
-        'title': 'Ensure default user shell timeout is configured',
-        'status': 'MANUAL',
-        'details': 'Checking default user shell timeout requires parsing multiple profile files. Manual review of collected profile files is required.',
-        'found_value': 'Review collected profile files',
-        'expected_value': 'TMOUT<=900',
-        'severity': 'Medium',
-        'section': 'access_control'
-    })
+    # 5.4.4 - Ensure default user umask is 027 or 077 (offline)
+    rule_id = '5.4.4'
+    title = 'Ensure default user umask is 027 or 077'
+    expected_umasks = ['027', '077']
+    
+    bashrc_content = ""
+    if bashrc_file.exists():
+        try:
+            bashrc_content = bashrc_file.read_text()
+        except Exception as e:
+            logging.warning(f"Could not read {bashrc_file}: {e}")
 
-    # 5.4.3.3 - Ensure default user umask is configured (Offline - Manual)
-    results.append({
-        'rule_id': '5.4.3.3',
-        'title': 'Ensure default user umask is configured',
-        'status': 'MANUAL',
-        'details': 'Checking default user umask requires parsing multiple profile files. Manual review of collected profile files is required.',
-        'found_value': 'Review collected profile files',
-        'expected_value': 'One of 027, 077',
-        'severity': 'Medium',
-        'section': 'access_control'
-    })
+    profile_content = ""
+    if profile_file.exists():
+        try:
+            profile_content = profile_file.read_text()
+        except Exception as e:
+            logging.warning(f"Could not read {profile_file}: {e}")
+
+    login_defs_content = login_defs_data # Already loaded above
+
+    found_umasks = []
+    bashrc_umask = None
+    profile_umask = None
+    login_defs_umask = None
+
+    if bashrc_content:
+        match = re.search(r'^\s*umask\s+(\d{3})', bashrc_content, re.MULTILINE)
+        if match:
+            bashrc_umask = match.group(1)
+            found_umasks.append(f'bashrc: {bashrc_umask}')
+    
+    if profile_content:
+        match = re.search(r'^\s*umask\s+(\d{3})', profile_content, re.MULTILINE)
+        if match:
+            profile_umask = match.group(1)
+            found_umasks.append(f'profile: {profile_umask}')
+
+    if login_defs_content and 'UMASK' in login_defs_content:
+        login_defs_umask = str(login_defs_content['UMASK'])
+        found_umasks.append(f'login.defs: {login_defs_umask}')
+
+    all_compliant = True
+    details_list = []
+
+    if bashrc_umask and bashrc_umask not in expected_umasks:
+        all_compliant = False
+        details_list.append(f'Collected /etc/bashrc umask is {bashrc_umask}, expected one of {", ".join(expected_umasks)}.')
+    elif not bashrc_umask and bashrc_file.exists(): # Only report if file exists but umask not found
+        details_list.append('Collected /etc/bashrc umask not explicitly set.')
+
+    if profile_umask and profile_umask not in expected_umasks:
+        all_compliant = False
+        details_list.append(f'Collected /etc/profile umask is {profile_umask}, expected one of {", ".join(expected_umasks)}.')
+    elif not profile_umask and profile_file.exists(): # Only report if file exists but umask not found
+        details_list.append('Collected /etc/profile umask not explicitly set.')
+
+    if login_defs_umask and login_defs_umask not in expected_umasks:
+        all_compliant = False
+        details_list.append(f'Collected /etc/login.defs UMASK is {login_defs_umask}, expected one of {", ".join(expected_umasks)}.')
+    elif not login_defs_umask and login_defs_file.exists(): # Only report if file exists but umask not found
+        details_list.append('Collected /etc/login.defs UMASK not explicitly set.')
+
+    if not bashrc_file.exists() and not profile_file.exists() and not login_defs_file.exists():
+        results.append({
+            'rule_id': rule_id,
+            'title': title,
+            'status': Status.SKIPPED,
+            'details': 'No relevant umask configuration files (bashrc, profile, login.defs) found in collected data, cannot check default user umask.',
+            'found_value': 'Data files not found',
+            'expected_value': f'umask 027 or 077',
+            'severity': Severity.MEDIUM,
+            'section': 'access_control'
+        })
+    elif all_compliant and found_umasks:
+        results.append({
+            'rule_id': rule_id,
+            'title': title,
+            'status': Status.PASS,
+            'details': f'Default user umask is compliant based on collected data. Found: {"; ".join(found_umasks)}.',
+            'found_value': '; '.join(found_umasks),
+            'expected_value': f'umask 027 or 077',
+            'severity': Severity.MEDIUM,
+            'section': 'access_control'
+        })
+    else:
+        results.append({
+            'rule_id': rule_id,
+            'title': title,
+            'status': Status.FAIL,
+            'details': 'Default user umask is not fully compliant based on collected data. ' + ' '.join(details_list),
+            'found_value': '; '.join(found_umasks) if found_umasks else 'Not found or not compliant',
+            'expected_value': f'umask 027 or 077',
+            'severity': Severity.MEDIUM,
+            'section': 'access_control'
+        })
 
     return results
-
-if __name__ == "__main__":
-    # Test the module
-    print("Testing RHEL 9 CIS Section 5 - Access Control")
-    
-    # Example of online run
-    print("\n--- Online Run ---")
-    online_results = run_access_control_checks()
-    for result in online_results[:5]:  # Show first 5 results
-        print(f"Rule {result['rule_id']}: {result['title']}")
-        print(f"Status: {result['status']}")
-        print(f"Details: {result['details']}")
-        if result.get('found_value') is not None: print(f"Found: {result['found_value']}")
-        if result.get('expected_value') is not None: print(f"Expected: {result['expected_value']}")
-        if 'remediation' in result and result['remediation']:
-            print(f"Remediation: {result['remediation']}")
-        print("-" * 50)
-
-    # Example of offline run (requires a 'data' directory with collected info)
-    # For demonstration, let's assume a dummy data directory exists
-    # You would typically run collect_data.sh first to populate this
-    dummy_data_dir = "./dummy_data_for_access_control_checks"
-    os.makedirs(dummy_data_dir, exist_ok=True)
-    os.makedirs(Path(dummy_data_dir) / "security" / "ssh", exist_ok=True)
-    os.makedirs(Path(dummy_data_dir) / "security" / "pam", exist_ok=True)
-    os.makedirs(Path(dummy_data_dir) / "security" / "sudoers", exist_ok=True)
-    os.makedirs(Path(dummy_data_dir) / "system", exist_ok=True)
-
-    # Create dummy files for offline testing
-    (Path(dummy_data_dir) / "security" / "ssh" / "sshd_config").write_text("""
-# SSHD config
-PermitRootLogin no
-ClientAliveInterval 300
-ClientAliveCountMax 3
-Ciphers aes256-gcm@openssh.com
-KexAlgorithms curve25519-sha256
-MACs hmac-sha2-512
-Banner /etc/issue.net
-AllowUsers testuser
-""")
-    (Path(dummy_data_dir) / "security" / "ssh" / "ssh-permissions.txt").write_text("""
--rw-------. 1 root root 3900 Jan 18 2024 sshd_config
--rw-------. 1 root root  668 Jan 18 2024 ssh_host_rsa_key
--rw-r--r--. 1 root root  146 Jan 18 2024 ssh_host_rsa_key.pub
-""")
-    (Path(dummy_data_dir) / "system" / "packages.txt").write_text("sudo-1.9.5p2-1.el9.x86_64\npam-1.5.1-1.el9.x86_64\nauthselect-1.2.2-1.el9.x86_64\nlibpwquality-1.4.4-1.el9.x86_64")
-    (Path(dummy_data_dir) / "security" / "sudoers" / "sudoers").write_text("""
-Defaults    logfile=/var/log/sudo.log
-Defaults    use_pty
-Defaults    timestamp_timeout=10
-# User privilege specification
-root    ALL=(ALL)       ALL
-%wheel  ALL=(ALL)       ALL
-""")
-    (Path(dummy_data_dir) / "security" / "pam" / "pwquality.conf").write_text("""
-# Configuration for pam_pwquality module
-difok = 2
-minlen = 14
-dcredit = -1
-ucredit = -1
-ocredit = -1
-lcredit = -1
-maxrepeat = 3
-maxsequence = 3
-dictcheck = 1
-enforce_for_root
-""")
-    (Path(dummy_data_dir) / "security" / "pam" / "faillock.conf").write_text("""
-# Configuration for pam_faillock module
-deny = 5
-unlock_time = 900
-even_deny_root
-""")
-    (Path(dummy_data_dir) / "security" / "pam" / "system-auth").write_text("""
-auth        required      pam_env.so
-auth        required      pam_faillock.so preauth silent audit deny=5 unlock_time=900
-auth        sufficient    pam_unix.so nullok try_first_pass
-auth        [default=die] pam_faillock.so authfail audit
-auth        required      pam_deny.so
-account     required      pam_unix.so
-password    requisite     pam_pwquality.so try_first_pass local_users_only retry=3 authtok_type=
-password    sufficient    pam_unix.so sha512 shadow use_authtok remember=5
-password    required      pam_deny.so
-session     optional      pam_keyinit.so revoke
-session     required      pam_limits.so
-session     required      pam_systemd.so
-session     optional      pam_oddjob_mkhomedir.so skel=/etc/skel/ umask=0077
-session     required      pam_unix.so
-""")
-    (Path(dummy_data_dir) / "security" / "pam" / "su").write_text("""
-auth        sufficient    pam_rootok.so
-auth        required      pam_wheel.so use_uid
-auth        required      pam_unix.so
-""")
-    (Path(dummy_data_dir) / "security" / "passwd").write_text("""
-root:x:0:0:root:/root:/bin/bash
-bin:x:1:1:bin:/bin:/sbin/nologin
-daemon:x:2:2:daemon:/sbin:/sbin/nologin
-adm:x:3:4:adm:/var/adm:/sbin/nologin
-lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin
-sync:x:5:0:sync:/sbin:/bin/sync
-shutdown:x:6:0:shutdown:/sbin:/sbin/shutdown
-halt:x:7:0:halt:/sbin:/sbin/halt
-mail:x:8:12:mail:/var/spool/mail:/sbin/nologin
-operator:x:11:0:operator:/root:/sbin/nologin
-games:x:12:100:games:/usr/games:/sbin/nologin
-ftp:x:14:50:FTP User:/var/ftp:/sbin/nologin
-nobody:x:65534:65534:nobody:/var/empty:/sbin/nologin
-dbus:x:81:81:System Message Bus:/:/sbin/nologin
-systemd-coredump:x:999:997:systemd Core Dumper:/:/sbin/nologin
-testuser:x:1000:1000:Test User:/home/testuser:/bin/bash
-""")
-    (Path(dummy_data_dir) / "security" / "shadow").write_text("""
-root:$6$salt$hash:19700:0:99999:7:::
-bin:*:17148:0:99999:7:::
-daemon:*:17148:0:99999:7:::
-testuser:$6$salt$hash:19700:0:99999:7:::
-operator:*:19700:0:99999:7:::
-""")
-    (Path(dummy_data_dir) / "security" / "group").write_text("""
-root:x:0:
-bin:x:1:daemon
-daemon:x:2:bin,adm
-sys:x:3:
-adm:x:4:
-tty:x:5:
-disk:x:6:
-lp:x:7:
-mem:x:8:
-kmem:x:9:
-wheel:x:10:testuser
-""")
-    (Path(dummy_data_dir) / "security" / "shells").write_text("""
-/bin/sh
-/bin/bash
-/usr/bin/sh
-/usr/bin/bash
-/usr/bin/git-shell
-/usr/sbin/nologin
-""")
-    (Path(dummy_data_dir) / "security" / "login.defs").write_text("""
-PASS_MAX_DAYS   90
-PASS_MIN_DAYS   1
-PASS_WARN_AGE   7
-ENCRYPT_METHOD  SHA512
-UMASK           022
-""")
-
-    print(f"\n--- Offline Run (using dummy data in {dummy_data_dir}) ---")
-    offline_results = run_access_control_checks(dummy_data_dir)
-    for result in offline_results[:5]: # Show first 5 results
-        print(f"Rule {result['rule_id']}: {result['title']}")
-        print(f"Status: {result['status']}")
-        print(f"Details: {result['details']}")
-        if result.get('found_value') is not None: print(f"Found: {result['found_value']}")
-        if result.get('expected_value') is not None: print(f"Expected: {result['expected_value']}")
-        if 'remediation' in result and result['remediation']:
-            print(f"Remediation: {result['remediation']}")
-        print("-" * 50)
-    
-    # Clean up dummy data
-    import shutil
-    shutil.rmtree(dummy_data_dir)
