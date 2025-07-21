@@ -27,7 +27,7 @@ def run_online():
     # 5.2 Configure privilege escalation
     results.extend(check_privilege_escalation_online())
     
-    # 5.3 Configure PAM
+    ## 5.3 Configure PAM
     results.extend(check_pam_online())
     
     # 5.4 User Accounts and Environment
