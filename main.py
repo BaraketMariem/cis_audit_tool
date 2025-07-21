@@ -35,7 +35,7 @@ def print_results(results, verbose=False, failed_only=False):
     total = len(results)
     passed = len([r for r in results if r.get('status') == 'PASS'])
     failed = len([r for r in results if r.get('status') == 'FAIL'])
-    skipped = len([r for r in results if r.get('status') == 'SKIP'])
+    skipped = len([r for r in results if r.get('status') == 'ERROR'])
     
     print(f"\n📊 AUDIT RESULTS SUMMARY")
     print("=" * 50)
@@ -49,7 +49,7 @@ def print_results(results, verbose=False, failed_only=False):
     # Group results by status
     passed_results = [r for r in results if r.get('status') == 'PASS']
     failed_results = [r for r in results if r.get('status') == 'FAIL']
-    skipped_results = [r for r in results if r.get('status') == 'SKIP']
+    skipped_results = [r for r in results if r.get('status') == 'ERROR']
     
     # Show results based on flags
     if failed_only:
@@ -121,7 +121,7 @@ def print_section_summary(results):
             sections[section]['passed'] += 1
         elif status == 'FAIL':
             sections[section]['failed'] += 1
-        elif status == 'SKIP':
+        elif status == 'ERROR':
             sections[section]['skipped'] += 1
     
     print(f"\n📈 SECTION SUMMARY:")
@@ -149,7 +149,7 @@ def save_results_json(results, output_file):
             'summary': {
                 'passed': len([r for r in results if r.get('status') == 'PASS']),
                 'failed': len([r for r in results if r.get('status') == 'FAIL']),
-                'skipped': len([r for r in results if r.get('status') == 'SKIP'])
+                'skipped': len([r for r in results if r.get('status') == 'ERROR'])
             },
             'results': results
         }
