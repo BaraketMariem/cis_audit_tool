@@ -1,38 +1,116 @@
-NEWNEW
-├── checks
-│   ├── __pycache__
-│   │   └── __init__.py
+rhel9-cis-audit/
+├── README.md                           # Project documentation
+├── requirements.txt                    # Python dependencies
+├── setup.py                           # Installation script
+├── .gitignore                         # Git ignore file
+├── LICENSE                            # Project license
+│
+├── src/                               # Main source code
 │   ├── __init__.py
-│   ├── access_control_check.py
-│   ├── host_firewall_check.py
-│   ├── initial_setup_check.py
-│   ├── logging_check.py
-│   ├── network_check.py
-│   ├── services_check.py
-│   ├── system_maintenance_check.py
-├── config
-│   ├── cis_rules.json
-│   └── default_config.yaml
-├── core
-│   └── auditor.py
-├── data
-├── docs
-├── reports
-│   ├── html_generator.py
-│   └── json_generator.py
-├── scripts
-│   ├── collect_data_enhanced.sh
-│   ├── collect_data_final.sh
-│   └── collect_data.sh
-├── utils
-│   ├── __pycache__
-│   │   └── __init__.py
+│   ├── main.py                        # 🎯 Main entry point (CORE)
+│   │
+│   ├── collectors/                    # 📁 Data Collection (IMPLEMENTED)
+│   │   ├── __init__.py
+│   │   ├── system_collector.py        # ✅ Main collector class
+│   │   ├── ssh_collector.py           # SSH-specific collection
+│   │   ├── firewall_collector.py      # Firewall-specific collection
+│   │   ├── filesystem_collector.py    # Filesystem collection
+│   │   ├── service_collector.py       # Service collection
+│   │   ├── audit_collector.py         # Audit system collection
+│   │   ├── user_collector.py          # User/permission collection
+│   │   └── network_collector.py       # Network configuration
+│   │
+│   ├── auditors/                      # 🔍 CIS Rule Engine (NEEDS IMPLEMENTATION)
+│   │   ├── __init__.py
+│   │   ├── base_auditor.py            # ❌ Base auditor class
+│   │   ├── cis_auditor.py             # ❌ Main CIS auditor (CRITICAL)
+│   │   ├── offline_analyzer.py        # ❌ Analyzes collected files
+│   │   ├── online_checker.py          # ❌ Direct live system checks
+│   │   └── compliance_calculator.py   # ❌ Scoring and compliance %
+│   │
+│   ├── rules/                         # 📋 CIS Rule Definitions (NEEDS IMPLEMENTATION)
+│   │   ├── __init__.py
+│   │   ├── rule_base.py               # ❌ Base rule class
+│   │   ├── initial_setup_rules.py     # ❌ Section 1: Initial Setup
+│   │   ├── services_rules.py          # ❌ Section 2: Services
+│   │   ├── network_rules.py           # ❌ Section 3: Network Configuration
+│   │   ├── logging_rules.py           # ❌ Section 4: Logging and Auditing
+│   │   ├── access_control_rules.py    # ❌ Section 5: Access Control
+│   │   ├── system_maintenance_rules.py # ❌ Section 6: System Maintenance
+│   │   └── rule_registry.py           # ❌ Rule registration system
+│   │
+│   ├── reports/                       # 📊 Report Generation (NEEDS IMPLEMENTATION)
+│   │   ├── __init__.py
+│   │   ├── base_reporter.py           # ❌ Base reporter class
+│   │   ├── html_generator.py          # ❌ HTML report generation
+│   │   ├── json_generator.py          # ❌ JSON/XML output
+│   │   ├── csv_generator.py           # ❌ CSV export
+│   │   ├── executive_summary.py       # ❌ Executive dashboard
+│   │   └── templates/                 # ❌ Report templates
+│   │       ├── html_template.html
+│   │       ├── executive_template.html
+│   │       └── styles.css
+│   │
+│   ├── remediation/                   # 🔧 Fix Generation (NEEDS IMPLEMENTATION)
+│   │   ├── __init__.py
+│   │   ├── fix_generator.py           # ❌ Generate fix commands
+│   │   ├── remediation_scripts.py     # ❌ Automated fixes
+│   │   ├── risk_assessor.py           # ❌ Risk analysis
+│   │   └── bash_scripts/              # ❌ Shell scripts for fixes
+│   │       ├── ssh_fixes.sh
+│   │       ├── firewall_fixes.sh
+│   │       └── filesystem_fixes.sh
+│   │
+│   ├── utils/                         # 🛠️ Utilities (NEEDS IMPLEMENTATION)
+│   │   ├── __init__.py
+│   │   ├── logger.py                  # ❌ Logging system
+│   │   ├── config_parser.py           # ❌ Configuration file parser
+│   │   ├── file_utils.py              # ❌ File handling utilities
+│   │   ├── command_runner.py          # ❌ Safe command execution
+│   │   ├── validators.py              # ❌ Input validation
+│   │   └── exceptions.py              # ❌ Custom exceptions
+│   │
+│   └── config/                        # ⚙️ Configuration (NEEDS IMPLEMENTATION)
+│       ├── __init__.py
+│       ├── cis_rules.json             # ❌ CIS rule definitions
+│       ├── severity_mapping.json      # ❌ Rule severity levels
+│       ├── default_config.yaml        # ❌ Default configuration
+│       └── logging_config.yaml        # ❌ Logging configuration
+│
+├── tests/                             # 🧪 Testing (NEEDS IMPLEMENTATION)
 │   ├── __init__.py
-│   └── parsers.py
-├── main.py
-├── project-structure.txt
-├── README.md
-├── requirements.txt
-├── run_audit.sh
-├── run_complete_audit.sh
-└── test_collector.sh
+│   ├── test_collectors.py             # ❌ Test data collection
+│   ├── test_auditors.py               # ❌ Test CIS rule engine
+│   ├── test_rules.py                  # ❌ Test individual rules
+│   ├── test_reports.py                # ❌ Test report generation
+│   ├── test_integration.py            # ❌ Integration tests
+│   ├── fixtures/                      # ❌ Test data
+│   │   ├── sample_configs/
+│   │   └── expected_results/
+│   └── test_data/                     # ❌ Mock system data
+│
+├── scripts/                           # 📜 Helper Scripts (NEEDS IMPLEMENTATION)
+│   ├── install.sh                     # ❌ Installation script
+│   ├── test_collector.sh              # ✅ Collection testing (IMPLEMENTED)
+│   ├── run_audit.sh                   # ❌ Quick audit script
+│   ├── generate_report.sh             # ❌ Report generation script
+│   └── remediate.sh                   # ❌ Apply fixes script
+│
+├── docs/                              # 📚 Documentation (NEEDS IMPLEMENTATION)
+│   ├── installation.md               # ❌ Installation guide
+│   ├── usage.md                       # ❌ Usage instructions
+│   ├── cis_rules_reference.md         # ❌ CIS rules documentation
+│   ├── api_reference.md               # ❌ API documentation
+│   ├── troubleshooting.md             # ❌ Troubleshooting guide
+│   └── examples/                      # ❌ Usage examples
+│       ├── offline_audit_example.md
+│       └── online_audit_example.md
+│
+├── collected_data/                    # 📁 Default collection directory
+│   └── .gitkeep
+│
+├── reports/                           # 📊 Generated reports directory
+│   └── .gitkeep
+│
+└── logs/                              # 📝 Application logs
+    └── .gitkeep
