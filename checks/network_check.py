@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 """
 RHEL 9 CIS Benchmark - Section 3: Network Configuration
