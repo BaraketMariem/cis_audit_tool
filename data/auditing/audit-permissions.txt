@@ -1,0 +1,4 @@
+total 1736
+drwx------.  2 root root      23 Jun 18 19:33 .
+drwxr-xr-x. 15 root root    4096 Jul 27 11:40 ..
+-rw-------.  1 root root 1541507 Jul 27 12:08 audit.log

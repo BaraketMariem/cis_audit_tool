@@ -1,0 +1,9 @@
+Filesystem                  Size  Used Avail Use% Mounted on
+devtmpfs                    4.0M     0  4.0M   0% /dev
+tmpfs                       1.8G     0  1.8G   0% /dev/shm
+tmpfs                       730M  9.2M  721M   2% /run
+/dev/mapper/rhel_vbox-root   64G  7.0G   57G  11% /
+/dev/sda1                   960M  299M  662M  32% /boot
+/dev/mapper/rhel_vbox-home   32G  280M   31G   1% /home
+tmpfs                       365M  112K  365M   1% /run/user/1000
+/dev/sr0                     57M   57M     0 100% /run/media/oussema/VBox_GAs_7.1.0

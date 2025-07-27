@@ -1,0 +1,30 @@
+Jul 27 11:40:06 vbox polkitd[747]: Loading rules from directory /etc/polkit-1/rules.d
+Jul 27 11:40:06 vbox polkitd[747]: Loading rules from directory /usr/share/polkit-1/rules.d
+Jul 27 11:40:06 vbox polkitd[747]: Finished loading, compiling and executing 13 rules
+Jul 27 11:40:06 vbox polkitd[747]: Acquired the name org.freedesktop.PolicyKit1 on the system bus
+Jul 27 11:40:08 vbox useradd[884]: failed adding user 'vboxadd', exit code: 9
+Jul 27 11:40:08 vbox useradd[890]: failed adding user 'vboxadd', exit code: 9
+Jul 27 11:40:13 vbox sshd[997]: Server listening on 0.0.0.0 port 22.
+Jul 27 11:40:13 vbox sshd[997]: Server listening on :: port 22.
+Jul 27 11:40:24 vbox systemd[2010]: pam_unix(systemd-user:session): session opened for user gdm(uid=42) by (uid=0)
+Jul 27 11:40:25 vbox gdm-launch-environment][2005]: pam_unix(gdm-launch-environment:session): session opened for user gdm(uid=42) by (uid=0)
+Jul 27 11:40:32 vbox polkitd[747]: Registered Authentication Agent for unix-session:c1 (system bus name :1.25 [/usr/bin/gnome-shell], object path /org/freedesktop/PolicyKit1/AuthenticationAgent, locale en_US.UTF-8)
+Jul 27 11:44:56 vbox gdm-password][2426]: gkr-pam: unable to locate daemon control file
+Jul 27 11:44:57 vbox gdm-password][2426]: gkr-pam: stashed password to try later in open session
+Jul 27 11:44:57 vbox systemd[2445]: pam_unix(systemd-user:session): session opened for user oussema(uid=1000) by (uid=0)
+Jul 27 11:44:57 vbox gdm-password][2426]: pam_unix(gdm-password:session): session opened for user oussema(uid=1000) by (uid=0)
+Jul 27 11:44:57 vbox gdm-password][2426]: gkr-pam: gnome-keyring-daemon started properly and unlocked keyring
+Jul 27 11:44:59 vbox polkitd[747]: Registered Authentication Agent for unix-session:2 (system bus name :1.69 [/usr/bin/gnome-shell], object path /org/freedesktop/PolicyKit1/AuthenticationAgent, locale en_US.UTF-8)
+Jul 27 11:45:02 vbox gdm-launch-environment][2005]: pam_unix(gdm-launch-environment:session): session closed for user gdm
+Jul 27 11:45:02 vbox polkitd[747]: Unregistered Authentication Agent for unix-session:c1 (system bus name :1.25, object path /org/freedesktop/PolicyKit1/AuthenticationAgent, locale en_US.UTF-8) (disconnected from bus)
+Jul 27 11:46:37 vbox sudo[3300]: oussema : TTY=pts/0 ; PWD=/home/oussema/cis_audit_tool/scripts ; USER=root ; COMMAND=./collect_data.sh
+Jul 27 11:46:37 vbox sudo[3300]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+Jul 27 11:46:40 vbox sudo[3300]: pam_unix(sudo:session): session closed for user root
+Jul 27 11:47:18 vbox sudo[3555]: oussema : TTY=pts/0 ; PWD=/home/oussema/cis_audit_tool ; USER=root ; COMMAND=/bin/python3 main.py --offline --data-dir /home/oussema/cis_audit_tool/data
+Jul 27 11:47:18 vbox sudo[3555]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+Jul 27 11:47:18 vbox sudo[3555]: pam_unix(sudo:session): session closed for user root
+Jul 27 11:58:19 vbox gdm-password][3650]: gkr-pam: unlocked login keyring
+Jul 27 12:06:50 vbox polkitd[747]: Operator of unix-session:2 successfully authenticated as unix-user:oussema to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.153 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:oussema)
+Jul 27 12:06:53 vbox polkitd[747]: Operator of unix-session:2 successfully authenticated as unix-user:oussema to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.157 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all-zones] (owned by unix-user:oussema)
+Jul 27 12:08:11 vbox sudo[4473]: oussema : TTY=pts/0 ; PWD=/home/oussema/cis_audit_tool/scripts ; USER=root ; COMMAND=./collect_data.sh
+Jul 27 12:08:11 vbox sudo[4473]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)

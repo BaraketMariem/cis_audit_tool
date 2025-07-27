@@ -1,0 +1,14 @@
+   Static hostname: (unset)
+Transient hostname: vbox
+         Icon name: computer-vm
+           Chassis: vm 🖴
+        Machine ID: 88ec21f9dc004e8eb1a7812fe10c2729
+           Boot ID: f6bf9baa8df64934afeacadc51ba8f52
+    Virtualization: oracle
+  Operating System: Red Hat Enterprise Linux 9.3 (Plow)
+       CPE OS Name: cpe:/o:redhat:enterprise_linux:9::baseos
+            Kernel: Linux 5.14.0-362.8.1.el9_3.x86_64
+      Architecture: x86-64
+   Hardware Vendor: innotek GmbH
+    Hardware Model: VirtualBox
+  Firmware Version: VirtualBox

@@ -1,0 +1,75 @@
+Module                  Size  Used by
+binfmt_misc            28672  1
+tls                   151552  3
+uinput                 24576  0
+nls_utf8               16384  1
+isofs                  65536  1
+snd_seq_dummy          16384  0
+snd_hrtimer            16384  1
+nft_fib_inet           16384  1
+nft_fib_ipv4           16384  1 nft_fib_inet
+nft_fib_ipv6           16384  1 nft_fib_inet
+nft_fib                16384  3 nft_fib_ipv6,nft_fib_ipv4,nft_fib_inet
+nft_reject_inet        16384  6
+nf_reject_ipv4         16384  1 nft_reject_inet
+nf_reject_ipv6         24576  1 nft_reject_inet
+nft_reject             16384  1 nft_reject_inet
+nft_ct                 24576  10
+nft_chain_nat          16384  3
+nf_nat                 61440  1 nft_chain_nat
+nf_conntrack          212992  2 nf_nat,nft_ct
+nf_defrag_ipv6         24576  1 nf_conntrack
+nf_defrag_ipv4         16384  1 nf_conntrack
+ip_set                 65536  0
+rfkill                 40960  3
+nf_tables             327680  192 nft_ct,nft_reject_inet,nft_fib_ipv6,nft_fib_ipv4,nft_chain_nat,nft_reject,nft_fib,nft_fib_inet
+nfnetlink              20480  3 nf_tables,ip_set
+qrtr                   57344  4
+snd_intel8x0           57344  2
+snd_ac97_codec        204800  1 snd_intel8x0
+ac97_bus               16384  1 snd_ac97_codec
+snd_seq               110592  7 snd_seq_dummy
+intel_rapl_msr         20480  0
+snd_seq_device         16384  1 snd_seq
+snd_pcm               180224  2 snd_intel8x0,snd_ac97_codec
+intel_rapl_common      36864  1 intel_rapl_msr
+intel_pmc_core         65536  0
+rapl                   28672  0
+snd_timer              53248  3 snd_seq,snd_hrtimer,snd_pcm
+snd                   143360  12 snd_seq,snd_seq_device,snd_intel8x0,snd_timer,snd_ac97_codec,snd_pcm
+pcspkr                 16384  0
+soundcore              16384  1 snd
+i2c_piix4              32768  0
+xfs                  2473984  3
+libcrc32c              16384  4 nf_conntrack,nf_nat,nf_tables,xfs
+sd_mod                 94208  4
+sr_mod                 28672  1
+cdrom                  90112  2 isofs,sr_mod
+t10_pi                 24576  1 sd_mod
+sg                     53248  0
+ata_generic            16384  0
+vmwgfx                458752  1
+drm_ttm_helper         16384  1 vmwgfx
+ttm                    98304  2 vmwgfx,drm_ttm_helper
+drm_kms_helper        245760  3 vmwgfx
+syscopyarea            16384  1 drm_kms_helper
+sysfillrect            16384  1 drm_kms_helper
+crct10dif_pclmul       16384  1
+ahci                   49152  2
+crc32_pclmul           16384  0
+sysimgblt              16384  1 drm_kms_helper
+libahci                61440  1 ahci
+ata_piix               45056  1
+crc32c_intel           24576  1
+drm                   704512  6 vmwgfx,drm_kms_helper,drm_ttm_helper,ttm
+e1000                 196608  0
+ghash_clmulni_intel    16384  0
+video                  73728  0
+libata                479232  4 ata_piix,libahci,ahci,ata_generic
+wmi                    45056  1 video
+serio_raw              20480  0
+dm_mirror              32768  0
+dm_region_hash         28672  1 dm_mirror
+dm_log                 28672  2 dm_region_hash,dm_mirror
+dm_mod                237568  12 dm_log,dm_mirror
+fuse                  212992  3
