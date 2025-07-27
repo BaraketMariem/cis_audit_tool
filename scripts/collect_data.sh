@@ -1,5 +1,5 @@
 #!/bin/bash
-# RHEL 9 CIS Data Collection Script - Enhanced for Offline Checks
+# RHEL 9 CIS Data Collection Script - Fixed Permission Handling
 # This script collects comprehensive system data for offline CIS audit
 
 set -euo pipefail
@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 DATA_DIR="$PROJECT_ROOT/data"
 
-# Ensure the base data directory exists before defining LOG_FILE
+# Ensure the base data directory exists
 mkdir -p "$DATA_DIR" 2>/dev/null || { 
     echo "Error: Failed to create base data directory $DATA_DIR. Check permissions or disk space." >&2
     exit 1
@@ -30,29 +30,44 @@ log() {
     echo -e "$1" | tee -a "$LOG_FILE"
 }
 
-# Safe file write function
-safe_write() {
-    local content="$1"
-    local file="$2"
+# Safe command execution with output capture
+safe_exec() {
+    local cmd="$1"
+    local output_file="$2"
     local use_sudo="${3:-false}"
+    local error_msg="${4:-Command failed}"
+    
+    # Ensure directory exists
+    mkdir -p "$(dirname "$output_file")" 2>/dev/null
     
     if [ "$use_sudo" = "true" ]; then
-        echo "$content" | sudo tee "$file" > /dev/null 2>&1 || echo "Failed to write $file" | sudo tee "$file" > /dev/null
+        if ! sudo bash -c "$cmd" > "$output_file" 2>/dev/null; then
+            echo "$error_msg" > "$output_file" 2>/dev/null || true
+        fi
     else
-        echo "$content" > "$file" 2>/dev/null || echo "Failed to write $file" > "$file"
+        if ! bash -c "$cmd" > "$output_file" 2>/dev/null; then
+            echo "$error_msg" > "$output_file" 2>/dev/null || true
+        fi
     fi
 }
 
-# Safe copy function
+# Safe file copy
 safe_copy() {
     local source="$1"
     local dest="$2"
     local use_sudo="${3:-false}"
     
+    # Ensure directory exists
+    mkdir -p "$(dirname "$dest")" 2>/dev/null
+    
     if [ "$use_sudo" = "true" ]; then
-        sudo cp "$source" "$dest" 2>/dev/null || safe_write "Source file not found: $source" "$dest" true
+        if ! sudo cp "$source" "$dest" 2>/dev/null; then
+            echo "Source file not accessible: $source" > "$dest" 2>/dev/null || true
+        fi
     else
-        cp "$source" "$dest" 2>/dev/null || safe_write "Source file not found: $source" "$dest" false
+        if ! cp "$source" "$dest" 2>/dev/null; then
+            echo "Source file not found: $source" > "$dest" 2>/dev/null || true
+        fi
     fi
 }
 
@@ -60,19 +75,11 @@ safe_copy() {
 create_directories() {
     log "${BLUE}📁 Creating data directory structure...${NC}"
     
-    # Create subdirectories matching offline check expectations
+    # Create all required directories
     mkdir -p "$DATA_DIR"/{system,network,services,security,logging,auditing,filesystem} 2>/dev/null
-    
-    # Security subdirectories
     mkdir -p "$DATA_DIR"/security/{ssh,pam,sudoers,selinux,firewall} 2>/dev/null
-    
-    # Logging subdirectories 
     mkdir -p "$DATA_DIR"/logging/{rsyslog,journald,audit} 2>/dev/null
-    
-    # System subdirectories
     mkdir -p "$DATA_DIR"/system/{packages,services,kernel,boot} 2>/dev/null
-    
-    # Network subdirectories
     mkdir -p "$DATA_DIR"/network/{interfaces,firewall,routing} 2>/dev/null
     
     log "${GREEN}✅ Directory structure created${NC}"
@@ -82,23 +89,22 @@ create_directories() {
 collect_system_info() {
     log "${BLUE}🖥️  Collecting system information...${NC}"
     
-    # Basic system info
-    hostnamectl > "$DATA_DIR/system/hostnamectl.txt" 2>/dev/null || safe_write "hostnamectl failed" "$DATA_DIR/system/hostnamectl.txt"
-    uname -a > "$DATA_DIR/system/uname.txt" 2>/dev/null || safe_write "uname failed" "$DATA_DIR/system/uname.txt"
+    safe_exec "hostnamectl" "$DATA_DIR/system/hostnamectl.txt" false "hostnamectl failed"
+    safe_exec "uname -a" "$DATA_DIR/system/uname.txt" false "uname failed"
     safe_copy "/etc/os-release" "$DATA_DIR/system/os-release.txt"
-    cat /proc/version > "$DATA_DIR/system/proc-version.txt" 2>/dev/null || safe_write "proc-version failed" "$DATA_DIR/system/proc-version.txt"
+    safe_exec "cat /proc/version" "$DATA_DIR/system/proc-version.txt" false "proc-version failed"
     
     # Hardware info
-    lscpu > "$DATA_DIR/system/lscpu.txt" 2>/dev/null || safe_write "lscpu failed" "$DATA_DIR/system/lscpu.txt"
-    free -h > "$DATA_DIR/system/memory.txt" 2>/dev/null || safe_write "free failed" "$DATA_DIR/system/memory.txt"
-    df -h > "$DATA_DIR/system/disk-usage.txt" 2>/dev/null || safe_write "df failed" "$DATA_DIR/system/disk-usage.txt"
+    safe_exec "lscpu" "$DATA_DIR/system/lscpu.txt" false "lscpu failed"
+    safe_exec "free -h" "$DATA_DIR/system/memory.txt" false "free failed"
+    safe_exec "df -h" "$DATA_DIR/system/disk-usage.txt" false "df failed"
     
-    # Package information (for offline checks)
-    rpm -qa > "$DATA_DIR/system/packages.txt" 2>/dev/null || safe_write "rpm failed" "$DATA_DIR/system/packages.txt"
+    # Package information
+    safe_exec "rpm -qa" "$DATA_DIR/system/packages.txt" false "rpm failed"
     
     # Kernel and boot information
-    cat /proc/cmdline > "$DATA_DIR/system/kernel-cmdline.txt" 2>/dev/null || safe_write "cmdline failed" "$DATA_DIR/system/kernel-cmdline.txt"
-    ls -la /boot/ > "$DATA_DIR/system/boot-files.txt" 2>/dev/null || safe_write "boot listing failed" "$DATA_DIR/system/boot-files.txt"
+    safe_exec "cat /proc/cmdline" "$DATA_DIR/system/kernel-cmdline.txt" false "cmdline failed"
+    safe_exec "ls -la /boot/" "$DATA_DIR/system/boot-files.txt" false "boot listing failed"
     
     # Copy GRUB configuration if available
     safe_copy "/boot/grub2/grub.cfg" "$DATA_DIR/system/grub.cfg"
@@ -111,9 +117,8 @@ collect_system_info() {
 collect_network_info() {
     log "${BLUE}🌐 Collecting network configuration...${NC}"
     
-    # Network interfaces
-    ip addr show > "$DATA_DIR/network/interfaces/ip-addr.txt" 2>/dev/null || safe_write "ip addr failed" "$DATA_DIR/network/interfaces/ip-addr.txt"
-    ip route show > "$DATA_DIR/network/routing/ip-route.txt" 2>/dev/null || safe_write "ip route failed" "$DATA_DIR/network/routing/ip-route.txt"
+    safe_exec "ip addr show" "$DATA_DIR/network/interfaces/ip-addr.txt" false "ip addr failed"
+    safe_exec "ip route show" "$DATA_DIR/network/routing/ip-route.txt" false "ip route failed"
     
     # Network configuration files
     safe_copy "/etc/hosts" "$DATA_DIR/network/hosts"
@@ -121,11 +126,11 @@ collect_network_info() {
     safe_copy "/etc/nsswitch.conf" "$DATA_DIR/network/nsswitch.conf"
     
     # Network services
-    ss -tuln > "$DATA_DIR/network/listening-ports.txt" 2>/dev/null || safe_write "ss failed" "$DATA_DIR/network/listening-ports.txt"
-    netstat -tuln > "$DATA_DIR/network/netstat.txt" 2>/dev/null || safe_write "netstat failed" "$DATA_DIR/network/netstat.txt"
+    safe_exec "ss -tuln" "$DATA_DIR/network/listening-ports.txt" false "ss failed"
+    safe_exec "netstat -tuln" "$DATA_DIR/network/netstat.txt" false "netstat failed"
     
     # Network parameters
-    sysctl -a > "$DATA_DIR/network/sysctl-network.txt" 2>/dev/null || safe_write "sysctl failed" "$DATA_DIR/network/sysctl-network.txt"
+    safe_exec "sysctl -a" "$DATA_DIR/network/sysctl-network.txt" false "sysctl failed"
     
     log "${GREEN}✅ Network configuration collected${NC}"
 }
@@ -134,164 +139,149 @@ collect_network_info() {
 collect_services_info() {
     log "${BLUE}⚙️  Collecting services information...${NC}"
     
-    # Systemd services
-    systemctl list-units --type=service > "$DATA_DIR/system/services/systemctl-services.txt" 2>/dev/null || safe_write "systemctl failed" "$DATA_DIR/system/services/systemctl-services.txt"
-    systemctl list-unit-files --type=service > "$DATA_DIR/system/services/systemctl-unit-files.txt" 2>/dev/null || safe_write "systemctl unit-files failed" "$DATA_DIR/system/services/systemctl-unit-files.txt"
+    safe_exec "systemctl list-units --type=service" "$DATA_DIR/system/services/systemctl-services.txt" false "systemctl failed"
+    safe_exec "systemctl list-unit-files --type=service" "$DATA_DIR/system/services/systemctl-unit-files.txt" false "systemctl unit-files failed"
     
     # Service status for key services
     for service in sshd rsyslog auditd firewalld chronyd systemd-timesyncd nfs-server rpcbind; do
-        systemctl is-enabled $service > "$DATA_DIR/system/services/${service}-enabled.txt" 2>/dev/null || safe_write "disabled" "$DATA_DIR/system/services/${service}-enabled.txt"
-        systemctl is-active $service > "$DATA_DIR/system/services/${service}-active.txt" 2>/dev/null || safe_write "inactive" "$DATA_DIR/system/services/${service}-active.txt"
+        safe_exec "systemctl is-enabled $service" "$DATA_DIR/system/services/${service}-enabled.txt" false "disabled"
+        safe_exec "systemctl is-active $service" "$DATA_DIR/system/services/${service}-active.txt" false "inactive"
     done
     
-    # Running processes
-    ps aux > "$DATA_DIR/system/services/processes.txt" 2>/dev/null || safe_write "ps failed" "$DATA_DIR/system/services/processes.txt"
-    
-    # Cron jobs
-    crontab -l > "$DATA_DIR/system/services/user-crontab.txt" 2>/dev/null || safe_write "No user crontab" "$DATA_DIR/system/services/user-crontab.txt"
-    ls -la /etc/cron* > "$DATA_DIR/system/services/system-cron.txt" 2>/dev/null || safe_write "cron listing failed" "$DATA_DIR/system/services/system-cron.txt"
+    safe_exec "ps aux" "$DATA_DIR/system/services/processes.txt" false "ps failed"
+    safe_exec "crontab -l" "$DATA_DIR/system/services/user-crontab.txt" false "No user crontab"
+    safe_exec "ls -la /etc/cron*" "$DATA_DIR/system/services/system-cron.txt" false "cron listing failed"
     
     log "${GREEN}✅ Services information collected${NC}"
 }
 
-# Security configuration collection - Enhanced
+# Security configuration collection
 collect_security_info() {
     log "${BLUE}🔒 Collecting security configuration...${NC}"
     
-    # SSH Configuration (Section 5.1)
+    # SSH Configuration
     safe_copy "/etc/ssh/sshd_config" "$DATA_DIR/security/ssh/sshd_config"
-    ls -la /etc/ssh/ > "$DATA_DIR/security/ssh/ssh-permissions.txt" 2>/dev/null || safe_write "SSH dir listing failed" "$DATA_DIR/security/ssh/ssh-permissions.txt"
+    safe_exec "ls -la /etc/ssh/" "$DATA_DIR/security/ssh/ssh-permissions.txt" false "SSH dir listing failed"
     
-    # Copy SSH host keys with proper handling
+    # Copy SSH host keys
     if [ -d /etc/ssh ]; then
-        find /etc/ssh -name "ssh_host_*_key*" -exec cp {} "$DATA_DIR/security/ssh/" \; 2>/dev/null || safe_write "SSH host keys not accessible" "$DATA_DIR/security/ssh/ssh-keys-info.txt"
+        find /etc/ssh -name "ssh_host_*_key*" -exec cp {} "$DATA_DIR/security/ssh/" \; 2>/dev/null || echo "SSH host keys not accessible" > "$DATA_DIR/security/ssh/ssh-keys-info.txt"
     fi
     
-    # PAM Configuration (Section 5.3)
+    # PAM Configuration
     if [ -d /etc/pam.d ]; then
-        cp -r /etc/pam.d/* "$DATA_DIR/security/pam/" 2>/dev/null || safe_write "PAM config not accessible" "$DATA_DIR/security/pam/pam-info.txt"
+        cp -r /etc/pam.d/* "$DATA_DIR/security/pam/" 2>/dev/null || echo "PAM config not accessible" > "$DATA_DIR/security/pam/pam-info.txt"
     fi
     safe_copy "/etc/security/pwquality.conf" "$DATA_DIR/security/pam/pwquality.conf"
     safe_copy "/etc/security/faillock.conf" "$DATA_DIR/security/pam/faillock.conf"
     
-    # Sudo Configuration (Section 5.2)
+    # Sudo Configuration
     safe_copy "/etc/sudoers" "$DATA_DIR/security/sudoers/sudoers"
     if [ -d /etc/sudoers.d ]; then
-        cp -r /etc/sudoers.d/* "$DATA_DIR/security/sudoers/" 2>/dev/null || safe_write "sudoers.d not accessible" "$DATA_DIR/security/sudoers/sudoers-d-info.txt"
+        cp -r /etc/sudoers.d/* "$DATA_DIR/security/sudoers/" 2>/dev/null || echo "sudoers.d not accessible" > "$DATA_DIR/security/sudoers/sudoers-d-info.txt"
     fi
-    ls -la /etc/sudoers* > "$DATA_DIR/security/sudoers/sudoers-permissions.txt" 2>/dev/null || safe_write "sudoers listing failed" "$DATA_DIR/security/sudoers/sudoers-permissions.txt"
+    safe_exec "ls -la /etc/sudoers*" "$DATA_DIR/security/sudoers/sudoers-permissions.txt" false "sudoers listing failed"
     
-    # User and Group Files (Section 5.4 & 7.2)
+    # User and Group Files
     safe_copy "/etc/passwd" "$DATA_DIR/security/passwd"
     safe_copy "/etc/group" "$DATA_DIR/security/group"
     safe_copy "/etc/shells" "$DATA_DIR/security/shells"
     safe_copy "/etc/login.defs" "$DATA_DIR/security/login.defs"
     
-    # These files require sudo access
-    sudo cp /etc/shadow "$DATA_DIR/security/shadow" 2>/dev/null || safe_write "shadow not accessible" "$DATA_DIR/security/shadow" true
-    sudo cp /etc/gshadow "$DATA_DIR/security/gshadow" 2>/dev/null || safe_write "gshadow not accessible" "$DATA_DIR/security/gshadow" true
-    sudo cp /etc/security/opasswd "$DATA_DIR/security/opasswd" 2>/dev/null || safe_write "opasswd not found" "$DATA_DIR/security/opasswd" true
+    # Files requiring sudo
+    safe_copy "/etc/shadow" "$DATA_DIR/security/shadow" true
+    safe_copy "/etc/gshadow" "$DATA_DIR/security/gshadow" true
+    safe_copy "/etc/security/opasswd" "$DATA_DIR/security/opasswd" true
     
-    # File permissions for critical files
-    ls -la /etc/passwd /etc/shadow /etc/group /etc/gshadow /etc/shells > "$DATA_DIR/security/file-permissions.txt" 2>/dev/null || safe_write "permission check failed" "$DATA_DIR/security/file-permissions.txt"
+    # File permissions
+    safe_exec "ls -la /etc/passwd /etc/shadow /etc/group /etc/gshadow /etc/shells" "$DATA_DIR/security/file-permissions.txt" false "permission check failed"
     
     # SELinux
-    getenforce > "$DATA_DIR/security/selinux/getenforce.txt" 2>/dev/null || safe_write "getenforce failed" "$DATA_DIR/security/selinux/getenforce.txt"
-    sestatus > "$DATA_DIR/security/selinux/sestatus.txt" 2>/dev/null || safe_write "sestatus failed" "$DATA_DIR/security/selinux/sestatus.txt"
+    safe_exec "getenforce" "$DATA_DIR/security/selinux/getenforce.txt" false "getenforce failed"
+    safe_exec "sestatus" "$DATA_DIR/security/selinux/sestatus.txt" false "sestatus failed"
     safe_copy "/etc/selinux/config" "$DATA_DIR/security/selinux/config"
     
     # Firewall Configuration
-    systemctl is-active firewalld > "$DATA_DIR/security/firewall/firewalld-active.txt" 2>/dev/null || safe_write "firewalld status failed" "$DATA_DIR/security/firewall/firewalld-active.txt"
-    systemctl is-enabled firewalld > "$DATA_DIR/security/firewall/firewalld-enabled.txt" 2>/dev/null || safe_write "firewalld enabled failed" "$DATA_DIR/security/firewall/firewalld-enabled.txt"
-    firewall-cmd --get-default-zone > "$DATA_DIR/security/firewall/default-zone.txt" 2>/dev/null || safe_write "firewall default zone failed" "$DATA_DIR/security/firewall/default-zone.txt"
-    firewall-cmd --list-all > "$DATA_DIR/security/firewall/firewall-rules.txt" 2>/dev/null || safe_write "firewall rules failed" "$DATA_DIR/security/firewall/firewall-rules.txt"
-    firewall-cmd --list-all-zones > "$DATA_DIR/security/firewall/all-zones.txt" 2>/dev/null || safe_write "firewall zones failed" "$DATA_DIR/security/firewall/all-zones.txt"
-    
-    # Check for iptables
-    iptables -L > "$DATA_DIR/security/firewall/iptables.txt" 2>/dev/null || safe_write "iptables failed" "$DATA_DIR/security/firewall/iptables.txt"
+    safe_exec "systemctl is-active firewalld" "$DATA_DIR/security/firewall/firewalld-active.txt" false "firewalld status failed"
+    safe_exec "systemctl is-enabled firewalld" "$DATA_DIR/security/firewall/firewalld-enabled.txt" false "firewalld enabled failed"
+    safe_exec "firewall-cmd --get-default-zone" "$DATA_DIR/security/firewall/default-zone.txt" false "firewall default zone failed"
+    safe_exec "firewall-cmd --list-all" "$DATA_DIR/security/firewall/firewall-rules.txt" false "firewall rules failed"
+    safe_exec "firewall-cmd --list-all-zones" "$DATA_DIR/security/firewall/all-zones.txt" false "firewall zones failed"
+    safe_exec "iptables -L" "$DATA_DIR/security/firewall/iptables.txt" false "iptables failed"
     
     log "${GREEN}✅ Security configuration collected${NC}"
 }
 
-# Logging and Auditing collection - Enhanced
+# Logging and Auditing collection
 collect_logging_auditing_info() {
     log "${BLUE}📋 Collecting logging and auditing configuration...${NC}"
     
-    # Journald Configuration (Section 6.2.1 & 6.2.2)
+    # Journald Configuration
     safe_copy "/etc/systemd/journald.conf" "$DATA_DIR/logging/journald.conf"
     if [ -d /etc/systemd/journald.conf.d/ ]; then
-        cp -r /etc/systemd/journald.conf.d/* "$DATA_DIR/logging/journald/" 2>/dev/null || safe_write "journald.conf.d not found" "$DATA_DIR/logging/journald/journald-conf-d-info.txt"
+        cp -r /etc/systemd/journald.conf.d/* "$DATA_DIR/logging/journald/" 2>/dev/null || echo "journald.conf.d not found" > "$DATA_DIR/logging/journald/journald-conf-d-info.txt"
     fi
-    ls -la /var/log/journal/ > "$DATA_DIR/logging/journal-permissions.txt" 2>/dev/null || safe_write "journal dir not found" "$DATA_DIR/logging/journal-permissions.txt"
+    safe_exec "ls -la /var/log/journal/" "$DATA_DIR/logging/journal-permissions.txt" false "journal dir not found"
     
-    # Rsyslog Configuration (Section 6.2.3)
+    # Rsyslog Configuration
     safe_copy "/etc/rsyslog.conf" "$DATA_DIR/logging/rsyslog.conf"
     if [ -d /etc/rsyslog.d/ ]; then
-        cp -r /etc/rsyslog.d/* "$DATA_DIR/logging/rsyslog/" 2>/dev/null || safe_write "rsyslog.d not found" "$DATA_DIR/logging/rsyslog/rsyslog-d-info.txt"
+        cp -r /etc/rsyslog.d/* "$DATA_DIR/logging/rsyslog/" 2>/dev/null || echo "rsyslog.d not found" > "$DATA_DIR/logging/rsyslog/rsyslog-d-info.txt"
     fi
     
     # Logrotate Configuration
     safe_copy "/etc/logrotate.conf" "$DATA_DIR/logging/logrotate.conf"
     if [ -d /etc/logrotate.d/ ]; then
-        cp -r /etc/logrotate.d/* "$DATA_DIR/logging/" 2>/dev/null || safe_write "logrotate.d not found" "$DATA_DIR/logging/logrotate-d-info.txt"
+        cp -r /etc/logrotate.d/* "$DATA_DIR/logging/" 2>/dev/null || echo "logrotate.d not found" > "$DATA_DIR/logging/logrotate-d-info.txt"
     fi
     
-    # Audit Configuration (Section 6.3)
+    # Audit Configuration
     safe_copy "/etc/audit/auditd.conf" "$DATA_DIR/auditing/auditd.conf"
     safe_copy "/etc/audit/audit.rules" "$DATA_DIR/auditing/audit.rules"
     if [ -d /etc/audit/rules.d/ ]; then
-        cp -r /etc/audit/rules.d/* "$DATA_DIR/auditing/" 2>/dev/null || safe_write "audit rules.d not found" "$DATA_DIR/auditing/audit-rules-d-info.txt"
+        cp -r /etc/audit/rules.d/* "$DATA_DIR/auditing/" 2>/dev/null || echo "audit rules.d not found" > "$DATA_DIR/auditing/audit-rules-d-info.txt"
     fi
     
     # Audit status and rules
-    auditctl -l > "$DATA_DIR/auditing/auditctl-rules.txt" 2>/dev/null || safe_write "auditctl failed" "$DATA_DIR/auditing/auditctl-rules.txt"
-    auditctl -s > "$DATA_DIR/auditing/auditctl-status.txt" 2>/dev/null || safe_write "auditctl status failed" "$DATA_DIR/auditing/auditctl-status.txt"
+    safe_exec "auditctl -l" "$DATA_DIR/auditing/auditctl-rules.txt" false "auditctl failed"
+    safe_exec "auditctl -s" "$DATA_DIR/auditing/auditctl-status.txt" false "auditctl status failed"
     
     # Log file permissions
-    ls -la /var/log/ > "$DATA_DIR/logging/log-permissions.txt" 2>/dev/null || safe_write "log permissions failed" "$DATA_DIR/logging/log-permissions.txt"
-    ls -la /var/log/audit/ > "$DATA_DIR/auditing/audit-permissions.txt" 2>/dev/null || safe_write "audit permissions failed" "$DATA_DIR/auditing/audit-permissions.txt"
+    safe_exec "ls -la /var/log/" "$DATA_DIR/logging/log-permissions.txt" false "log permissions failed"
+    safe_exec "ls -la /var/log/audit/" "$DATA_DIR/auditing/audit-permissions.txt" false "audit permissions failed"
     
     # Service status for logging services
     for service in rsyslog systemd-journald auditd; do
-        systemctl is-enabled $service > "$DATA_DIR/logging/${service}-enabled.txt" 2>/dev/null || safe_write "disabled" "$DATA_DIR/logging/${service}-enabled.txt"
-        systemctl is-active $service > "$DATA_DIR/logging/${service}-active.txt" 2>/dev/null || safe_write "inactive" "$DATA_DIR/logging/${service}-active.txt"
+        safe_exec "systemctl is-enabled $service" "$DATA_DIR/logging/${service}-enabled.txt" false "disabled"
+        safe_exec "systemctl is-active $service" "$DATA_DIR/logging/${service}-active.txt" false "inactive"
     done
     
-    # Sample log files (last 100 lines to avoid huge files)
-    tail -100 /var/log/messages > "$DATA_DIR/logging/messages-sample.txt" 2>/dev/null || safe_write "messages log not found" "$DATA_DIR/logging/messages-sample.txt"
-    tail -100 /var/log/secure > "$DATA_DIR/logging/secure-sample.txt" 2>/dev/null || safe_write "secure log not found" "$DATA_DIR/logging/secure-sample.txt"
-    sudo tail -100 /var/log/audit/audit.log > "$DATA_DIR/auditing/audit-sample.txt" 2>/dev/null || safe_write "audit log not found" "$DATA_DIR/auditing/audit-sample.txt" true
-    
-    # Journal logs
-    journalctl --no-pager -n 100 > "$DATA_DIR/logging/journalctl-sample.txt" 2>/dev/null || safe_write "journalctl failed" "$DATA_DIR/logging/journalctl-sample.txt"
+    # Sample log files
+    safe_exec "tail -100 /var/log/messages" "$DATA_DIR/logging/messages-sample.txt" false "messages log not found"
+    safe_exec "tail -100 /var/log/secure" "$DATA_DIR/logging/secure-sample.txt" false "secure log not found"
+    safe_exec "tail -100 /var/log/audit/audit.log" "$DATA_DIR/auditing/audit-sample.txt" true "audit log not found"
+    safe_exec "journalctl --no-pager -n 100" "$DATA_DIR/logging/journalctl-sample.txt" false "journalctl failed"
     
     log "${GREEN}✅ Logging and auditing configuration collected${NC}"
 }
 
-# Filesystem information collection - Enhanced
+# Filesystem information collection
 collect_filesystem_info() {
     log "${BLUE}💾 Collecting filesystem information...${NC}"
     
-    # Mount points and filesystem configuration
-    mount > "$DATA_DIR/filesystem/mount.txt" 2>/dev/null || safe_write "mount failed" "$DATA_DIR/filesystem/mount.txt"
-    cat /proc/mounts > "$DATA_DIR/filesystem/proc-mounts.txt" 2>/dev/null || safe_write "proc-mounts failed" "$DATA_DIR/filesystem/proc-mounts.txt"
+    safe_exec "mount" "$DATA_DIR/filesystem/mount.txt" false "mount failed"
+    safe_exec "cat /proc/mounts" "$DATA_DIR/filesystem/proc-mounts.txt" false "proc-mounts failed"
     safe_copy "/etc/fstab" "$DATA_DIR/filesystem/fstab"
     
-    # Filesystem usage and disk information
-    df -h > "$DATA_DIR/filesystem/df.txt" 2>/dev/null || safe_write "df failed" "$DATA_DIR/filesystem/df.txt"
-    lsblk > "$DATA_DIR/filesystem/lsblk.txt" 2>/dev/null || safe_write "lsblk failed" "$DATA_DIR/filesystem/lsblk.txt"
+    safe_exec "df -h" "$DATA_DIR/filesystem/df.txt" false "df failed"
+    safe_exec "lsblk" "$DATA_DIR/filesystem/lsblk.txt" false "lsblk failed"
     
-    # File permissions on critical system files
-    ls -la /etc/passwd /etc/shadow /etc/group /etc/gshadow > "$DATA_DIR/filesystem/critical-file-perms.txt" 2>/dev/null || safe_write "critical file perms failed" "$DATA_DIR/filesystem/critical-file-perms.txt"
+    safe_exec "ls -la /etc/passwd /etc/shadow /etc/group /etc/gshadow" "$DATA_DIR/filesystem/critical-file-perms.txt" false "critical file perms failed"
     
-    # Find world-writable files (limited search to avoid long execution)
-    find /etc /usr/bin /usr/sbin /bin /sbin -type f -perm -0002 2>/dev/null | head -50 > "$DATA_DIR/filesystem/world-writable-files.txt" || safe_write "world-writable search failed" "$DATA_DIR/filesystem/world-writable-files.txt"
-    
-    # Find files without owner/group (limited search)
-    find /etc /usr/bin /usr/sbin /bin /sbin -nouser -o -nogroup 2>/dev/null | head -50 > "$DATA_DIR/filesystem/orphaned-files.txt" || safe_write "orphaned files search failed" "$DATA_DIR/filesystem/orphaned-files.txt"
-    
-    # SUID/SGID files (limited search) - Fixed syntax
-    find /usr/bin /usr/sbin /bin /sbin -type f $$ -perm -4000 -o -perm -2000 $$ 2>/dev/null > "$DATA_DIR/filesystem/suid-sgid-files.txt" || safe_write "suid/sgid search failed" "$DATA_DIR/filesystem/suid-sgid-files.txt"
+    # Limited searches to avoid long execution times
+    safe_exec "find /etc /usr/bin /usr/sbin /bin /sbin -type f -perm -0002 2>/dev/null | head -50" "$DATA_DIR/filesystem/world-writable-files.txt" false "world-writable search failed"
+    safe_exec "find /etc /usr/bin /usr/sbin /bin /sbin -nouser -o -nogroup 2>/dev/null | head -50" "$DATA_DIR/filesystem/orphaned-files.txt" false "orphaned files search failed"
+    safe_exec "find /usr/bin /usr/sbin /bin /sbin -type f \$$ -perm -4000 -o -perm -2000 \$$ 2>/dev/null" "$DATA_DIR/filesystem/suid-sgid-files.txt" false "suid/sgid search failed"
     
     log "${GREEN}✅ Filesystem information collected${NC}"
 }
@@ -300,17 +290,10 @@ collect_filesystem_info() {
 collect_kernel_boot_info() {
     log "${BLUE}🔧 Collecting kernel and boot configuration...${NC}"
     
-    # Kernel parameters
-    sysctl -a > "$DATA_DIR/system/kernel/sysctl-all.txt" 2>/dev/null || safe_write "sysctl failed" "$DATA_DIR/system/kernel/sysctl-all.txt"
-    cat /proc/cmdline > "$DATA_DIR/system/kernel/cmdline.txt" 2>/dev/null || safe_write "cmdline failed" "$DATA_DIR/system/kernel/cmdline.txt"
-    
-    # Kernel modules
-    lsmod > "$DATA_DIR/system/kernel/lsmod.txt" 2>/dev/null || safe_write "lsmod failed" "$DATA_DIR/system/kernel/lsmod.txt"
-    
-    # Boot configuration
-    ls -la /boot/ > "$DATA_DIR/system/boot/boot-files.txt" 2>/dev/null || safe_write "boot listing failed" "$DATA_DIR/system/boot/boot-files.txt"
-    
-    # GRUB configuration
+    safe_exec "sysctl -a" "$DATA_DIR/system/kernel/sysctl-all.txt" false "sysctl failed"
+    safe_exec "cat /proc/cmdline" "$DATA_DIR/system/kernel/cmdline.txt" false "cmdline failed"
+    safe_exec "lsmod" "$DATA_DIR/system/kernel/lsmod.txt" false "lsmod failed"
+    safe_exec "ls -la /boot/" "$DATA_DIR/system/boot/boot-files.txt" false "boot listing failed"
     safe_copy "/etc/default/grub" "$DATA_DIR/system/boot/grub"
     
     log "${GREEN}✅ Kernel and boot configuration collected${NC}"
@@ -320,18 +303,14 @@ collect_kernel_boot_info() {
 collect_time_sync_info() {
     log "${BLUE}⏰ Collecting time synchronization information...${NC}"
     
-    # Time sync services
-    systemctl is-enabled chronyd > "$DATA_DIR/system/services/chronyd-enabled.txt" 2>/dev/null || safe_write "disabled" "$DATA_DIR/system/services/chronyd-enabled.txt"
-    systemctl is-active chronyd > "$DATA_DIR/system/services/chronyd-active.txt" 2>/dev/null || safe_write "inactive" "$DATA_DIR/system/services/chronyd-active.txt"
-    systemctl is-enabled systemd-timesyncd > "$DATA_DIR/system/services/timesyncd-enabled.txt" 2>/dev/null || safe_write "disabled" "$DATA_DIR/system/services/timesyncd-enabled.txt"
-    systemctl is-active systemd-timesyncd > "$DATA_DIR/system/services/timesyncd-active.txt" 2>/dev/null || safe_write "inactive" "$DATA_DIR/system/services/timesyncd-active.txt"
+    safe_exec "systemctl is-enabled chronyd" "$DATA_DIR/system/services/chronyd-enabled.txt" false "disabled"
+    safe_exec "systemctl is-active chronyd" "$DATA_DIR/system/services/chronyd-active.txt" false "inactive"
+    safe_exec "systemctl is-enabled systemd-timesyncd" "$DATA_DIR/system/services/timesyncd-enabled.txt" false "disabled"
+    safe_exec "systemctl is-active systemd-timesyncd" "$DATA_DIR/system/services/timesyncd-active.txt" false "inactive"
     
-    # Time sync configuration
     safe_copy "/etc/chrony.conf" "$DATA_DIR/system/chrony.conf"
     safe_copy "/etc/systemd/timesyncd.conf" "$DATA_DIR/system/timesyncd.conf"
-    
-    # Current time status
-    timedatectl > "$DATA_DIR/system/timedatectl.txt" 2>/dev/null || safe_write "timedatectl failed" "$DATA_DIR/system/timedatectl.txt"
+    safe_exec "timedatectl" "$DATA_DIR/system/timedatectl.txt" false "timedatectl failed"
     
     log "${GREEN}✅ Time synchronization information collected${NC}"
 }
@@ -343,10 +322,7 @@ main() {
     log "${BLUE}📁 Data directory: $DATA_DIR${NC}"
     log "${BLUE}📝 Log file: $LOG_FILE${NC}"
     
-    # Create detailed directory structure
     create_directories
-    
-    # Collect all data
     collect_system_info
     collect_network_info
     collect_services_info
@@ -360,7 +336,6 @@ main() {
     log "${BLUE}📊 Data collected in: $DATA_DIR${NC}"
     log "${BLUE}📝 Collection log: $LOG_FILE${NC}"
     
-    # Show directory size
     du -sh "$DATA_DIR" 2>/dev/null | while read size path; do
         log "${BLUE}📦 Total size: $size${NC}"
     done
@@ -371,7 +346,6 @@ main() {
     log "${YELLOW} 2. Run offline audit: python3 main.py --offline --data-dir $DATA_DIR${NC}"
     log "${YELLOW} 3. Check collection log: $LOG_FILE${NC}"
     
-    # Create a summary of what was collected
     log "${BLUE}📋 Collection Summary:${NC}"
     log "${BLUE} - System information and packages${NC}"
     log "${BLUE} - Network configuration and services${NC}"
