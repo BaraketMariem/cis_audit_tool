@@ -1,0 +1,38 @@
+[0;32m🔴 Starting enhanced CIS RHEL 9 data collection...[0m
+[0;34m📅 Timestamp: 20250727_120811[0m
+[0;34m📁 Data directory: /home/oussema/cis_audit_tool/data[0m
+[0;34m📝 Log file: /home/oussema/cis_audit_tool/data/collection_20250727_120811.log[0m
+[0;34m📁 Creating data directory structure...[0m
+[0;32m✅ Directory structure created[0m
+[0;34m🖥️  Collecting system information...[0m
+[0;32m✅ System information collected[0m
+[0;34m🌐 Collecting network configuration...[0m
+[0;32m✅ Network configuration collected[0m
+[0;34m⚙️  Collecting services information...[0m
+[0;32m✅ Services information collected[0m
+[0;34m🔒 Collecting security configuration...[0m
+[0;32m✅ Security configuration collected[0m
+[0;34m📋 Collecting logging and auditing configuration...[0m
+[0;32m✅ Logging and auditing configuration collected[0m
+[0;34m💾 Collecting filesystem information...[0m
+[0;32m✅ Filesystem information collected[0m
+[0;34m🔧 Collecting kernel and boot configuration...[0m
+[0;32m✅ Kernel and boot configuration collected[0m
+[0;34m⏰ Collecting time synchronization information...[0m
+[0;32m✅ Time synchronization information collected[0m
+[0;32m🎉 Enhanced data collection completed successfully![0m
+[0;34m📊 Data collected in: /home/oussema/cis_audit_tool/data[0m
+[0;34m📝 Collection log: /home/oussema/cis_audit_tool/data/collection_20250727_120811.log[0m
+[0;34m📦 Total size: 888K[0m
+[1;33mNext steps:[0m
+[1;33m  1. Review collected data in: /home/oussema/cis_audit_tool/data[0m
+[1;33m  2. Run offline audit: python3 main.py --offline --data-dir /home/oussema/cis_audit_tool/data[0m
+[1;33m  3. Check collection log: /home/oussema/cis_audit_tool/data/collection_20250727_120811.log[0m
+[0;34m📋 Collection Summary:[0m
+[0;34m  - System information and packages[0m
+[0;34m  - Network configuration and services[0m
+[0;34m  - Security configuration (SSH, PAM, sudo, users)[0m
+[0;34m  - Logging and auditing configuration[0m
+[0;34m  - Filesystem information and permissions[0m
+[0;34m  - Kernel and boot configuration[0m
+[0;34m  - Time synchronization settings[0m

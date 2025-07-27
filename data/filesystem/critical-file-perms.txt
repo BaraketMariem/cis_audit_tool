@@ -1,0 +1,4 @@
+-rw-r--r--. 1 root root  860 Jun 20 22:08 /etc/group
+----------. 1 root root  695 Jun 20 22:08 /etc/gshadow
+-rw-r--r--. 1 root root 2154 Jun 20 21:37 /etc/passwd
+----------. 1 root root 1162 Jun 20 21:37 /etc/shadow
