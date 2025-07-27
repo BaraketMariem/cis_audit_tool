@@ -1,8 +1,8 @@
-NAME               MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
-sda                  8:0    0  100G  0 disk 
-├─sda1               8:1    0    1G  0 part /boot
-└─sda2               8:2    0   99G  0 part 
-  ├─rhel_vbox-root 253:0    0 63.9G  0 lvm  /
-  ├─rhel_vbox-swap 253:1    0  3.9G  0 lvm  [SWAP]
-  └─rhel_vbox-home 253:2    0 31.2G  0 lvm  /home
-sr0                 11:0    1 56.1M  0 rom  /run/media/oussema/VBox_GAs_7.1.0
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+sr0            11:0    1  9.8G  0 rom  /run/media/mariem/RHEL-9-3-0-BaseOS-x86_64
+nvme0n1       259:0    0  100G  0 disk 
+├─nvme0n1p1   259:1    0    1G  0 part /boot
+└─nvme0n1p2   259:2    0   99G  0 part 
+  ├─rhel-root 253:0    0 63.9G  0 lvm  /
+  ├─rhel-swap 253:1    0  3.9G  0 lvm  [SWAP]
+  └─rhel-home 253:2    0 31.2G  0 lvm  /home

@@ -1,15 +1,15 @@
-total 255616
-dr-xr-xr-x.  5 root root      4096 Jun 18 19:34 .
-dr-xr-xr-x. 18 root root       235 Jun 18 19:23 ..
+total 255824
+dr-xr-xr-x.  5 root root      4096 Jun 20 17:35 .
+dr-xr-xr-x. 18 root root       235 Jun 20 16:24 ..
 -rw-r--r--.  1 root root    219463 Oct  3  2023 config-5.14.0-362.8.1.el9_3.x86_64
-drwxr-xr-x.  3 root root        17 Jun 18 19:23 efi
-drwx------.  5 root root        97 Jul 27 11:47 grub2
--rw-------.  1 root root 134177697 Jun 18 19:28 initramfs-0-rescue-88ec21f9dc004e8eb1a7812fe10c2729.img
--rw-------.  1 root root  58716609 Jun 18 19:31 initramfs-5.14.0-362.8.1.el9_3.x86_64.img
--rw-------.  1 root root  33451008 Jun 18 19:34 initramfs-5.14.0-362.8.1.el9_3.x86_64kdump.img
-drwxr-xr-x.  3 root root        21 Jun 18 19:25 loader
-lrwxrwxrwx.  1 root root        51 Jun 18 19:26 symvers-5.14.0-362.8.1.el9_3.x86_64.gz -> /lib/modules/5.14.0-362.8.1.el9_3.x86_64/symvers.gz
+drwxr-xr-x.  3 root root        17 Jun 20 16:30 efi
+drwx------.  5 root root        97 Jul 27 21:12 grub2
+-rw-------.  1 root root 134177696 Jun 20 17:06 initramfs-0-rescue-481147ff42ac4cc08a40b7c37d751d37.img
+-rw-------.  1 root root  58847353 Jun 20 17:29 initramfs-5.14.0-362.8.1.el9_3.x86_64.img
+-rw-------.  1 root root  33533440 Jun 20 17:35 initramfs-5.14.0-362.8.1.el9_3.x86_64kdump.img
+drwxr-xr-x.  3 root root        21 Jun 20 16:45 loader
+lrwxrwxrwx.  1 root root        51 Jun 20 16:51 symvers-5.14.0-362.8.1.el9_3.x86_64.gz -> /lib/modules/5.14.0-362.8.1.el9_3.x86_64/symvers.gz
 -rw-------.  1 root root   8491113 Oct  3  2023 System.map-5.14.0-362.8.1.el9_3.x86_64
--rwxr-xr-x.  1 root root  13335480 Jun 18 19:27 vmlinuz-0-rescue-88ec21f9dc004e8eb1a7812fe10c2729
+-rwxr-xr-x.  1 root root  13335480 Jun 20 16:58 vmlinuz-0-rescue-481147ff42ac4cc08a40b7c37d751d37
 -rwxr-xr-x.  1 root root  13335480 Oct  3  2023 vmlinuz-5.14.0-362.8.1.el9_3.x86_64
 -rw-r--r--.  1 root root       166 Oct  3  2023 .vmlinuz-5.14.0-362.8.1.el9_3.x86_64.hmac

@@ -1,7 +1,7 @@
 
 #
 # /etc/fstab
-# Created by anaconda on Wed Jun 18 18:22:17 2025
+# Created by anaconda on Fri Jun 20 15:19:04 2025
 #
 # Accessible filesystems, by reference, are maintained under '/dev/disk/'.
 # See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info.
@@ -9,7 +9,7 @@
 # After editing this file, run 'systemctl daemon-reload' to update systemd
 # units generated from this file.
 #
-/dev/mapper/rhel_vbox-root /                       xfs     defaults        0 0
-UUID=b3b4e965-2899-4e26-8d0e-75eb64c94ce5 /boot                   xfs     defaults        0 0
-/dev/mapper/rhel_vbox-home /home                   xfs     defaults        0 0
-/dev/mapper/rhel_vbox-swap none                    swap    defaults        0 0
+/dev/mapper/rhel-root   /                       xfs     defaults        0 0
+UUID=51c04d16-30f1-4cf8-ac08-dc4e1af24733 /boot                   xfs     defaults        0 0
+/dev/mapper/rhel-home   /home                   xfs     defaults        0 0
+/dev/mapper/rhel-swap   none                    swap    defaults        0 0

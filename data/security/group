@@ -8,7 +8,7 @@ disk:x:6:
 lp:x:7:
 mem:x:8:
 kmem:x:9:
-wheel:x:10:oussema
+wheel:x:10:mariem
 cdrom:x:11:
 mail:x:12:
 man:x:15:
@@ -56,6 +56,4 @@ chrony:x:979:
 slocate:x:21:
 dnsmasq:x:978:
 tcpdump:x:72:
-oussema:x:1000:
-vboxsf:x:977:oussema
-vboxdrmipc:x:976:
+mariem:x:1000:

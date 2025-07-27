@@ -1,100 +1,100 @@
-Jul 27 11:58:58 vbox packagekitd[2112]: Failed to get cache filename for gstreamer1-plugins-bad-free-libs
-Jul 27 11:58:58 vbox packagekitd[2112]: Failed to get cache filename for passt
-Jul 27 11:58:58 vbox packagekitd[2112]: Failed to get cache filename for passt-selinux
-Jul 27 11:58:58 vbox packagekitd[2112]: Failed to get cache filename for kernel-devel
-Jul 27 11:58:58 vbox packagekitd[2112]: Failed to get cache filename for keyutils
-Jul 27 11:58:58 vbox packagekitd[2112]: Failed to get cache filename for openssl-fips-provider
-Jul 27 11:58:58 vbox packagekitd[2112]: Failed to get cache filename for openssl-fips-provider-so
-Jul 27 11:58:58 vbox packagekitd[2112]: Failed to get cache filename for grub2-tools-efi
-Jul 27 11:58:58 vbox packagekitd[2112]: Failed to get cache filename for grub2-tools-extra
-Jul 27 11:58:58 vbox packagekitd[2112]: Failed to get cache filename for ledmon-libs
-Jul 27 11:58:58 vbox packagekitd[2112]: Failed to get cache filename for kernel
-Jul 27 11:58:58 vbox packagekitd[2112]: Failed to get cache filename for kernel-core
-Jul 27 11:58:58 vbox packagekitd[2112]: Failed to get cache filename for kernel-modules
-Jul 27 11:58:58 vbox packagekitd[2112]: Failed to get cache filename for kernel-modules-core
-Jul 27 11:58:58 vbox PackageKit[2112]: get-details transaction /226_abedcece from uid 1000 finished with success after 307ms
-Jul 27 11:58:58 vbox packagekitd[2112]: Failed to get cache filename for gstreamer1-plugins-base
-Jul 27 11:58:58 vbox packagekitd[2112]: Failed to get cache filename for gstreamer1-plugins-ugly-free
-Jul 27 11:58:58 vbox packagekitd[2112]: Failed to get cache filename for firefox
-Jul 27 11:58:58 vbox packagekitd[2112]: Failed to get cache filename for gnome-screenshot
-Jul 27 11:58:58 vbox packagekitd[2112]: Failed to get cache filename for subscription-manager-cockpit
-Jul 27 11:58:58 vbox packagekitd[2112]: Failed to get cache filename for cockpit-podman
-Jul 27 11:58:58 vbox packagekitd[2112]: Failed to get cache filename for cockpit-storaged
-Jul 27 11:58:58 vbox packagekitd[2112]: Failed to get cache filename for gstreamer1-plugins-bad-free
-Jul 27 11:58:58 vbox packagekitd[2112]: Failed to get cache filename for nautilus
-Jul 27 11:58:58 vbox packagekitd[2112]: Failed to get cache filename for gstreamer1-plugins-good
-Jul 27 11:58:58 vbox packagekitd[2112]: Failed to get cache filename for gnome-control-center
-Jul 27 11:58:58 vbox packagekitd[2112]: Failed to get cache filename for cockpit
-Jul 27 11:58:58 vbox packagekitd[2112]: Failed to get cache filename for yelp
-Jul 27 11:58:58 vbox packagekitd[2112]: Failed to get cache filename for sushi
-Jul 27 11:58:58 vbox packagekitd[2112]: Failed to get cache filename for gnome-software
-Jul 27 11:58:58 vbox packagekitd[2112]: Failed to get cache filename for google-noto-sans-gurmukhi-fonts
-Jul 27 11:58:58 vbox packagekitd[2112]: Failed to get cache filename for google-noto-sans-sinhala-vf-fonts
-Jul 27 11:58:58 vbox PackageKit[2112]: get-details transaction /227_cabccbdb from uid 1000 finished with success after 22ms
-Jul 27 11:59:02 vbox systemd[2445]: Created slice Slice /app/dbus-:1.2-org.gnome.Nautilus.
-Jul 27 11:59:02 vbox systemd[2445]: Started dbus-:1.2-org.gnome.Nautilus@0.service.
-Jul 27 11:59:03 vbox systemd[1]: Starting Hostname Service...
-Jul 27 11:59:03 vbox systemd[1]: Started Hostname Service.
-Jul 27 11:59:07 vbox systemd[2445]: Created slice Slice /app/dbus-:1.2-org.gnome.gedit.
-Jul 27 11:59:07 vbox systemd[2445]: Started dbus-:1.2-org.gnome.gedit@0.service.
-Jul 27 11:59:07 vbox gnome-shell[2558]: meta_window_set_stack_position_no_sync: assertion 'window->stack_position >= 0' failed
-Jul 27 11:59:33 vbox systemd[1]: systemd-hostnamed.service: Deactivated successfully.
-Jul 27 12:01:01 vbox CROND[3808]: (root) CMD (run-parts /etc/cron.hourly)
-Jul 27 12:01:01 vbox run-parts[3811]: (/etc/cron.hourly) starting 0anacron
-Jul 27 12:01:01 vbox anacron[3821]: Anacron started on 2025-07-27
-Jul 27 12:01:01 vbox anacron[3821]: Will run job `cron.daily' in 35 min.
-Jul 27 12:01:01 vbox anacron[3821]: Will run job `cron.monthly' in 75 min.
-Jul 27 12:01:01 vbox anacron[3821]: Jobs will be executed sequentially
-Jul 27 12:01:01 vbox run-parts[3823]: (/etc/cron.hourly) finished 0anacron
-Jul 27 12:01:01 vbox CROND[3807]: (root) CMDEND (run-parts /etc/cron.hourly)
-Jul 27 12:02:40 vbox rhsm-service[3045]:  INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
-Jul 27 12:02:40 vbox rhsm-service[3045]:  INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
-Jul 27 12:02:40 vbox rhsm-service[3045]:  INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
-Jul 27 12:02:40 vbox rhsm-service[3045]:  INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
-Jul 27 12:02:46 vbox rhsm-service[3045]:  INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
-Jul 27 12:02:46 vbox rhsm-service[3045]:  INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
-Jul 27 12:02:46 vbox rhsm-service[3045]:  INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
-Jul 27 12:02:46 vbox rhsm-service[3045]:  INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
-Jul 27 12:02:48 vbox rhsm-service[3045]:  INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
-Jul 27 12:02:48 vbox rhsm-service[3045]:  INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
-Jul 27 12:02:48 vbox rhsm-service[3045]:  INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
-Jul 27 12:02:48 vbox rhsm-service[3045]:  INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
-Jul 27 12:02:48 vbox gnome-software[2922]: Only 0 apps for recent list, hiding
-Jul 27 12:02:53 vbox rhsm-service[3045]:  INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
-Jul 27 12:02:53 vbox rhsm-service[3045]:  INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
-Jul 27 12:02:53 vbox rhsm-service[3045]:  INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
-Jul 27 12:02:53 vbox rhsm-service[3045]:  INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
-Jul 27 12:02:57 vbox PackageKit[2112]: get-updates transaction /228_bceeadbb from uid 1000 finished with success after 8522ms
-Jul 27 12:02:57 vbox PackageKit[2112]: resolve transaction /229_bbaecdaa from uid 1000 finished with success after 693ms
-Jul 27 12:02:58 vbox PackageKit[2112]: resolve transaction /230_aaabebac from uid 1000 finished with success after 2ms
-Jul 27 12:02:58 vbox PackageKit[2112]: get-update-detail transaction /231_eeaddabd from uid 1000 finished with success after 15ms
-Jul 27 12:02:58 vbox PackageKit[2112]: resolve transaction /232_ebaeebad from uid 1000 finished with success after 3ms
-Jul 27 12:02:58 vbox PackageKit[2112]: resolve transaction /233_bbdedcba from uid 1000 finished with success after 4ms
-Jul 27 12:02:58 vbox gnome-software[2922]: Only 1 apps for popular list, hiding
-Jul 27 12:02:58 vbox packagekitd[2112]: Failed to get cache filename for hyperv-daemons
-Jul 27 12:02:58 vbox packagekitd[2112]: Failed to get cache filename for cups-filesystem
-Jul 27 12:02:58 vbox packagekitd[2112]: Failed to get cache filename for gnome-control-center-filesystem
-Jul 27 12:02:58 vbox packagekitd[2112]: Failed to get cache filename for emacs-filesystem
-Jul 27 12:02:58 vbox packagekitd[2112]: Failed to get cache filename for containers-common-extra
-Jul 27 12:02:58 vbox packagekitd[2112]: Failed to get cache filename for kernel
-Jul 27 12:02:58 vbox PackageKit[2112]: get-details transaction /234_ddaabdcc from uid 1000 finished with success after 6ms
-Jul 27 12:06:44 vbox systemd[1]: Starting Hostname Service...
-Jul 27 12:06:44 vbox systemd[1]: Started Hostname Service.
-Jul 27 12:06:45 vbox kernel: hrtimer: interrupt took 2623226 ns
-Jul 27 12:06:46 vbox crontab[4144]: (oussema) LIST (oussema)
-Jul 27 12:06:46 vbox systemd[1]: Starting Fingerprint Authentication Daemon...
-Jul 27 12:06:46 vbox systemd[1]: Started Fingerprint Authentication Daemon.
-Jul 27 12:06:50 vbox polkitd[747]: Operator of unix-session:2 successfully authenticated as unix-user:oussema to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.153 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:oussema)
-Jul 27 12:06:53 vbox polkitd[747]: Operator of unix-session:2 successfully authenticated as unix-user:oussema to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.157 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all-zones] (owned by unix-user:oussema)
-Jul 27 12:06:53 vbox systemd[1]: Starting Time & Date Service...
-Jul 27 12:06:53 vbox systemd[1]: Started Time & Date Service.
-Jul 27 12:07:15 vbox systemd[1]: systemd-hostnamed.service: Deactivated successfully.
-Jul 27 12:07:17 vbox systemd[1]: fprintd.service: Deactivated successfully.
-Jul 27 12:07:23 vbox systemd[1]: systemd-timedated.service: Deactivated successfully.
-Jul 27 12:08:08 vbox systemd[1]: Starting Fingerprint Authentication Daemon...
-Jul 27 12:08:08 vbox systemd[1]: Started Fingerprint Authentication Daemon.
-Jul 27 12:08:11 vbox sudo[4473]:  oussema : TTY=pts/0 ; PWD=/home/oussema/cis_audit_tool/scripts ; USER=root ; COMMAND=./collect_data.sh
-Jul 27 12:08:11 vbox sudo[4473]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
-Jul 27 12:08:11 vbox systemd[1]: Starting Hostname Service...
-Jul 27 12:08:12 vbox systemd[1]: Started Hostname Service.
-Jul 27 12:08:13 vbox crontab[4556]: (root) LIST (root)
+Jul 27 22:54:26 localhost.localdomain systemd[1]: Starting Hostname Service...
+Jul 27 22:54:26 localhost.localdomain systemd[1]: Started Hostname Service.
+Jul 27 22:54:37 localhost.localdomain crontab[7284]: (mariem) LIST (mariem)
+Jul 27 22:54:42 localhost.localdomain systemd[1]: Starting Fingerprint Authentication Daemon...
+Jul 27 22:54:42 localhost.localdomain systemd[1]: Started Fingerprint Authentication Daemon.
+Jul 27 22:54:48 localhost.localdomain polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.658 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:mariem)
+Jul 27 22:54:55 localhost.localdomain polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.662 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all-zones] (owned by unix-user:mariem)
+Jul 27 22:54:56 localhost.localdomain systemd[1]: systemd-hostnamed.service: Deactivated successfully.
+Jul 27 22:54:58 localhost.localdomain systemd[1]: Starting Time & Date Service...
+Jul 27 22:54:58 localhost.localdomain systemd[1]: Started Time & Date Service.
+Jul 27 22:55:12 localhost.localdomain systemd[1]: fprintd.service: Deactivated successfully.
+Jul 27 22:55:13 localhost.localdomain sudo[7677]:   mariem : TTY=pts/0 ; PWD=/home/mariem/cis_audit_tool/scripts ; USER=root ; COMMAND=./collect_data.sh
+Jul 27 22:55:13 localhost.localdomain sudo[7677]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+Jul 27 22:55:13 localhost.localdomain systemd[1]: Starting Hostname Service...
+Jul 27 22:55:13 localhost.localdomain systemd[1]: Started Hostname Service.
+Jul 27 22:55:18 localhost.localdomain crontab[7839]: (root) LIST (root)
+Jul 27 22:55:26 localhost.localdomain sudo[7677]: pam_unix(sudo:session): session closed for user root
+Jul 27 22:55:43 localhost.localdomain systemd[1]: systemd-hostnamed.service: Deactivated successfully.
+Jul 27 22:55:56 localhost.localdomain systemd[1]: systemd-timedated.service: Deactivated successfully.
+Jul 27 22:56:23 localhost.localdomain systemd[1]: Starting Fingerprint Authentication Daemon...
+Jul 27 22:56:24 localhost.localdomain systemd[1]: Started Fingerprint Authentication Daemon.
+Jul 27 22:56:29 localhost.localdomain polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.698 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:mariem)
+Jul 27 22:56:33 localhost.localdomain crontab[8452]: (mariem) LIST (mariem)
+Jul 27 22:56:54 localhost.localdomain systemd[1]: fprintd.service: Deactivated successfully.
+Jul 27 23:01:01 localhost.localdomain CROND[8513]: (root) CMD (run-parts /etc/cron.hourly)
+Jul 27 23:01:01 localhost.localdomain run-parts[8516]: (/etc/cron.hourly) starting 0anacron
+Jul 27 23:01:01 localhost.localdomain anacron[8526]: Anacron started on 2025-07-27
+Jul 27 23:01:01 localhost.localdomain anacron[8526]: Normal exit (0 jobs run)
+Jul 27 23:01:01 localhost.localdomain run-parts[8528]: (/etc/cron.hourly) finished 0anacron
+Jul 27 23:01:01 localhost.localdomain CROND[8512]: (root) CMDEND (run-parts /etc/cron.hourly)
+Jul 27 23:06:34 localhost.localdomain cupsd[1110]: REQUEST localhost - - "POST / HTTP/1.1" 200 185 Renew-Subscription successful-ok
+Jul 27 23:08:04 localhost.localdomain NetworkManager[1077]: <info>  [1753654084.1630] dhcp4 (ens160): state changed new lease, address=192.168.136.135
+Jul 27 23:08:04 localhost.localdomain systemd[1]: Starting Network Manager Script Dispatcher Service...
+Jul 27 23:08:04 localhost.localdomain systemd[1]: Started Network Manager Script Dispatcher Service.
+Jul 27 23:08:14 localhost.localdomain systemd[1]: NetworkManager-dispatcher.service: Deactivated successfully.
+Jul 27 23:08:20 localhost.localdomain systemd[1]: Starting Fingerprint Authentication Daemon...
+Jul 27 23:08:21 localhost.localdomain systemd[1]: Started Fingerprint Authentication Daemon.
+Jul 27 23:08:26 localhost.localdomain sudo[8590]:   mariem : TTY=pts/0 ; PWD=/home/mariem/cis_audit_tool ; USER=root ; COMMAND=/bin/python3 main.py --offline --verbose
+Jul 27 23:08:26 localhost.localdomain sudo[8590]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+Jul 27 23:08:27 localhost.localdomain sudo[8590]: pam_unix(sudo:session): session closed for user root
+Jul 27 23:08:51 localhost.localdomain systemd[1]: fprintd.service: Deactivated successfully.
+Jul 27 23:10:05 localhost.localdomain systemd[1]: Starting Fingerprint Authentication Daemon...
+Jul 27 23:10:05 localhost.localdomain systemd[1]: Started Fingerprint Authentication Daemon.
+Jul 27 23:10:12 localhost.localdomain polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.737 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:mariem)
+Jul 27 23:10:14 localhost.localdomain crontab[8925]: (mariem) LIST (mariem)
+Jul 27 23:10:36 localhost.localdomain systemd[1]: fprintd.service: Deactivated successfully.
+Jul 27 23:13:31 localhost.localdomain gsd-color[2617]: unable to get EDID for xrandr-Virtual-1: unable to get EDID for output
+Jul 27 23:15:16 localhost.localdomain systemd[1]: fwupd.service: Deactivated successfully.
+Jul 27 23:15:16 localhost.localdomain systemd[1]: fwupd.service: Consumed 3.928s CPU time.
+Jul 27 23:17:01 localhost.localdomain gnome-shell[2405]: libinput error: event2  - VirtualPS/2 VMware VMMouse: client bug: event processing lagging behind by 11ms, your system is too slow
+Jul 27 23:23:04 localhost.localdomain NetworkManager[1077]: <info>  [1753654984.1659] dhcp4 (ens160): state changed new lease, address=192.168.136.135
+Jul 27 23:23:04 localhost.localdomain systemd[1]: Starting Network Manager Script Dispatcher Service...
+Jul 27 23:23:04 localhost.localdomain systemd[1]: Started Network Manager Script Dispatcher Service.
+Jul 27 23:23:14 localhost.localdomain systemd[1]: NetworkManager-dispatcher.service: Deactivated successfully.
+Jul 27 23:26:55 localhost.localdomain rhsm-service[2910]:  INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Jul 27 23:26:55 localhost.localdomain rhsm-service[2910]:  INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Jul 27 23:26:56 localhost.localdomain rhsm-service[2910]:  INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Jul 27 23:26:56 localhost.localdomain rhsm-service[2910]:  INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Jul 27 23:27:00 localhost.localdomain rhsm-service[2910]:  INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Jul 27 23:27:00 localhost.localdomain rhsm-service[2910]:  INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Jul 27 23:27:00 localhost.localdomain rhsm-service[2910]:  INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Jul 27 23:27:00 localhost.localdomain rhsm-service[2910]:  INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Jul 27 23:27:02 localhost.localdomain rhsm-service[2910]:  INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Jul 27 23:27:02 localhost.localdomain rhsm-service[2910]:  INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Jul 27 23:27:02 localhost.localdomain rhsm-service[2910]:  INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Jul 27 23:27:02 localhost.localdomain rhsm-service[2910]:  INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Jul 27 23:27:06 localhost.localdomain rhsm-service[2910]:  INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Jul 27 23:27:06 localhost.localdomain rhsm-service[2910]:  INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Jul 27 23:27:06 localhost.localdomain rhsm-service[2910]:  INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Jul 27 23:27:06 localhost.localdomain rhsm-service[2910]:  INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Jul 27 23:27:30 localhost.localdomain rhsm-service[2910]:  INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Jul 27 23:27:30 localhost.localdomain rhsm-service[2910]:  INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Jul 27 23:27:30 localhost.localdomain rhsm-service[2910]:  INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Jul 27 23:27:30 localhost.localdomain rhsm-service[2910]:  INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Jul 27 23:27:33 localhost.localdomain rhsm-service[2910]:  INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Jul 27 23:27:34 localhost.localdomain rhsm-service[2910]:  INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Jul 27 23:27:34 localhost.localdomain rhsm-service[2910]:  INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Jul 27 23:27:34 localhost.localdomain rhsm-service[2910]:  INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Jul 27 23:27:36 localhost.localdomain rhsm-service[2910]:  INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Jul 27 23:27:36 localhost.localdomain rhsm-service[2910]:  INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Jul 27 23:27:36 localhost.localdomain rhsm-service[2910]:  INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Jul 27 23:27:36 localhost.localdomain rhsm-service[2910]:  INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Jul 27 23:27:40 localhost.localdomain rhsm-service[2910]:  INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Jul 27 23:27:40 localhost.localdomain rhsm-service[2910]:  INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Jul 27 23:27:40 localhost.localdomain rhsm-service[2910]:  INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Jul 27 23:27:40 localhost.localdomain rhsm-service[2910]:  INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Jul 27 23:28:21 localhost.localdomain gsd-color[2617]: unable to get EDID for xrandr-Virtual-1: unable to get EDID for output
+Jul 27 23:28:26 localhost.localdomain gsd-color[2617]: unable to get EDID for xrandr-Virtual-1: unable to get EDID for output
+Jul 27 23:28:46 localhost.localdomain systemd[1]: Starting Fingerprint Authentication Daemon...
+Jul 27 23:28:46 localhost.localdomain systemd[1]: Started Fingerprint Authentication Daemon.
+Jul 27 23:28:52 localhost.localdomain polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.773 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:mariem)
+Jul 27 23:28:54 localhost.localdomain crontab[9648]: (mariem) LIST (mariem)
+Jul 27 23:29:17 localhost.localdomain systemd[1]: fprintd.service: Deactivated successfully.
+Jul 27 23:34:10 localhost.localdomain systemd[1]: Starting Hostname Service...
+Jul 27 23:34:10 localhost.localdomain systemd[1]: Started Hostname Service.
+Jul 27 23:34:18 localhost.localdomain crontab[9887]: (mariem) LIST (mariem)
+Jul 27 23:34:21 localhost.localdomain systemd[1]: Starting Fingerprint Authentication Daemon...
+Jul 27 23:34:21 localhost.localdomain systemd[1]: Started Fingerprint Authentication Daemon.
+Jul 27 23:34:27 localhost.localdomain polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.818 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:mariem)
+Jul 27 23:34:33 localhost.localdomain polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.822 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all-zones] (owned by unix-user:mariem)
