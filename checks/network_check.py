@@ -98,6 +98,14 @@ def check_ipv6_status_online():
         if ipv6_disabled or grub_disabled:
             status = 'PASS'
             details = f'IPv6 is disabled (kernel: {ipv6_disabled}, grub: {grub_disabled})'
+            if ipv6_disabled:
+                details = f"Checked /proc/sys/net/ipv6/conf/all/disable_ipv6: Found value '1' - IPv6 disabled"
+            if grub_disabled:
+                grub_line = grub_result.stdout.strip()
+                details = f"Checked /etc/default/grub: Found '{grub_line}'"
+            if ipv6_disabled and grub_disabled:
+                grub_line = grub_result.stdout.strip()
+                details = f"Checked /proc/sys/net/ipv6/conf/all/disable_ipv6: Found value '1' - IPv6 disabled. Checked /etc/default/grub: Found '{grub_line}'"
         else:
             status = 'MANUAL'
             details = 'IPv6 is enabled - manual review required to determine if this is appropriate'
@@ -144,6 +152,12 @@ def check_ipv6_status_offline(data_dir):
         if ipv6_disabled or grub_disabled:
             status = 'PASS'
             details = f'IPv6 is disabled (kernel: {ipv6_disabled}, grub: {grub_disabled})'
+            if ipv6_disabled:
+                details = f"Checked {sysctl_file}: Found 'net.ipv6.conf.all.disable_ipv6 = 1' - IPv6 disabled"
+            if grub_disabled:
+                details = f"Checked {grub_file}: Found 'ipv6.disable=1' in GRUB configuration"
+            if ipv6_disabled and grub_disabled:
+                details = f"Checked {sysctl_file}: Found 'net.ipv6.conf.all.disable_ipv6 = 1'. Checked {grub_file}: Found 'ipv6.disable=1' in GRUB configuration"
         else:
             status = 'MANUAL'
             details = 'IPv6 appears to be enabled - manual review required'
@@ -181,7 +195,7 @@ def check_wireless_interfaces_online():
                 'rule_id': '3.1.2',
                 'title': 'Ensure wireless interfaces are disabled',
                 'status': 'PASS',
-                'details': 'No wireless interfaces found',
+                'details': 'Checked iwconfig output: No wireless extensions found',
                 'severity': 'Medium',
                 'section': 'network'
             }
@@ -190,7 +204,7 @@ def check_wireless_interfaces_online():
                 'rule_id': '3.1.2',
                 'title': 'Ensure wireless interfaces are disabled',
                 'status': 'FAIL',
-                'details': f'Wireless interfaces found: {result.stdout.strip()}',
+                'details': f'Found wireless interface(s): {result.stdout.strip()}',
                 'severity': 'Medium',
                 'section': 'network',
                 'remediation': 'Disable wireless interfaces or remove wireless drivers'
@@ -222,7 +236,7 @@ def check_wireless_interfaces_offline(data_dir):
                     'rule_id': '3.1.2',
                     'title': 'Ensure wireless interfaces are disabled',
                     'status': 'PASS',
-                    'details': 'No wireless interfaces found in network configuration',
+                    'details': f'Checked {network_file}: No wireless interfaces found in network configuration',
                     'severity': 'Medium',
                     'section': 'network'
                 }
@@ -231,7 +245,7 @@ def check_wireless_interfaces_offline(data_dir):
                     'rule_id': '3.1.2',
                     'title': 'Ensure wireless interfaces are disabled',
                     'status': 'FAIL',
-                    'details': 'Potential wireless interfaces found in network configuration',
+                    'details': f'Checked {network_file}: Potential wireless interfaces found in network configuration',
                     'severity': 'Medium',
                     'section': 'network',
                     'remediation': 'Disable wireless interfaces or remove wireless drivers'
@@ -275,16 +289,21 @@ def check_bluetooth_services_online():
                 'rule_id': '3.1.3',
                 'title': 'Ensure bluetooth services are not in use',
                 'status': 'PASS',
-                'details': 'Bluetooth service is not enabled or active',
+                'details': "Checked 'systemctl is-enabled bluetooth': returned 'disabled'. Checked 'systemctl is-active bluetooth': returned 'inactive'",
                 'severity': 'Medium',
                 'section': 'network'
             }
         else:
+            details = ""
+            if bluetooth_enabled:
+                details += f"Checked 'systemctl is-enabled bluetooth': returned '{enabled_result.stdout.strip()}'."
+            if bluetooth_active:
+                details += f" Checked 'systemctl is-active bluetooth': returned '{active_result.stdout.strip()}'."
             return {
                 'rule_id': '3.1.3',
                 'title': 'Ensure bluetooth services are not in use',
                 'status': 'FAIL',
-                'details': f'Bluetooth service status - enabled: {bluetooth_enabled}, active: {bluetooth_active}',
+                'details': details,
                 'severity': 'Medium',
                 'section': 'network',
                 'remediation': 'Disable bluetooth service: systemctl disable bluetooth && systemctl stop bluetooth'
@@ -316,7 +335,7 @@ def check_bluetooth_services_offline(data_dir):
                     'rule_id': '3.1.3',
                     'title': 'Ensure bluetooth services are not in use',
                     'status': 'PASS',
-                    'details': 'Bluetooth service is not enabled',
+                    'details': f"Checked {services_file}: Bluetooth service is not enabled",
                     'severity': 'Medium',
                     'section': 'network'
                 }
@@ -325,7 +344,7 @@ def check_bluetooth_services_offline(data_dir):
                     'rule_id': '3.1.3',
                     'title': 'Ensure bluetooth services are not in use',
                     'status': 'FAIL',
-                    'details': 'Bluetooth service appears to be enabled',
+                    'details': f"Checked {services_file}: Bluetooth service appears to be enabled",
                     'severity': 'Medium',
                     'section': 'network',
                     'remediation': 'Disable bluetooth service: systemctl disable bluetooth'
@@ -407,11 +426,19 @@ def check_kernel_module_online(rule_id, module, title):
         modprobe_blocked = 'install /bin/true' in modprobe_result.stdout
         
         if not module_loaded and (module_blacklisted or modprobe_blocked):
+            details = f'{module} module is not loaded and is properly disabled'
+            if not module_loaded:
+                lsmod_details = f"Checked 'lsmod | grep {module}': No output - module not loaded."
+            if module_blacklisted:
+                blacklist_details = f" Checked /etc/modprobe.d/blacklist.conf: Found 'install {module} /bin/true'."
+            if modprobe_blocked:
+                modprobe_details = f" Checked modprobe: found 'install /bin/true'."
+            details = lsmod_details + (blacklist_details if module_blacklisted else "") + (modprobe_details if modprobe_blocked else "")
             return {
                 'rule_id': rule_id,
                 'title': title,
                 'status': 'PASS',
-                'details': f'{module} module is not loaded and is properly disabled',
+                'details': details,
                 'severity': 'Medium',
                 'section': 'network'
             }
@@ -420,7 +447,7 @@ def check_kernel_module_online(rule_id, module, title):
                 'rule_id': rule_id,
                 'title': title,
                 'status': 'PASS',
-                'details': f'{module} module is not loaded',
+                'details': f"Checked 'lsmod | grep {module}': No output - module not loaded",
                 'severity': 'Medium',
                 'section': 'network'
             }
@@ -469,7 +496,7 @@ def check_kernel_module_offline(data_dir, rule_id, module, title):
                 'rule_id': rule_id,
                 'title': title,
                 'status': 'PASS',
-                'details': f'{module} module is not loaded and is blacklisted',
+                'details': f"Checked {lsmod_file}: Module not loaded. Checked {blacklist_file}: Module is blacklisted",
                 'severity': 'Medium',
                 'section': 'network'
             }
@@ -478,7 +505,7 @@ def check_kernel_module_offline(data_dir, rule_id, module, title):
                 'rule_id': rule_id,
                 'title': title,
                 'status': 'PASS',
-                'details': f'{module} module is not loaded',
+                'details': f"Checked {lsmod_file}: Module is not loaded",
                 'severity': 'Medium',
                 'section': 'network'
             }
@@ -568,7 +595,7 @@ def check_network_parameter_online(rule_id, param, expected_value, title):
                     'rule_id': rule_id,
                     'title': title,
                     'status': 'PASS',
-                    'details': f'{param} = {current_value} (expected {expected_value})',
+                    'details': f"Checked 'sysctl {param}': Found '{param} = {current_value}' - matches expected value",
                     'severity': 'Medium',
                     'section': 'network'
                 }
@@ -577,7 +604,7 @@ def check_network_parameter_online(rule_id, param, expected_value, title):
                     'rule_id': rule_id,
                     'title': title,
                     'status': 'FAIL',
-                    'details': f'{param} = {current_value} (expected {expected_value})',
+                    'details': f"Checked 'sysctl {param}': Found '{param} = {current_value}' (expected {expected_value})",
                     'severity': 'Medium',
                     'section': 'network',
                     'remediation': f'Set {param} = {expected_value} in /etc/sysctl.conf and run sysctl -p'
@@ -622,7 +649,7 @@ def check_network_parameter_offline(data_dir, rule_id, param, expected_value, ti
                         'rule_id': rule_id,
                         'title': title,
                         'status': 'PASS',
-                        'details': f'{param} = {current_value} (expected {expected_value})',
+                        'details': f"Checked {sysctl_file}: Found '{param} = {current_value}' - matches expected value",
                         'severity': 'Medium',
                         'section': 'network'
                     }
@@ -631,7 +658,7 @@ def check_network_parameter_offline(data_dir, rule_id, param, expected_value, ti
                         'rule_id': rule_id,
                         'title': title,
                         'status': 'FAIL',
-                        'details': f'{param} = {current_value} (expected {expected_value})',
+                        'details': f"Checked {sysctl_file}: Found '{param} = {current_value}' (expected {expected_value})",
                         'severity': 'Medium',
                         'section': 'network',
                         'remediation': f'Set {param} = {expected_value} in /etc/sysctl.conf'

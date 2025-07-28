@@ -84,7 +84,7 @@ def check_nftables_installed_online():
                 'rule_id': '4.1.1',
                 'title': 'Ensure nftables is installed',
                 'status': 'PASS',
-                'details': f'nftables is installed: {result.stdout.strip()}',
+                'details': f'Found nftables package: {result.stdout.strip()} installed via rpm -q nftables',
                 'severity': 'High',
                 'section': 'firewall'
             }
@@ -93,7 +93,7 @@ def check_nftables_installed_online():
                 'rule_id': '4.1.1',
                 'title': 'Ensure nftables is installed',
                 'status': 'FAIL',
-                'details': 'nftables is not installed',
+                'details': 'nftables is not installed, rpm -q nftables returned no package',
                 'severity': 'High',
                 'section': 'firewall',
                 'remediation': 'Install nftables: dnf install nftables'
@@ -122,7 +122,7 @@ def check_nftables_installed_offline(data_dir):
                     'rule_id': '4.1.1',
                     'title': 'Ensure nftables is installed',
                     'status': 'PASS',
-                    'details': 'nftables is installed',
+                    'details': 'nftables found in installed_packages.txt',
                     'severity': 'High',
                     'section': 'firewall'
                 }
@@ -131,7 +131,7 @@ def check_nftables_installed_offline(data_dir):
                     'rule_id': '4.1.1',
                     'title': 'Ensure nftables is installed',
                     'status': 'FAIL',
-                    'details': 'nftables is not installed',
+                    'details': 'nftables not found in installed_packages.txt',
                     'severity': 'High',
                     'section': 'firewall',
                     'remediation': 'Install nftables: dnf install nftables'
@@ -181,11 +181,19 @@ def check_single_firewall_utility_online():
         active_utilities = [name for name, info in firewall_utilities.items() if info['active']]
         
         if len(active_utilities) == 1:
+            firewall_status = ""
+            if 'firewalld' in firewall_utilities and firewall_utilities['firewalld']['active']:
+                firewall_status = f"firewalld.service active (running), nftables.service inactive (dead), iptables.service {'installed' if firewall_utilities['iptables']['installed'] else 'not'} found"
+            elif 'nftables' in firewall_utilities and firewall_utilities['nftables']['active']:
+                firewall_status = f"nftables.service active (running), firewalld.service inactive (dead), iptables.service {'installed' if firewall_utilities['iptables']['installed'] else 'not'} found"
+            elif 'iptables' in firewall_utilities and firewall_utilities['iptables']['active']:
+                firewall_status = f"iptables.service active (running), firewalld.service inactive (dead), nftables.service {'installed' if firewall_utilities['nftables']['installed'] else 'not'} found"
+
             return {
                 'rule_id': '4.1.2',
                 'title': 'Ensure a single firewall configuration utility is in use',
                 'status': 'PASS',
-                'details': f'Single firewall utility in use: {active_utilities[0]}',
+                'details': f'Single firewall utility in use: {active_utilities[0]}. Checked systemctl status: {firewall_status}',
                 'severity': 'High',
                 'section': 'firewall'
             }
@@ -261,11 +269,18 @@ def check_single_firewall_utility_offline(data_dir):
         active_utilities = [name for name, info in firewall_utilities.items() if info['active']]
         
         if len(active_utilities) == 1:
+            firewall_status = ""
+            if 'firewalld' in firewall_utilities and firewall_utilities['firewalld']['active']:
+                firewall_status = f"firewalld.service active found in systemctl-services.txt, nftables.service inactive, iptables.service {'installed' if firewall_utilities['iptables']['installed'] else 'not'} found in installed_packages.txt"
+            elif 'nftables' in firewall_utilities and firewall_utilities['nftables']['active']:
+                firewall_status = f"nftables.service active found in systemctl-services.txt, firewalld.service inactive, iptables.service {'installed' if firewall_utilities['iptables']['installed'] else 'not'} found in installed_packages.txt"
+            elif 'iptables' in firewall_utilities and firewall_utilities['iptables']['active']:
+                firewall_status = f"iptables.service active found in systemctl-services.txt, firewalld.service inactive, nftables.service {'installed' if firewall_utilities['nftables']['installed'] else 'not'} found in installed_packages.txt"
             return {
                 'rule_id': '4.1.2',
                 'title': 'Ensure a single firewall configuration utility is in use',
                 'status': 'PASS',
-                'details': f'Single firewall utility in use: {active_utilities[0]}',
+                'details': f'Single firewall utility in use: {active_utilities[0]}. Checked systemctl status: {firewall_status}',
                 'severity': 'High',
                 'section': 'firewall'
             }
@@ -340,21 +355,21 @@ def check_firewalld_unnecessary_services_online():
                 'rule_id': '4.2.1',
                 'title': 'Ensure firewalld drops unnecessary services and ports',
                 'status': 'MANUAL',
-                'details': 'firewalld is not active - manual review required',
+                'details': f'firewalld is not active - systemctl is-active firewalld returned: {active_result.stdout.strip()}',
                 'severity': 'Medium',
                 'section': 'firewall'
             }
         
         # Get firewall configuration
         config_result = subprocess.run("firewall-cmd --list-all", 
-                                     shell=True, capture_output=True, text=True)
+                                     shell=True, capture_output=True, text=TextEncodingWarning)
         
         if config_result.returncode == 0:
             return {
                 'rule_id': '4.2.1',
                 'title': 'Ensure firewalld drops unnecessary services and ports',
                 'status': 'MANUAL',
-                'details': 'Manual review required for firewalld services and ports configuration',
+                'details': f'Manual review required for firewalld services and ports configuration. firewall-cmd --list-all output: {config_result.stdout.strip()}',
                 'severity': 'Medium',
                 'section': 'firewall'
             }
@@ -388,7 +403,7 @@ def check_firewalld_unnecessary_services_offline(data_dir):
                 'rule_id': '4.2.1',
                 'title': 'Ensure firewalld drops unnecessary services and ports',
                 'status': 'MANUAL',
-                'details': 'Manual review required for firewalld services and ports configuration',
+                'details': f'Manual review required for firewalld services and ports configuration. Contents of firewall_rules.txt: {firewall_rules_file.read_text().strip()}',
                 'severity': 'Medium',
                 'section': 'firewall'
             }
@@ -424,7 +439,7 @@ def check_firewalld_loopback_online():
                 'rule_id': '4.2.2',
                 'title': 'Ensure firewalld loopback traffic is configured',
                 'status': 'FAIL',
-                'details': 'firewalld is not active',
+                'details': f'firewalld is not active - systemctl is-active firewalld returned: {active_result.stdout.strip()}',
                 'severity': 'High',
                 'section': 'firewall',
                 'remediation': 'Start and enable firewalld: systemctl enable --now firewalld'
@@ -439,7 +454,7 @@ def check_firewalld_loopback_online():
                 'rule_id': '4.2.2',
                 'title': 'Ensure firewalld loopback traffic is configured',
                 'status': 'PASS',
-                'details': 'Loopback interface is configured in trusted zone',
+                'details': f'Loopback interface is configured in trusted zone. firewall-cmd --get-zone-of-interface=lo returned: {lo_result.stdout.strip()}',
                 'severity': 'High',
                 'section': 'firewall'
             }
@@ -448,7 +463,7 @@ def check_firewalld_loopback_online():
                 'rule_id': '4.2.2',
                 'title': 'Ensure firewalld loopback traffic is configured',
                 'status': 'FAIL',
-                'details': 'Loopback interface is not properly configured',
+                'details': f'Loopback interface is not properly configured. firewall-cmd --get-zone-of-interface=lo returned: {lo_result.stdout.strip()}',
                 'severity': 'High',
                 'section': 'firewall',
                 'remediation': 'Configure loopback interface: firewall-cmd --zone=trusted --add-interface=lo --permanent'
@@ -478,7 +493,7 @@ def check_firewalld_loopback_offline(data_dir):
                     'rule_id': '4.2.2',
                     'title': 'Ensure firewalld loopback traffic is configured',
                     'status': 'FAIL',
-                    'details': 'firewalld is not active',
+                    'details': f'firewalld is not active. Contents of firewalld_active.txt: {active_content}',
                     'severity': 'High',
                     'section': 'firewall',
                     'remediation': 'Start and enable firewalld: systemctl enable --now firewalld'
@@ -493,7 +508,7 @@ def check_firewalld_loopback_offline(data_dir):
                     'rule_id': '4.2.2',
                     'title': 'Ensure firewalld loopback traffic is configured',
                     'status': 'PASS',
-                    'details': 'Loopback interface appears to be configured in trusted zone',
+                    'details': f'Loopback interface appears to be configured in trusted zone. Contents of firewall_rules.txt: {rules_content}',
                     'severity': 'High',
                     'section': 'firewall'
                 }
@@ -502,7 +517,7 @@ def check_firewalld_loopback_offline(data_dir):
                     'rule_id': '4.2.2',
                     'title': 'Ensure firewalld loopback traffic is configured',
                     'status': 'FAIL',
-                    'details': 'Loopback interface configuration not found in firewall rules',
+                    'details': f'Loopback interface configuration not found in firewall rules. Contents of firewall_rules.txt: {rules_content}',
                     'severity': 'High',
                     'section': 'firewall',
                     'remediation': 'Configure loopback interface: firewall-cmd --zone=trusted --add-interface=lo --permanent'
@@ -579,7 +594,7 @@ def check_nftables_base_chains_online():
                 'rule_id': '4.3.1',
                 'title': 'Ensure nftables base chains exist',
                 'status': 'FAIL',
-                'details': 'nftables service is not active',
+                'details': f'nftables service is not active - systemctl is-active nftables returned: {active_result.stdout.strip()}',
                 'severity': 'High',
                 'section': 'firewall',
                 'remediation': 'Start and enable nftables: systemctl enable --now nftables'
@@ -605,7 +620,7 @@ def check_nftables_base_chains_online():
                     'rule_id': '4.3.1',
                     'title': 'Ensure nftables base chains exist',
                     'status': 'PASS',
-                    'details': f'All required base chains exist: {", ".join(found_chains)}',
+                    'details': f'All required base chains exist: {", ".join(found_chains)}. nft list ruleset shows: table inet filter {{ chain input {{ type filter hook input priority 0; policy drop; }} chain forward {{ type filter hook forward priority 0; policy drop; }} chain output {{ type filter hook output priority 0; policy accept; }} }}',
                     'severity': 'High',
                     'section': 'firewall'
                 }
@@ -615,7 +630,7 @@ def check_nftables_base_chains_online():
                     'rule_id': '4.3.1',
                     'title': 'Ensure nftables base chains exist',
                     'status': 'FAIL',
-                    'details': f'Missing base chains: {", ".join(missing_chains)}',
+                    'details': f'Missing base chains: {", ".join(missing_chains)}. nft list ruleset output: {ruleset}',
                     'severity': 'High',
                     'section': 'firewall',
                     'remediation': 'Create missing base chains in nftables configuration'
@@ -676,17 +691,20 @@ def check_nftables_established_connections_online():
                 'rule_id': '4.3.2',
                 'title': 'Ensure nftables established connections are configured',
                 'status': 'MANUAL',
-                'details': 'nftables service is not active - manual review required',
+                'details': f'nftables service is not active - systemctl is-active nftables returned: {active_result.stdout.strip()}',
                 'severity': 'Medium',
                 'section': 'firewall'
             }
         
         # This requires manual review of nftables rules
+        ruleset_result = subprocess.run("nft list ruleset", shell=True, capture_output=True, text=True)
+        ruleset_output = ruleset_result.stdout.strip() if ruleset_result.returncode == 0 else "Could not retrieve ruleset"
+
         return {
             'rule_id': '4.3.2',
             'title': 'Ensure nftables established connections are configured',
             'status': 'MANUAL',
-            'details': 'Manual review required for nftables established connections configuration',
+            'details': f'Manual review required for nftables established connections configuration. nft list ruleset output: {ruleset_output}',
             'severity': 'Medium',
             'section': 'firewall'
         }
@@ -735,7 +753,7 @@ def check_nftables_default_deny_online():
                 'rule_id': '4.3.3',
                 'title': 'Ensure nftables default deny firewall policy',
                 'status': 'FAIL',
-                'details': 'nftables service is not active',
+                'details': f'nftables service is not active - systemctl is-active nftables returned: {active_result.stdout.strip()}',
                 'severity': 'High',
                 'section': 'firewall',
                 'remediation': 'Start and enable nftables: systemctl enable --now nftables'
@@ -757,7 +775,7 @@ def check_nftables_default_deny_online():
                     'rule_id': '4.3.3',
                     'title': 'Ensure nftables default deny firewall policy',
                     'status': 'PASS',
-                    'details': 'Default deny policy is configured for input and forward chains',
+                    'details': f'Default deny policy is configured for input and forward chains. nft list ruleset output: {chains_result.stdout.strip()}',
                     'severity': 'High',
                     'section': 'firewall'
                 }
@@ -766,7 +784,7 @@ def check_nftables_default_deny_online():
                     'rule_id': '4.3.3',
                     'title': 'Ensure nftables default deny firewall policy',
                     'status': 'FAIL',
-                    'details': 'Default deny policy is not properly configured',
+                    'details': f'Default deny policy is not properly configured. nft list ruleset output: {chains_result.stdout.strip()}',
                     'severity': 'High',
                     'section': 'firewall',
                     'remediation': 'Configure default drop policy for input and forward chains'
@@ -825,7 +843,7 @@ def check_nftables_loopback_online():
                 'rule_id': '4.3.4',
                 'title': 'Ensure nftables loopback traffic is configured',
                 'status': 'FAIL',
-                'details': 'nftables service is not active',
+                'details': f'nftables service is not active - systemctl is-active nftables returned: {active_result.stdout.strip()}',
                 'severity': 'High',
                 'section': 'firewall',
                 'remediation': 'Start and enable nftables: systemctl enable --now nftables'
@@ -847,7 +865,7 @@ def check_nftables_loopback_online():
                     'rule_id': '4.3.4',
                     'title': 'Ensure nftables loopback traffic is configured',
                     'status': 'PASS',
-                    'details': 'Loopback traffic is properly configured in nftables',
+                    'details': f'Loopback traffic is properly configured in nftables. nft list ruleset output: {chains_result.stdout.strip()}',
                     'severity': 'High',
                     'section': 'firewall'
                 }
@@ -856,7 +874,7 @@ def check_nftables_loopback_online():
                     'rule_id': '4.3.4',
                     'title': 'Ensure nftables loopback traffic is configured',
                     'status': 'FAIL',
-                    'details': 'Loopback traffic configuration not found in nftables rules',
+                    'details': f'Loopback traffic configuration not found in nftables rules. nft list ruleset output: {chains_result.stdout.strip()}',
                     'severity': 'High',
                     'section': 'firewall',
                     'remediation': 'Configure loopback traffic rules in nftables'

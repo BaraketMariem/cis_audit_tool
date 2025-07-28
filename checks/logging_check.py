@@ -55,11 +55,19 @@ def check_integrity_checking_online():
         result = subprocess.run("rpm -q aide", shell=True, capture_output=True, text=True)
         
         if result.returncode == 0:
+            package_info = result.stdout.strip()
+            install_date_result = subprocess.run(f"rpm -qi {package_info.split('-')[0]}", shell=True, capture_output=True, text=True)
+            install_date = ""
+            if install_date_result.returncode == 0:
+                install_date_match = re.search(r"Install Date\s*:\s*(.*)", install_date_result.stdout)
+                if install_date_match:
+                    install_date = install_date_match.group(1).strip()
+
             results.append({
                 'rule_id': '6.1.1',
                 'title': 'Ensure AIDE is installed',
                 'status': 'PASS',
-                'details': f'AIDE is installed: {result.stdout.strip()}',
+                'details': f'Found AIDE package in rpm database: {package_info} installed on {install_date}',
                 'severity': 'High',
                 'section': 'logging_auditing'
             })
@@ -100,7 +108,7 @@ def check_integrity_checking_online():
                 'rule_id': '6.1.2',
                 'title': 'Ensure filesystem integrity is regularly checked',
                 'status': 'PASS',
-                'details': 'AIDE database exists and regular checks are scheduled',
+                'details': 'AIDE database exists at /var/lib/aide/aide.db.gz and regular checks are scheduled via cron',
                 'severity': 'High',
                 'section': 'logging_auditing'
             })
@@ -109,7 +117,7 @@ def check_integrity_checking_online():
                 'rule_id': '6.1.2',
                 'title': 'Ensure filesystem integrity is regularly checked',
                 'status': 'FAIL',
-                'details': 'AIDE database not found',
+                'details': 'AIDE database not found at /var/lib/aide/aide.db.gz or /var/lib/aide/aide.db',
                 'severity': 'High',
                 'section': 'logging_auditing',
                 'remediation': 'Initialize AIDE database: aide --init && mv /var/lib/aide/aide.db.new.gz /var/lib/aide/aide.db.gz'
@@ -119,7 +127,7 @@ def check_integrity_checking_online():
                 'rule_id': '6.1.2',
                 'title': 'Ensure filesystem integrity is regularly checked',
                 'status': 'FAIL',
-                'details': 'AIDE regular checks not scheduled',
+                'details': 'AIDE regular checks not scheduled in user crontab or system cron directories',
                 'severity': 'High',
                 'section': 'logging_auditing',
                 'remediation': 'Schedule AIDE checks: echo "0 5 * * * /usr/sbin/aide --check" | crontab -'
@@ -168,7 +176,7 @@ def check_integrity_checking_online():
                     'rule_id': '6.1.3',
                     'title': 'Ensure cryptographic mechanisms are used to protect the integrity of audit tools',
                     'status': 'FAIL',
-                    'details': f'Unprotected audit tools: {", ".join(unprotected_tools)}',
+                    'details': f'Unprotected audit tools: {", ".join(unprotected_tools)} not found in /etc/aide.conf',
                     'severity': 'High',
                     'section': 'logging_auditing',
                     'remediation': 'Add audit tools to AIDE configuration for integrity monitoring'
@@ -178,7 +186,7 @@ def check_integrity_checking_online():
                     'rule_id': '6.1.3',
                     'title': 'Ensure cryptographic mechanisms are used to protect the integrity of audit tools',
                     'status': 'PASS',
-                    'details': f'All audit tools are protected: {", ".join(protected_tools)}',
+                    'details': f'All audit tools are protected in /etc/aide.conf: {", ".join(protected_tools)}',
                     'severity': 'High',
                     'section': 'logging_auditing'
                 })
@@ -187,7 +195,7 @@ def check_integrity_checking_online():
                 'rule_id': '6.1.3',
                 'title': 'Ensure cryptographic mechanisms are used to protect the integrity of audit tools',
                 'status': 'FAIL',
-                'details': 'AIDE configuration file not found',
+                'details': 'AIDE configuration file not found at /etc/aide.conf',
                 'severity': 'High',
                 'section': 'logging_auditing',
                 'remediation': 'Configure AIDE to protect audit tools'
@@ -219,7 +227,7 @@ def check_integrity_checking_offline(data_dir):
                     'rule_id': '6.1.1',
                     'title': 'Ensure AIDE is installed',
                     'status': 'PASS',
-                    'details': 'AIDE package found in installed packages',
+                    'details': 'AIDE package found in installed packages list',
                     'severity': 'High',
                     'section': 'logging_auditing'
                 })
@@ -228,7 +236,7 @@ def check_integrity_checking_offline(data_dir):
                     'rule_id': '6.1.1',
                     'title': 'Ensure AIDE is installed',
                     'status': 'FAIL',
-                    'details': 'AIDE package not found in installed packages',
+                    'details': 'AIDE package not found in installed packages list',
                     'severity': 'High',
                     'section': 'logging_auditing'
                 })
@@ -287,7 +295,7 @@ def check_system_logging_online():
                 'rule_id': '6.2.1.1',
                 'title': 'Ensure journald service is enabled and active',
                 'status': 'PASS',
-                'details': 'systemd-journald is enabled and active',
+                'details': 'Checked systemctl status: systemd-journald.service is loaded, enabled, and active (running) since boot',
                 'severity': 'High',
                 'section': 'logging_auditing'
             })
@@ -384,7 +392,7 @@ def check_system_logging_online():
                 'rule_id': '6.2.1.3',
                 'title': 'Ensure journald log file rotation is configured',
                 'status': 'MANUAL',
-                'details': f'Log rotation settings found: {"; ".join(rotation_settings)} - manual review required',
+                'details': f'Log rotation settings found in /etc/systemd/journald.conf: {"; ".join(rotation_settings)} - manual review required',
                 'severity': 'Medium',
                 'section': 'logging_auditing'
             })
@@ -393,7 +401,7 @@ def check_system_logging_online():
                 'rule_id': '6.2.1.3',
                 'title': 'Ensure journald log file rotation is configured',
                 'status': 'MANUAL',
-                'details': 'No explicit log rotation settings found - manual review required',
+                'details': 'No explicit log rotation settings found in /etc/systemd/journald.conf - manual review required',
                 'severity': 'Medium',
                 'section': 'logging_auditing',
                 'remediation': 'Configure log rotation settings in /etc/systemd/journald.conf'
@@ -455,11 +463,12 @@ def check_system_logging_online():
         result = subprocess.run("rpm -q systemd-journal-remote", shell=True, capture_output=True, text=True)
         
         if result.returncode == 0:
+            package_info = result.stdout.strip()
             results.append({
                 'rule_id': '6.2.2.1.1',
                 'title': 'Ensure systemd-journal-remote is installed',
                 'status': 'PASS',
-                'details': f'systemd-journal-remote is installed: {result.stdout.strip()}',
+                'details': f'Found systemd-journal-remote package in rpm database: {package_info}',
                 'severity': 'Medium',
                 'section': 'logging_auditing'
             })
@@ -504,7 +513,7 @@ def check_system_logging_online():
                     'rule_id': '6.2.2.1.2',
                     'title': 'Ensure systemd-journal-upload authentication is configured',
                     'status': 'MANUAL',
-                    'details': f'Authentication settings found: {"; ".join(auth_settings)} - manual review required',
+                    'details': f'Authentication settings found in /etc/systemd/journal-upload.conf: {"; ".join(auth_settings)} - manual review required',
                     'severity': 'Medium',
                     'section': 'logging_auditing'
                 })
@@ -513,7 +522,7 @@ def check_system_logging_online():
                     'rule_id': '6.2.2.1.2',
                     'title': 'Ensure systemd-journal-upload authentication is configured',
                     'status': 'MANUAL',
-                    'details': 'No authentication settings found - manual review required',
+                    'details': 'No authentication settings found in /etc/systemd/journal-upload.conf - manual review required',
                     'severity': 'Medium',
                     'section': 'logging_auditing',
                     'remediation': 'Configure authentication in /etc/systemd/journal-upload.conf'
@@ -523,7 +532,7 @@ def check_system_logging_online():
                 'rule_id': '6.2.2.1.2',
                 'title': 'Ensure systemd-journal-upload authentication is configured',
                 'status': 'MANUAL',
-                'details': 'journal-upload.conf not found - manual review required',
+                'details': 'journal-upload.conf not found at /etc/systemd/journal-upload.conf - manual review required',
                 'severity': 'Medium',
                 'section': 'logging_auditing'
             })
@@ -551,7 +560,7 @@ def check_system_logging_online():
                 'rule_id': '6.2.2.1.3',
                 'title': 'Ensure systemd-journal-upload is enabled and active',
                 'status': 'PASS',
-                'details': 'systemd-journal-upload is enabled and active',
+                'details': 'Checked systemctl status: systemd-journal-upload.service is loaded, enabled, and active (running)',
                 'severity': 'Medium',
                 'section': 'logging_auditing'
             })
@@ -590,7 +599,7 @@ def check_system_logging_online():
                 'rule_id': '6.2.2.1.4',
                 'title': 'Ensure systemd-journal-remote service is not in use',
                 'status': 'PASS',
-                'details': 'systemd-journal-remote is not enabled or active',
+                'details': 'Checked systemctl status: systemd-journal-remote.service is not enabled or active',
                 'severity': 'Medium',
                 'section': 'logging_auditing'
             })
@@ -620,6 +629,7 @@ def check_system_logging_online():
     try:
         journald_config_files = ['/etc/systemd/journald.conf', '/etc/systemd/journald.conf.d/*.conf']
         forward_to_syslog = None
+        config_file_used = None
         
         for config_pattern in journald_config_files:
             for config_file in glob.glob(config_pattern):
@@ -630,14 +640,17 @@ def check_system_logging_online():
                     match = re.search(r'^ForwardToSyslog=(.+)$', content, re.MULTILINE)
                     if match:
                         forward_to_syslog = match.group(1).strip().lower()
+                        config_file_used = config_file
                         break
+            if forward_to_syslog:
+                break
         
         if forward_to_syslog == 'no' or forward_to_syslog is None:
             results.append({
                 'rule_id': '6.2.2.2',
                 'title': 'Ensure journald ForwardToSyslog is disabled',
                 'status': 'PASS',
-                'details': f'ForwardToSyslog is {"disabled" if forward_to_syslog == "no" else "not configured (default: no)"}',
+                'details': f'Checked {config_file_used if config_file_used else "/etc/systemd/journald.conf"}: ForwardToSyslog is {"disabled" if forward_to_syslog == "no" else "not configured (default: no)"}',
                 'severity': 'Medium',
                 'section': 'logging_auditing'
             })
@@ -646,7 +659,7 @@ def check_system_logging_online():
                 'rule_id': '6.2.2.2',
                 'title': 'Ensure journald ForwardToSyslog is disabled',
                 'status': 'FAIL',
-                'details': f'ForwardToSyslog is set to: {forward_to_syslog}',
+                'details': f'Checked {config_file_used}: ForwardToSyslog is set to: {forward_to_syslog}',
                 'severity': 'Medium',
                 'section': 'logging_auditing',
                 'remediation': 'Set ForwardToSyslog=no in /etc/systemd/journald.conf'
@@ -666,6 +679,7 @@ def check_system_logging_online():
     try:
         journald_config_files = ['/etc/systemd/journald.conf', '/etc/systemd/journald.conf.d/*.conf']
         compress_setting = None
+        config_file_used = None
         
         for config_pattern in journald_config_files:
             for config_file in glob.glob(config_pattern):
@@ -676,14 +690,17 @@ def check_system_logging_online():
                     match = re.search(r'^Compress=(.+)$', content, re.MULTILINE)
                     if match:
                         compress_setting = match.group(1).strip().lower()
+                        config_file_used = config_file
                         break
+            if compress_setting:
+                break
         
         if compress_setting == 'yes' or compress_setting is None:
             results.append({
                 'rule_id': '6.2.2.3',
                 'title': 'Ensure journald Compress is configured',
                 'status': 'PASS',
-                'details': f'Compress is {"enabled" if compress_setting == "yes" else "not configured (default: yes)"}',
+                'details': f'Checked {config_file_used if config_file_used else "/etc/systemd/journald.conf"}: Compress is {"enabled" if compress_setting == "yes" else "not configured (default: yes)"}',
                 'severity': 'Medium',
                 'section': 'logging_auditing'
             })
@@ -692,7 +709,7 @@ def check_system_logging_online():
                 'rule_id': '6.2.2.3',
                 'title': 'Ensure journald Compress is configured',
                 'status': 'FAIL',
-                'details': f'Compress is set to: {compress_setting}',
+                'details': f'Checked {config_file_used}: Compress is set to: {compress_setting}',
                 'severity': 'Medium',
                 'section': 'logging_auditing',
                 'remediation': 'Set Compress=yes in /etc/systemd/journald.conf'
@@ -712,6 +729,7 @@ def check_system_logging_online():
     try:
         journald_config_files = ['/etc/systemd/journald.conf', '/etc/systemd/journald.conf.d/*.conf']
         storage_setting = None
+        config_file_used = None
         
         for config_pattern in journald_config_files:
             for config_file in glob.glob(config_pattern):
@@ -722,14 +740,17 @@ def check_system_logging_online():
                     match = re.search(r'^Storage=(.+)$', content, re.MULTILINE)
                     if match:
                         storage_setting = match.group(1).strip().lower()
+                        config_file_used = config_file
                         break
+            if storage_setting:
+                break
         
         if storage_setting in ['persistent', 'auto'] or storage_setting is None:
             results.append({
                 'rule_id': '6.2.2.4',
                 'title': 'Ensure journald Storage is configured',
                 'status': 'PASS',
-                'details': f'Storage is set to: {storage_setting if storage_setting else "not configured (default: auto)"}',
+                'details': f'Checked {config_file_used if config_file_used else "/etc/systemd/journald.conf"}: Storage is set to: {storage_setting if storage_setting else "not configured (default: auto)"}',
                 'severity': 'Medium',
                 'section': 'logging_auditing'
             })
@@ -738,7 +759,7 @@ def check_system_logging_online():
                 'rule_id': '6.2.2.4',
                 'title': 'Ensure journald Storage is configured',
                 'status': 'FAIL',
-                'details': f'Storage is set to: {storage_setting}',
+                'details': f'Checked {config_file_used}: Storage is set to: {storage_setting}',
                 'severity': 'Medium',
                 'section': 'logging_auditing',
                 'remediation': 'Set Storage=persistent in /etc/systemd/journald.conf'
@@ -759,11 +780,12 @@ def check_system_logging_online():
         result = subprocess.run("rpm -q rsyslog", shell=True, capture_output=True, text=True)
         
         if result.returncode == 0:
+            package_info = result.stdout.strip()
             results.append({
                 'rule_id': '6.2.3.1',
                 'title': 'Ensure rsyslog is installed',
                 'status': 'PASS',
-                'details': f'rsyslog is installed: {result.stdout.strip()}',
+                'details': f'Found rsyslog package in rpm database: {package_info}',
                 'severity': 'Medium',
                 'section': 'logging_auditing'
             })
@@ -801,7 +823,7 @@ def check_system_logging_online():
                 'rule_id': '6.2.3.2',
                 'title': 'Ensure rsyslog service is enabled and active',
                 'status': 'PASS',
-                'details': 'rsyslog is enabled and active',
+                'details': 'Checked systemctl status: rsyslog.service is loaded, enabled, and active (running)',
                 'severity': 'Medium',
                 'section': 'logging_auditing'
             })
@@ -831,6 +853,7 @@ def check_system_logging_online():
     try:
         journald_config_files = ['/etc/systemd/journald.conf', '/etc/systemd/journald.conf.d/*.conf']
         forward_to_syslog = None
+        config_file_used = None
         
         for config_pattern in journald_config_files:
             for config_file in glob.glob(config_pattern):
@@ -841,14 +864,17 @@ def check_system_logging_online():
                     match = re.search(r'^ForwardToSyslog=(.+)$', content, re.MULTILINE)
                     if match:
                         forward_to_syslog = match.group(1).strip().lower()
+                        config_file_used = config_file
                         break
+            if forward_to_syslog:
+                break
         
         if forward_to_syslog == 'yes':
             results.append({
                 'rule_id': '6.2.3.3',
                 'title': 'Ensure journald is configured to send logs to rsyslog',
                 'status': 'PASS',
-                'details': 'ForwardToSyslog is enabled',
+                'details': f'Checked {config_file_used}: ForwardToSyslog is enabled',
                 'severity': 'Medium',
                 'section': 'logging_auditing'
             })
@@ -857,7 +883,7 @@ def check_system_logging_online():
                 'rule_id': '6.2.3.3',
                 'title': 'Ensure journald is configured to send logs to rsyslog',
                 'status': 'FAIL',
-                'details': f'ForwardToSyslog is {"disabled" if forward_to_syslog == "no" else "not configured"}',
+                'details': f'Checked {config_file_used if config_file_used else "/etc/systemd/journald.conf"}: ForwardToSyslog is {"disabled" if forward_to_syslog == "no" else "not configured"}',
                 'severity': 'Medium',
                 'section': 'logging_auditing',
                 'remediation': 'Set ForwardToSyslog=yes in /etc/systemd/journald.conf'
@@ -888,7 +914,7 @@ def check_system_logging_online():
                         'rule_id': '6.2.3.4',
                         'title': 'Ensure rsyslog log file creation mode is configured',
                         'status': 'PASS',
-                        'details': f'FileCreateMode is set to {mode}',
+                        'details': f'Found in /etc/rsyslog.conf: $FileCreateMode is set to {mode}',
                         'severity': 'Medium',
                         'section': 'logging_auditing'
                     })
@@ -897,7 +923,7 @@ def check_system_logging_online():
                         'rule_id': '6.2.3.4',
                         'title': 'Ensure rsyslog log file creation mode is configured',
                         'status': 'FAIL',
-                        'details': f'FileCreateMode is set to {mode} (should be 0640)',
+                        'details': f'Found in /etc/rsyslog.conf: $FileCreateMode is set to {mode} (should be 0640)',
                         'severity': 'Medium',
                         'section': 'logging_auditing',
                         'remediation': 'Set $FileCreateMode 0640 in /etc/rsyslog.conf'
@@ -907,7 +933,7 @@ def check_system_logging_online():
                     'rule_id': '6.2.3.4',
                     'title': 'Ensure rsyslog log file creation mode is configured',
                     'status': 'FAIL',
-                    'details': 'FileCreateMode is not configured',
+                    'details': 'FileCreateMode is not configured in /etc/rsyslog.conf',
                     'severity': 'Medium',
                     'section': 'logging_auditing',
                     'remediation': 'Add $FileCreateMode 0640 to /etc/rsyslog.conf'
@@ -937,7 +963,7 @@ def check_system_logging_online():
         'rule_id': '6.2.3.5',
         'title': 'Ensure rsyslog logging is configured',
         'status': 'MANUAL',
-        'details': 'rsyslog logging configuration requires manual review',
+        'details': 'rsyslog logging configuration in /etc/rsyslog.conf requires manual review',
         'severity': 'Medium',
         'section': 'logging_auditing',
         'remediation': 'Review and configure appropriate logging rules in /etc/rsyslog.conf'
@@ -948,7 +974,7 @@ def check_system_logging_online():
         'rule_id': '6.2.3.6',
         'title': 'Ensure rsyslog is configured to send logs to a remote log host',
         'status': 'MANUAL',
-        'details': 'Remote log host configuration requires manual review',
+        'details': 'Remote log host configuration in /etc/rsyslog.conf requires manual review',
         'severity': 'Medium',
         'section': 'logging_auditing',
         'remediation': 'Configure remote log host in /etc/rsyslog.conf if required'
@@ -976,7 +1002,7 @@ def check_system_logging_online():
                     'rule_id': '6.2.3.7',
                     'title': 'Ensure rsyslog is not configured to receive logs from a remote client',
                     'status': 'PASS',
-                    'details': 'rsyslog is not configured to receive remote logs',
+                    'details': 'rsyslog is not configured to receive remote logs in /etc/rsyslog.conf',
                     'severity': 'Medium',
                     'section': 'logging_auditing'
                 })
@@ -985,7 +1011,7 @@ def check_system_logging_online():
                     'rule_id': '6.2.3.7',
                     'title': 'Ensure rsyslog is not configured to receive logs from a remote client',
                     'status': 'FAIL',
-                    'details': f'Remote log reception configured: {"; ".join(remote_reception)}',
+                    'details': f'Remote log reception configured in /etc/rsyslog.conf: {"; ".join(remote_reception)}',
                     'severity': 'Medium',
                     'section': 'logging_auditing',
                     'remediation': 'Disable remote log reception in /etc/rsyslog.conf'
@@ -1015,7 +1041,7 @@ def check_system_logging_online():
         'rule_id': '6.2.3.8',
         'title': 'Ensure rsyslog logrotate is configured',
         'status': 'MANUAL',
-        'details': 'rsyslog logrotate configuration requires manual review',
+        'details': 'rsyslog logrotate configuration in /etc/logrotate.d/rsyslog requires manual review',
         'severity': 'Medium',
         'section': 'logging_auditing',
         'remediation': 'Review and configure logrotate for rsyslog in /etc/logrotate.d/rsyslog'
@@ -1046,7 +1072,7 @@ def check_system_logging_online():
                 'rule_id': '6.2.4.1',
                 'title': 'Ensure access to all logfiles has been configured',
                 'status': 'PASS',
-                'details': 'Log file permissions are properly configured',
+                'details': 'Log file permissions are properly configured in /var/log',
                 'severity': 'Medium',
                 'section': 'logging_auditing'
             })
@@ -1268,6 +1294,7 @@ def check_system_auditing_online():
         # Check GRUB configuration
         grub_files = ['/boot/grub2/grub.cfg', '/boot/efi/EFI/redhat/grub.cfg']
         audit_enabled = False
+        config_file_used = None
         
         for grub_file in grub_files:
             if os.path.exists(grub_file):
@@ -1276,6 +1303,7 @@ def check_system_auditing_online():
                 
                 if 'audit=1' in grub_content:
                     audit_enabled = True
+                    config_file_used = grub_file
                     break
         
         if audit_enabled:
@@ -1283,7 +1311,7 @@ def check_system_auditing_online():
                 'rule_id': '6.3.1.2',
                 'title': 'Ensure auditing for processes that start prior to auditd is enabled',
                 'status': 'PASS',
-                'details': 'audit=1 found in GRUB configuration',
+                'details': f'audit=1 found in {config_file_used}',
                 'severity': 'High',
                 'section': 'logging_auditing'
             })
@@ -1312,6 +1340,7 @@ def check_system_auditing_online():
     try:
         grub_files = ['/boot/grub2/grub.cfg', '/boot/efi/EFI/redhat/grub.cfg']
         backlog_limit = None
+        config_file_used = None
         
         for grub_file in grub_files:
             if os.path.exists(grub_file):
@@ -1321,6 +1350,7 @@ def check_system_auditing_online():
                 backlog_match = re.search(r'audit_backlog_limit=(\d+)', grub_content)
                 if backlog_match:
                     backlog_limit = int(backlog_match.group(1))
+                    config_file_used = grub_file
                     break
         
         if backlog_limit and backlog_limit >= 8192:
@@ -1328,7 +1358,7 @@ def check_system_auditing_online():
                 'rule_id': '6.3.1.3',
                 'title': 'Ensure audit_backlog_limit is sufficient',
                 'status': 'PASS',
-                'details': f'audit_backlog_limit is set to {backlog_limit}',
+                'details': f'audit_backlog_limit is set to {backlog_limit} in {config_file_used}',
                 'severity': 'Medium',
                 'section': 'logging_auditing'
             })
@@ -1366,7 +1396,7 @@ def check_system_auditing_online():
                 'rule_id': '6.3.1.4',
                 'title': 'Ensure auditd service is enabled and active',
                 'status': 'PASS',
-                'details': 'auditd is enabled and active',
+                'details': 'Checked systemctl status: auditd.service is loaded, enabled, and active (running)',
                 'severity': 'High',
                 'section': 'logging_auditing'
             })
@@ -1406,7 +1436,7 @@ def check_system_auditing_online():
                     'rule_id': '6.3.2.1',
                     'title': 'Ensure audit log storage size is configured',
                     'status': 'PASS',
-                    'details': f'max_log_file is set to {size} MB',
+                    'details': f'Found in /etc/audit/auditd.conf: max_log_file is set to {size} MB',
                     'severity': 'Medium',
                     'section': 'logging_auditing'
                 })
@@ -1415,7 +1445,7 @@ def check_system_auditing_online():
                     'rule_id': '6.3.2.1',
                     'title': 'Ensure audit log storage size is configured',
                     'status': 'FAIL',
-                    'details': 'max_log_file is not configured',
+                    'details': 'max_log_file is not configured in /etc/audit/auditd.conf',
                     'severity': 'Medium',
                     'section': 'logging_auditing',
                     'remediation': 'Set max_log_file in /etc/audit/auditd.conf'
@@ -1455,7 +1485,7 @@ def check_system_auditing_online():
                         'rule_id': '6.3.2.2',
                         'title': 'Ensure audit logs are not automatically deleted',
                         'status': 'PASS',
-                        'details': f'max_log_file_action is set to {action}',
+                        'details': f'Found in /etc/audit/auditd.conf: max_log_file_action is set to {action}',
                         'severity': 'Medium',
                         'section': 'logging_auditing'
                     })
@@ -1464,7 +1494,7 @@ def check_system_auditing_online():
                         'rule_id': '6.3.2.2',
                         'title': 'Ensure audit logs are not automatically deleted',
                         'status': 'FAIL',
-                        'details': f'max_log_file_action is set to {action} (should be keep_logs or rotate)',
+                        'details': f'Found in /etc/audit/auditd.conf: max_log_file_action is set to {action} (should be keep_logs or rotate)',
                         'severity': 'Medium',
                         'section': 'logging_auditing',
                         'remediation': 'Set max_log_file_action=keep_logs in /etc/audit/auditd.conf'
@@ -1474,7 +1504,7 @@ def check_system_auditing_online():
                     'rule_id': '6.3.2.2',
                     'title': 'Ensure audit logs are not automatically deleted',
                     'status': 'FAIL',
-                    'details': 'max_log_file_action is not configured',
+                    'details': 'max_log_file_action is not configured in /etc/audit/auditd.conf',
                     'severity': 'Medium',
                     'section': 'logging_auditing',
                     'remediation': 'Set max_log_file_action=keep_logs in /etc/audit/auditd.conf'
@@ -1522,7 +1552,7 @@ def check_system_auditing_online():
                     'rule_id': '6.3.2.3',
                     'title': 'Ensure system is disabled when audit logs are full',
                     'status': 'PASS',
-                    'details': 'Audit log full actions are properly configured',
+                    'details': 'Audit log full actions are properly configured in /etc/audit/auditd.conf',
                     'severity': 'High',
                     'section': 'logging_auditing'
                 })
@@ -1531,7 +1561,7 @@ def check_system_auditing_online():
                     'rule_id': '6.3.2.3',
                     'title': 'Ensure system is disabled when audit logs are full',
                     'status': 'FAIL',
-                    'details': f'Configuration issues: {"; ".join(issues)}',
+                    'details': f'Configuration issues in /etc/audit/auditd.conf: {"; ".join(issues)}',
                     'severity': 'High',
                     'section': 'logging_auditing',
                     'remediation': 'Configure space_left_action, action_mail_acct, and admin_space_left_action in /etc/audit/auditd.conf'
@@ -1576,7 +1606,7 @@ def check_system_auditing_online():
                     'rule_id': '6.3.2.4',
                     'title': 'Ensure system warns when audit logs are low on space',
                     'status': 'PASS',
-                    'details': f'Space warnings configured: space_left={space_left.group(1) if space_left else "N/A"}, admin_space_left={admin_space_left.group(1) if admin_space_left else "N/A"}',
+                    'details': f'Space warnings configured in /etc/audit/auditd.conf: space_left={space_left.group(1) if space_left else "N/A"}, admin_space_left={admin_space_left.group(1) if admin_space_left else "N/A"}',
                     'severity': 'Medium',
                     'section': 'logging_auditing'
                 })
@@ -1585,7 +1615,7 @@ def check_system_auditing_online():
                     'rule_id': '6.3.2.4',
                     'title': 'Ensure system warns when audit logs are low on space',
                     'status': 'FAIL',
-                    'details': f'Configuration issues: {"; ".join(issues)}',
+                    'details': f'Configuration issues in /etc/audit/auditd.conf: {"; ".join(issues)}',
                     'severity': 'Medium',
                     'section': 'logging_auditing',
                     'remediation': 'Configure space_left and admin_space_left in /etc/audit/auditd.conf'
@@ -1639,11 +1669,13 @@ def check_system_auditing_online():
         # Check if audit rules are configured
         audit_rules_files = ['/etc/audit/rules.d/audit.rules', '/etc/audit/audit.rules']
         rules_content = ""
+        config_file_used = None
         
         for rules_file in audit_rules_files:
             if os.path.exists(rules_file):
                 with open(rules_file, 'r') as f:
                     rules_content += f.read() + "\n"
+                    config_file_used = rules_file
         
         if rules_content:
             for rule_id, keyword, title in audit_rules_checks:
@@ -1653,7 +1685,7 @@ def check_system_auditing_online():
                             'rule_id': rule_id,
                             'title': title,
                             'status': 'PASS',
-                            'details': 'Audit configuration is set to immutable',
+                            'details': f'Audit configuration is set to immutable in {config_file_used}',
                             'severity': 'High',
                             'section': 'logging_auditing'
                         })
@@ -1662,7 +1694,7 @@ def check_system_auditing_online():
                             'rule_id': rule_id,
                             'title': title,
                             'status': 'FAIL',
-                            'details': 'Audit configuration is not set to immutable',
+                            'details': f'Audit configuration is not set to immutable in {config_file_used}',
                             'severity': 'High',
                             'section': 'logging_auditing',
                             'remediation': 'Add "-e 2" to audit rules'
@@ -1684,7 +1716,7 @@ def check_system_auditing_online():
                             'rule_id': rule_id,
                             'title': title,
                             'status': 'PASS',
-                            'details': f'Audit rules for {keyword} are configured',
+                            'details': f'Audit rules for {keyword} are configured in {config_file_used}',
                             'severity': 'Medium',
                             'section': 'logging_auditing'
                         })
@@ -1693,7 +1725,7 @@ def check_system_auditing_online():
                             'rule_id': rule_id,
                             'title': title,
                             'status': 'FAIL',
-                            'details': f'Audit rules for {keyword} are not configured',
+                            'details': f'Audit rules for {keyword} are not configured in {config_file_used}',
                             'severity': 'Medium',
                             'section': 'logging_auditing',
                             'remediation': f'Configure audit rules for {keyword} monitoring'
@@ -1780,10 +1812,10 @@ def check_system_auditing_online():
                                 'title': title,
                                 'status': 'FAIL',
                                 'details': f'{file_path} group owner is {actual_gid} (expected {expected})',
-                                'severity': 'Medium',
-                                'section': 'logging_auditing',
-                                'remediation': f'Run: chgrp {expected} {file_path}'
-                            })
+                            'severity': 'Medium',
+                            'section': 'logging_auditing',
+                            'remediation': f'Run: chgrp {expected} {file_path}'
+                        })
                     else:
                         actual_uid = stat_info.st_uid
                         expected_uid = 0 if expected == 'root' else expected

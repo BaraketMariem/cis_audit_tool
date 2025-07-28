@@ -90,7 +90,7 @@ def check_system_file_permissions_online():
                         'rule_id': rule_id,
                         'title': title,
                         'status': 'PASS',
-                        'details': f'{file_path} has correct permissions ({actual_mode}) and ownership ({owner_name}:{group_name})',
+                        'details': f'Checked {file_path}: File permissions {actual_mode}, owner {owner_name}:{group_name} (UID:{stat_info.st_uid}, GID:{stat_info.st_gid}) - matches required {expected_mode} {expected_owner}:{expected_group}',
                         'severity': 'High',
                         'section': 'system_maintenance'
                     })
@@ -99,7 +99,7 @@ def check_system_file_permissions_online():
                         'rule_id': rule_id,
                         'title': title,
                         'status': 'FAIL',
-                        'details': f'{file_path} issues: {"; ".join(issues)}',
+                        'details': f'Checked {file_path}: Issues found - {"; ".join(issues)}',
                         'severity': 'High',
                         'section': 'system_maintenance',
                         'remediation': f'Run: chown {expected_owner}:{expected_group} {file_path} && chmod {expected_mode} {file_path}'
@@ -158,7 +158,7 @@ def check_system_file_permissions_online():
                 'rule_id': '7.1.11',
                 'title': 'Ensure world writable files and directories are secured',
                 'status': 'PASS',
-                'details': 'No inappropriate world-writable files found',
+                'details': f"No inappropriate world-writable files found via '{world_writable_cmd}'",
                 'severity': 'Medium',
                 'section': 'system_maintenance'
             })
@@ -172,7 +172,7 @@ def check_system_file_permissions_online():
                 'rule_id': '7.1.11',
                 'title': 'Ensure world writable files and directories are secured',
                 'status': 'FAIL',
-                'details': f'World-writable files found: {"; ".join(file_list)}',
+                'details': f"Found world-writable files via '{world_writable_cmd}': {'; '.join(file_list)}",
                 'severity': 'Medium',
                 'section': 'system_maintenance',
                 'remediation': 'Review and secure world-writable files: chmod o-w <file>'
@@ -209,7 +209,7 @@ def check_system_file_permissions_online():
                 'rule_id': '7.1.12',
                 'title': 'Ensure no files or directories without an owner and a group exist',
                 'status': 'PASS',
-                'details': 'No orphaned files or directories found',
+                'details': f"No orphaned files or directories found via '{no_owner_cmd}' and '{no_group_cmd}'",
                 'severity': 'Medium',
                 'section': 'system_maintenance'
             })
@@ -218,7 +218,7 @@ def check_system_file_permissions_online():
                 'rule_id': '7.1.12',
                 'title': 'Ensure no files or directories without an owner and a group exist',
                 'status': 'FAIL',
-                'details': f'Orphaned files found: {"; ".join(orphaned_files[:10])}',
+                'details': f"Found orphaned files via '{no_owner_cmd}' and '{no_group_cmd}': {"; ".join(orphaned_files[:10])}",
                 'severity': 'Medium',
                 'section': 'system_maintenance',
                 'remediation': 'Assign proper ownership to orphaned files: chown <user>:<group> <file>'
@@ -266,7 +266,7 @@ def check_system_file_permissions_online():
                 'rule_id': '7.1.13',
                 'title': 'Ensure SUID and SGID files are reviewed',
                 'status': 'MANUAL',
-                'details': f'Found {"; ".join(file_summary)} - manual review required',
+                'details': f"Found {'; '.join(file_summary)} via '{suid_cmd}' and '{sgid_cmd}' - manual review required",
                 'severity': 'Medium',
                 'section': 'system_maintenance',
                 'remediation': 'Review SUID/SGID files and remove unnecessary permissions'
@@ -276,7 +276,7 @@ def check_system_file_permissions_online():
                 'rule_id': '7.1.13',
                 'title': 'Ensure SUID and SGID files are reviewed',
                 'status': 'MANUAL',
-                'details': 'No SUID/SGID files found - manual review recommended',
+                'details': f"No SUID/SGID files found via '{suid_cmd}' and '{sgid_cmd}' - manual review recommended",
                 'severity': 'Medium',
                 'section': 'system_maintenance'
             })
@@ -322,7 +322,7 @@ def check_system_file_permissions_offline(data_dir):
                     'rule_id': rule_id,
                     'title': title,
                     'status': 'MANUAL',
-                    'details': f'{filename} file found in collected data - manual review of permissions required',
+                    'details': f'{filename} file found in collected data - manual review of permissions required. Expected permissions: {expected_mode} {expected_owner}:{expected_group}',
                     'severity': 'High',
                     'section': 'system_maintenance',
                     'remediation': f'Verify permissions: should be {expected_mode} {expected_owner}:{expected_group}'
@@ -404,7 +404,7 @@ def check_user_group_settings_online():
                     'rule_id': '7.2.1',
                     'title': 'Ensure accounts in /etc/passwd use shadowed passwords',
                     'status': 'PASS',
-                    'details': 'All accounts use shadowed passwords',
+                    'details': f"Checked /etc/passwd: All accounts use shadowed passwords (password field contains 'x', '*', '!', or '!!')",
                     'severity': 'High',
                     'section': 'system_maintenance'
                 })
@@ -413,7 +413,7 @@ def check_user_group_settings_online():
                     'rule_id': '7.2.1',
                     'title': 'Ensure accounts in /etc/passwd use shadowed passwords',
                     'status': 'FAIL',
-                    'details': f'Accounts not using shadowed passwords: {", ".join(non_shadowed_accounts)}',
+                    'details': f'Checked /etc/passwd: Accounts not using shadowed passwords: {", ".join(non_shadowed_accounts)} (password field contains actual password hash)',
                     'severity': 'High',
                     'section': 'system_maintenance',
                     'remediation': 'Run: pwconv to convert to shadowed passwords'
@@ -461,7 +461,7 @@ def check_user_group_settings_online():
                     'rule_id': '7.2.2',
                     'title': 'Ensure /etc/shadow password fields are not empty',
                     'status': 'PASS',
-                    'details': 'No accounts with empty password fields found',
+                    'details': 'Checked /etc/shadow: No accounts with empty password fields found',
                     'severity': 'High',
                     'section': 'system_maintenance'
                 })
@@ -470,7 +470,7 @@ def check_user_group_settings_online():
                     'rule_id': '7.2.2',
                     'title': 'Ensure /etc/shadow password fields are not empty',
                     'status': 'FAIL',
-                    'details': f'Accounts with empty passwords: {", ".join(empty_password_accounts)}',
+                    'details': f'Checked /etc/shadow: Accounts with empty passwords: {", ".join(empty_password_accounts)}',
                     'severity': 'High',
                     'section': 'system_maintenance',
                     'remediation': 'Lock or delete accounts with empty passwords: passwd -l <account>'
@@ -534,7 +534,7 @@ def check_user_group_settings_online():
                     'rule_id': '7.2.3',
                     'title': 'Ensure all groups in /etc/passwd exist in /etc/group',
                     'status': 'PASS',
-                    'details': 'All groups referenced in /etc/passwd exist in /etc/group',
+                    'details': 'Checked /etc/passwd and /etc/group: All GIDs referenced in /etc/passwd exist in /etc/group',
                     'severity': 'Medium',
                     'section': 'system_maintenance'
                 })
@@ -543,7 +543,7 @@ def check_user_group_settings_online():
                     'rule_id': '7.2.3',
                     'title': 'Ensure all groups in /etc/passwd exist in /etc/group',
                     'status': 'FAIL',
-                    'details': f'Missing GIDs in /etc/group: {", ".join(map(str, sorted(missing_gids)))}',
+                    'details': f'Checked /etc/passwd and /etc/group: Missing GIDs in /etc/group: {", ".join(map(str, sorted(missing_gids)))}',
                     'severity': 'Medium',
                     'section': 'system_maintenance',
                     'remediation': 'Add missing groups to /etc/group or fix user GIDs'
@@ -596,7 +596,7 @@ def check_user_group_settings_online():
                     'rule_id': '7.2.4',
                     'title': 'Ensure no duplicate UIDs exist',
                     'status': 'PASS',
-                    'details': 'No duplicate UIDs found',
+                    'details': 'Checked /etc/passwd: No duplicate UIDs found',
                     'severity': 'High',
                     'section': 'system_maintenance'
                 })
@@ -609,7 +609,7 @@ def check_user_group_settings_online():
                     'rule_id': '7.2.4',
                     'title': 'Ensure no duplicate UIDs exist',
                     'status': 'FAIL',
-                    'details': f'Duplicate UIDs found: {"; ".join(duplicate_details)}',
+                    'details': f'Checked /etc/passwd: Duplicate UIDs found: {"; ".join(duplicate_details)}',
                     'severity': 'High',
                     'section': 'system_maintenance',
                     'remediation': 'Assign unique UIDs to duplicate accounts'
@@ -662,7 +662,7 @@ def check_user_group_settings_online():
                     'rule_id': '7.2.5',
                     'title': 'Ensure no duplicate GIDs exist',
                     'status': 'PASS',
-                    'details': 'No duplicate GIDs found',
+                    'details': 'Checked /etc/group: No duplicate GIDs found',
                     'severity': 'Medium',
                     'section': 'system_maintenance'
                 })
@@ -675,7 +675,7 @@ def check_user_group_settings_online():
                     'rule_id': '7.2.5',
                     'title': 'Ensure no duplicate GIDs exist',
                     'status': 'FAIL',
-                    'details': f'Duplicate GIDs found: {"; ".join(duplicate_details)}',
+                    'details': f'Checked /etc/group: Duplicate GIDs found: {"; ".join(duplicate_details)}',
                     'severity': 'Medium',
                     'section': 'system_maintenance',
                     'remediation': 'Assign unique GIDs to duplicate groups'
@@ -724,7 +724,7 @@ def check_user_group_settings_online():
                     'rule_id': '7.2.6',
                     'title': 'Ensure no duplicate user names exist',
                     'status': 'PASS',
-                    'details': 'No duplicate usernames found',
+                    'details': 'Checked /etc/passwd: No duplicate usernames found',
                     'severity': 'Medium',
                     'section': 'system_maintenance'
                 })
@@ -733,7 +733,7 @@ def check_user_group_settings_online():
                     'rule_id': '7.2.6',
                     'title': 'Ensure no duplicate user names exist',
                     'status': 'FAIL',
-                    'details': f'Duplicate usernames found: {", ".join(duplicate_usernames)}',
+                    'details': f'Checked /etc/passwd: Duplicate usernames found: {", ".join(duplicate_usernames)}',
                     'severity': 'Medium',
                     'section': 'system_maintenance',
                     'remediation': 'Remove or rename duplicate user accounts'
@@ -782,7 +782,7 @@ def check_user_group_settings_online():
                     'rule_id': '7.2.7',
                     'title': 'Ensure no duplicate group names exist',
                     'status': 'PASS',
-                    'details': 'No duplicate group names found',
+                    'details': 'Checked /etc/group: No duplicate group names found',
                     'severity': 'Medium',
                     'section': 'system_maintenance'
                 })
@@ -791,7 +791,7 @@ def check_user_group_settings_online():
                     'rule_id': '7.2.7',
                     'title': 'Ensure no duplicate group names exist',
                     'status': 'FAIL',
-                    'details': f'Duplicate group names found: {", ".join(duplicate_groupnames)}',
+                    'details': f'Checked /etc/group: Duplicate group names found: {", ".join(duplicate_groupnames)}',
                     'severity': 'Medium',
                     'section': 'system_maintenance',
                     'remediation': 'Remove or rename duplicate groups'
@@ -872,7 +872,7 @@ def check_user_group_settings_online():
                     'rule_id': '7.2.8',
                     'title': 'Ensure local interactive user home directories are configured',
                     'status': 'PASS',
-                    'details': f'All {len(interactive_users)} interactive user home directories are properly configured',
+                    'details': f'Checked /etc/passwd: All {len(interactive_users)} interactive user home directories are properly configured',
                     'severity': 'Medium',
                     'section': 'system_maintenance'
                 })
@@ -886,7 +886,7 @@ def check_user_group_settings_online():
                     'rule_id': '7.2.8',
                     'title': 'Ensure local interactive user home directories are configured',
                     'status': 'FAIL',
-                    'details': f'Home directory issues: {"; ".join(issue_list)}',
+                    'details': f'Checked /etc/passwd: Home directory issues: {"; ".join(issue_list)}',
                     'severity': 'Medium',
                     'section': 'system_maintenance',
                     'remediation': 'Fix home directory ownership and permissions'
@@ -968,7 +968,7 @@ def check_user_group_settings_online():
                     'rule_id': '7.2.9',
                     'title': 'Ensure local interactive user dot files access is configured',
                     'status': 'PASS',
-                    'details': f'Dot files for {checked_users} interactive users are properly configured',
+                    'details': f'Checked /etc/passwd: Dot files for {checked_users} interactive users are properly configured',
                     'severity': 'Medium',
                     'section': 'system_maintenance'
                 })
@@ -982,7 +982,7 @@ def check_user_group_settings_online():
                     'rule_id': '7.2.9',
                     'title': 'Ensure local interactive user dot files access is configured',
                     'status': 'FAIL',
-                    'details': f'Dot file issues: {"; ".join(issue_list)}',
+                    'details': f'Checked /etc/passwd: Dot file issues: {"; ".join(issue_list)}',
                     'severity': 'Medium',
                     'section': 'system_maintenance',
                     'remediation': 'Fix dot file ownership and permissions: chown <user> <dotfile> && chmod go-w <dotfile>'
