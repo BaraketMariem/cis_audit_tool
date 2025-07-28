@@ -1,1 +1,100 @@
-messages log not found
+Jul 28 01:44:10 localhost rtkit-daemon[870]: Successfully demoted thread 2526 of process 2507 (/usr/bin/pipewire).
+Jul 28 01:44:10 localhost rtkit-daemon[870]: Successfully demoted thread 2507 of process 2507 (/usr/bin/pipewire).
+Jul 28 01:44:10 localhost rtkit-daemon[870]: Demoted 6 threads.
+Jul 28 01:44:11 localhost systemd[1]: sssd-kcm.service: Deactivated successfully.
+Jul 28 01:44:11 localhost systemd[1]: sssd-kcm.service: Consumed 17.042s CPU time.
+Jul 28 01:44:11 localhost systemd[1]: Starting SSSD Kerberos Cache Manager...
+Jul 28 01:44:12 localhost systemd[1]: Started SSSD Kerberos Cache Manager.
+Jul 28 09:01:44 localhost sssd_kcm[12317]: Starting up
+Jul 28 09:01:44 localhost kernel: vmxnet3 0000:03:00.0 ens160: NIC Link is Up 10000 Mbps
+Jul 28 09:01:44 localhost NetworkManager[1077]: <info>  [1753689704.7654] device (ens160): carrier: link connected
+Jul 28 09:01:49 localhost kernel: vmxnet3 0000:03:00.0 ens160: NIC Link is Down
+Jul 28 09:01:54 localhost kernel: vmxnet3 0000:03:00.0 ens160: NIC Link is Up 10000 Mbps
+Jul 28 09:01:54 localhost NetworkManager[1077]: <info>  [1753689714.8443] device (ens160): carrier: link connected
+Jul 28 09:02:16 localhost chronyd[906]: Forward time jump detected!
+Jul 28 09:02:16 localhost chronyd[906]: Can't synchronise: no selectable sources
+Jul 28 09:03:36 localhost gsd-color[2617]: unable to get EDID for xrandr-Virtual-1: unable to get EDID for output
+Jul 28 09:03:36 localhost gnome-shell[2405]: libinput error: event2  - VirtualPS/2 VMware VMMouse: client bug: event processing lagging behind by 49ms, your system is too slow
+Jul 28 09:05:31 localhost chronyd[906]: Selected source 102.216.37.100 (2.rhel.pool.ntp.org)
+Jul 28 09:06:37 localhost chronyd[906]: Source 196.10.52.58 replaced with 160.119.216.206 (2.rhel.pool.ntp.org)
+Jul 28 09:06:57 localhost cupsd[1110]: REQUEST localhost - - "POST / HTTP/1.1" 200 185 Renew-Subscription client-error-not-found
+Jul 28 09:08:47 localhost chronyd[906]: Selected source 155.232.19.6 (2.rhel.pool.ntp.org)
+Jul 28 09:09:09 localhost kernel: vmxnet3 0000:03:00.0 ens160: NIC Link is Down
+Jul 28 09:09:14 localhost kernel: vmxnet3 0000:03:00.0 ens160: NIC Link is Up 10000 Mbps
+Jul 28 09:09:14 localhost NetworkManager[1077]: <info>  [1753690154.4294] device (ens160): carrier: link connected
+Jul 28 09:10:07 localhost NetworkManager[1077]: <info>  [1753690207.7812] dhcp4 (ens160): state changed new lease, address=192.168.136.135
+Jul 28 09:10:07 localhost systemd[1]: Starting Network Manager Script Dispatcher Service...
+Jul 28 09:10:07 localhost systemd[1]: Started Network Manager Script Dispatcher Service.
+Jul 28 09:10:18 localhost systemd[1]: NetworkManager-dispatcher.service: Deactivated successfully.
+Jul 28 09:10:20 localhost kernel: vmxnet3 0000:03:00.0 ens160: NIC Link is Down
+Jul 28 09:10:25 localhost kernel: vmxnet3 0000:03:00.0 ens160: NIC Link is Up 10000 Mbps
+Jul 28 09:10:25 localhost NetworkManager[1077]: <info>  [1753690225.2903] device (ens160): carrier: link connected
+Jul 28 09:12:58 localhost kernel: vmxnet3 0000:03:00.0 ens160: NIC Link is Down
+Jul 28 09:13:04 localhost kernel: vmxnet3 0000:03:00.0 ens160: NIC Link is Up 10000 Mbps
+Jul 28 09:13:04 localhost NetworkManager[1077]: <info>  [1753690384.1098] device (ens160): carrier: link connected
+Jul 28 09:13:44 localhost PackageKit[1841]: uid 1000 is trying to obtain org.freedesktop.packagekit.system-sources-refresh auth (only_trusted:0)
+Jul 28 09:13:45 localhost PackageKit[1841]: uid 1000 obtained auth for org.freedesktop.packagekit.system-sources-refresh
+Jul 28 09:13:48 localhost packagekitd[1841]: Skipping refresh of media: Cannot update read-only repo
+Jul 28 09:14:21 localhost systemd[1]: Starting Fingerprint Authentication Daemon...
+Jul 28 09:14:22 localhost systemd[1]: Started Fingerprint Authentication Daemon.
+Jul 28 09:14:32 localhost NetworkManager[1077]: <info>  [1753690472.6556] agent-manager: agent[e843a16dc3f3d31c,:1.70/org.gnome.Shell.NetworkAgent/1000]: agent registered
+Jul 28 09:14:48 localhost packagekitd[1841]: Skipping refresh of media: Cannot update read-only repo
+Jul 28 09:14:51 localhost systemd[1]: fprintd.service: Deactivated successfully.
+Jul 28 09:14:56 localhost packagekitd[1841]: Skipping refresh of media: Cannot update read-only repo
+Jul 28 09:15:48 localhost packagekitd[1841]: Skipping refresh of media: Cannot update read-only repo
+Jul 28 09:16:33 localhost packagekitd[1841]: Skipping refresh of media: Cannot update read-only repo
+Jul 28 09:21:32 localhost systemd[2290]: Started VTE child process 12487 launched by gnome-terminal-server process 6606.
+Jul 28 09:21:48 localhost packagekitd[1841]: Skipping refresh of media: Cannot update read-only repo
+Jul 28 09:21:54 localhost packagekitd[1841]: Skipping refresh of media: Cannot update read-only repo
+Jul 28 09:22:02 localhost gnome-shell[2405]: libinput error: event2  - VirtualPS/2 VMware VMMouse: client bug: event processing lagging behind by 23ms, your system is too slow
+Jul 28 09:22:02 localhost gnome-shell[2405]: libinput error: event2  - VirtualPS/2 VMware VMMouse: client bug: event processing lagging behind by 12ms, your system is too slow
+Jul 28 09:22:05 localhost gnome-shell[2405]: libinput error: event2  - VirtualPS/2 VMware VMMouse: client bug: event processing lagging behind by 12ms, your system is too slow
+Jul 28 09:22:25 localhost gsd-color[2617]: unable to get EDID for xrandr-Virtual-1: unable to get EDID for output
+Jul 28 09:22:25 localhost gnome-shell[2405]: libinput error: event2  - VirtualPS/2 VMware VMMouse: client bug: event processing lagging behind by 20ms, your system is too slow
+Jul 28 09:22:25 localhost gnome-shell[2405]: libinput error: event2  - VirtualPS/2 VMware VMMouse: WARNING: log rate limit exceeded (5 msgs per 60min). Discarding future messages.
+Jul 28 09:22:32 localhost gnome-shell[2405]: Source ID 1888 was not found when attempting to remove it
+Jul 28 09:24:44 localhost systemd[1]: Starting Fingerprint Authentication Daemon...
+Jul 28 09:24:45 localhost systemd[1]: Started Fingerprint Authentication Daemon.
+Jul 28 09:25:07 localhost NetworkManager[1077]: <info>  [1753691107.7789] dhcp4 (ens160): state changed new lease, address=192.168.136.135
+Jul 28 09:25:07 localhost systemd[1]: Starting Network Manager Script Dispatcher Service...
+Jul 28 09:25:08 localhost systemd[1]: Started Network Manager Script Dispatcher Service.
+Jul 28 09:25:15 localhost systemd[1]: fprintd.service: Deactivated successfully.
+Jul 28 09:25:18 localhost systemd[1]: NetworkManager-dispatcher.service: Deactivated successfully.
+Jul 28 09:28:35 localhost chronyd[906]: Selected source 160.119.216.206 (2.rhel.pool.ntp.org)
+Jul 28 09:31:33 localhost systemd[1]: Starting Fingerprint Authentication Daemon...
+Jul 28 09:31:33 localhost systemd[1]: Started Fingerprint Authentication Daemon.
+Jul 28 09:32:03 localhost systemd[1]: fprintd.service: Deactivated successfully.
+Jul 28 09:34:46 localhost pipewire[2507]: spa.alsa: front:0: (0 missed) snd_pcm_avail after recover: Broken pipe
+Jul 28 09:34:52 localhost systemd[1]: Starting Fingerprint Authentication Daemon...
+Jul 28 09:34:53 localhost systemd[1]: Started Fingerprint Authentication Daemon.
+Jul 28 09:35:24 localhost systemd[1]: fprintd.service: Deactivated successfully.
+Jul 28 09:39:56 localhost systemd[1]: Starting Fingerprint Authentication Daemon...
+Jul 28 09:39:56 localhost systemd[1]: Started Fingerprint Authentication Daemon.
+Jul 28 09:40:07 localhost NetworkManager[1077]: <info>  [1753692007.7661] dhcp4 (ens160): state changed new lease, address=192.168.136.135
+Jul 28 09:40:07 localhost systemd[1]: Starting Network Manager Script Dispatcher Service...
+Jul 28 09:40:07 localhost systemd[1]: Started Network Manager Script Dispatcher Service.
+Jul 28 09:40:18 localhost systemd[1]: NetworkManager-dispatcher.service: Deactivated successfully.
+Jul 28 09:40:26 localhost systemd[1]: fprintd.service: Deactivated successfully.
+Jul 28 09:43:39 localhost systemd[1]: Starting Fingerprint Authentication Daemon...
+Jul 28 09:43:39 localhost systemd[1]: Started Fingerprint Authentication Daemon.
+Jul 28 09:44:09 localhost systemd[1]: fprintd.service: Deactivated successfully.
+Jul 28 09:46:38 localhost pipewire[2507]: spa.alsa: front:0: (0 missed) snd_pcm_avail after recover: Broken pipe
+Jul 28 09:49:15 localhost gnome-shell[2405]: Source ID 110810 was not found when attempting to remove it
+Jul 28 09:49:54 localhost systemd[1]: Starting Fingerprint Authentication Daemon...
+Jul 28 09:49:54 localhost systemd[1]: Started Fingerprint Authentication Daemon.
+Jul 28 09:50:24 localhost systemd[1]: fprintd.service: Deactivated successfully.
+Jul 28 09:52:05 localhost systemd[1]: Starting Fingerprint Authentication Daemon...
+Jul 28 09:52:06 localhost systemd[1]: Started Fingerprint Authentication Daemon.
+Jul 28 09:52:36 localhost systemd[1]: fprintd.service: Deactivated successfully.
+Jul 28 09:54:34 localhost systemd[1]: Starting Fingerprint Authentication Daemon...
+Jul 28 09:54:34 localhost systemd[1]: Started Fingerprint Authentication Daemon.
+Jul 28 09:54:40 localhost gnome-shell[15487]: polkit-agent-helper-1: pam_authenticate failed: Authentication failure
+Jul 28 09:55:04 localhost systemd[1]: fprintd.service: Deactivated successfully.
+Jul 28 09:55:07 localhost NetworkManager[1077]: <info>  [1753692907.7656] dhcp4 (ens160): state changed new lease, address=192.168.136.135
+Jul 28 09:55:07 localhost systemd[1]: Starting Network Manager Script Dispatcher Service...
+Jul 28 09:55:07 localhost systemd[1]: Started Network Manager Script Dispatcher Service.
+Jul 28 09:55:18 localhost systemd[1]: NetworkManager-dispatcher.service: Deactivated successfully.
+Jul 28 09:58:51 localhost systemd[1]: Starting Fingerprint Authentication Daemon...
+Jul 28 09:58:51 localhost systemd[1]: Started Fingerprint Authentication Daemon.
+Jul 28 09:58:56 localhost systemd[1]: Starting Hostname Service...
+Jul 28 09:58:56 localhost systemd[1]: Started Hostname Service.

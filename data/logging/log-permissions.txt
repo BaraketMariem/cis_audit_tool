@@ -1,27 +1,28 @@
-total 2632
-drwxr-xr-x. 15 root   root     4096 Jul 27 21:07 .
+total 2652
+drwxr-xr-x. 15 root   root     4096 Jul 28 01:43 .
 drwxr-xr-x. 20 root   root     4096 Jun 20 17:32 ..
 drwxr-xr-x.  2 root   root     4096 Jun 20 17:29 anaconda
 drwx------.  2 root   root       23 Jun 20 17:32 audit
--rw-------.  1 root   root     2718 Jul 27 21:08 boot.log
+-rw-------.  1 root   root        0 Jul 28 01:43 boot.log
 -rw-------.  1 root   root    36268 Jun 22 13:32 boot.log-20250622
 -rw-------.  1 root   root    15176 Jul  7 09:15 boot.log-20250707
 -rw-------.  1 root   root     2568 Jul  8 20:53 boot.log-20250708
 -rw-------.  1 root   root    15109 Jul 14 11:04 boot.log-20250714
 -rw-------.  1 root   root     2635 Jul 16 16:19 boot.log-20250716
 -rw-------.  1 root   root    14702 Jul 27 21:07 boot.log-20250727
+-rw-------.  1 root   root     2718 Jul 28 01:43 boot.log-20250728
 -rw-rw----.  1 root   utmp        0 Jul  7 09:15 btmp
 -rw-rw----.  1 root   utmp     1152 Jun 20 21:38 btmp-20250707
 drwxr-x---.  2 chrony chrony      6 Oct 13  2022 chrony
--rw-------.  1 root   root     2204 Jul 27 23:34 cron
+-rw-------.  1 root   root     3106 Jul 28 09:59 cron
 -rw-------.  1 root   root     2601 Jun 30 22:01 cron-20250707
 -rw-------.  1 root   root     4895 Jul  9 01:01 cron-20250714
 -rw-------.  1 root   root     6433 Jul 18 17:01 cron-20250721
 -rw-------.  1 root   root    13280 Jul 25 15:01 cron-20250727
 drwxr-xr-x.  2 lp     sys        57 Jun 20 16:35 cups
--rw-r--r--.  1 root   root    66752 Jul 27 21:50 dnf.librepo.log
--rw-r--r--.  1 root   root   120707 Jul 27 21:52 dnf.log
--rw-r--r--.  1 root   root     4191 Jul 27 21:48 dnf.rpm.log
+-rw-r--r--.  1 root   root    66984 Jul 27 23:52 dnf.librepo.log
+-rw-r--r--.  1 root   root   121854 Jul 27 23:52 dnf.log
+-rw-r--r--.  1 root   root     4249 Jul 27 23:52 dnf.rpm.log
 -rw-r-----.  1 root   root        0 Jun 20 17:32 firewalld
 drwx--x--x.  2 root   gdm         6 Jan 27  2023 gdm
 -rw-r--r--.  1 root   root      120 Jul 27 23:27 hawkey.log
@@ -37,7 +38,7 @@ drwx------.  2 root   root        6 Sep 21  2023 insights-client
 -rw-------.  1 root   root        0 Jul  7 09:15 maillog-20250714
 -rw-------.  1 root   root        0 Jul 14 11:04 maillog-20250721
 -rw-------.  1 root   root        0 Jul 21 08:53 maillog-20250727
--rw-------.  1 root   root   325330 Jul 27 23:34 messages
+-rw-------.  1 root   root   341407 Jul 28 09:58 messages
 -rw-------.  1 root   root   100185 Jun 30 22:38 messages-20250707
 -rw-------.  1 root   root   429402 Jul  9 06:33 messages-20250714
 -rw-------.  1 root   root   582034 Jul 21 08:53 messages-20250721
@@ -47,7 +48,7 @@ drwxr-xr-x.  2 root   root        6 Sep 18  2023 qemu-ga
 lrwxrwxrwx.  1 root   root       39 Jun 20 16:29 README -> ../../usr/share/doc/systemd/README.logs
 drwxr-xr-x.  2 root   root     4096 Jul 27 21:07 rhsm
 drwx------.  3 root   root       17 Jun 20 16:30 samba
--rw-------.  1 root   root   116466 Jul 27 23:34 secure
+-rw-------.  1 root   root   121118 Jul 28 09:58 secure
 -rw-------.  1 root   root     3829 Jun 30 13:12 secure-20250707
 -rw-------.  1 root   root    14934 Jul  7 16:03 secure-20250714
 -rw-------.  1 root   root     7931 Jul 16 21:29 secure-20250721
@@ -72,6 +73,6 @@ drwxr-xr-x.  2 root   root       23 Jun 20 21:35 tuned
 -rw-r--r--.  1 root   root      306 Jun 21 01:07 vmware-network.9.log
 -rw-r--r--.  1 root   root      195 Jul 27 21:07 vmware-network.log
 -rw-------.  1 root   root     7155 Jul 27 21:07 vmware-vgauthsvc.log.0
--rw-------.  1 root   root    31082 Jul 27 21:07 vmware-vmsvc-root.log
+-rw-------.  1 root   root    31401 Jul 28 09:02 vmware-vmsvc-root.log
 -rw-------.  1 root   root     3260 Jul 27 21:07 vmware-vmtoolsd-root.log
 -rw-rw-r--.  1 root   utmp     7680 Jul 27 21:09 wtmp

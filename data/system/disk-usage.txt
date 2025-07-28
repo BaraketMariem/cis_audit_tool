@@ -4,6 +4,6 @@ tmpfs                  1.8G     0  1.8G   0% /dev/shm
 tmpfs                  724M  9.7M  714M   2% /run
 /dev/mapper/rhel-root   64G  6.5G   58G  11% /
 /dev/nvme0n1p1         960M  300M  661M  32% /boot
-/dev/mapper/rhel-home   32G  365M   31G   2% /home
-tmpfs                  362M  112K  362M   1% /run/user/1000
+/dev/mapper/rhel-home   32G  366M   31G   2% /home
+tmpfs                  362M  120K  362M   1% /run/user/1000
 /dev/sr0               9.9G  9.9G     0 100% /run/media/mariem/RHEL-9-3-0-BaseOS-x86_64

@@ -5,7 +5,9 @@ Byte Order:                         Little Endian
 CPU(s):                             1
 On-line CPU(s) list:                0
 Vendor ID:                          GenuineIntel
+BIOS Vendor ID:                     GenuineIntel
 Model name:                         12th Gen Intel(R) Core(TM) i7-12650H
+BIOS Model name:                    12th Gen Intel(R) Core(TM) i7-12650H
 CPU family:                         6
 Model:                              154
 Thread(s) per core:                 1

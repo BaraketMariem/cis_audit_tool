@@ -11,9 +11,31 @@ import json
 from pathlib import Path
 from datetime import datetime
 
+def normalize_status(result):
+    """
+    Normalize all non-PASS/FAIL statuses to SKIP with appropriate reason
+    This simplifies the output by treating all non-executable tests as skipped
+    """
+    status = result.get('status', 'UNKNOWN')
+    details = result.get('details', 'No details provided')
+    
+    if status == 'PASS':
+        return 'PASS', details
+    elif status == 'FAIL':
+        return 'FAIL', details
+    else:
+        # All other statuses become SKIP with explanation
+        if status == 'ERROR':
+            reason = f"Test skipped due to error: {details}"
+        elif status == 'UNKNOWN' or status is None:
+            reason = f"Test skipped due to unknown status: {details}"
+        else:
+            reason = f"Test skipped (status: {status}): {details}"
+        
+        return 'SKIP', reason
 
 def print_results(results, verbose=False, failed_only=False, detailed=False, section_details=None):
-    """Print audit results with summary - CLEAN VERSION"""
+    """Print audit results with summary - SIMPLIFIED COUNTING"""
     if not results:
         print("No results to display. Check for errors above.")
         return
@@ -27,21 +49,30 @@ def print_results(results, verbose=False, failed_only=False, detailed=False, sec
         print(f"DETAILED BREAKDOWN - {section_details.upper()} SECTION")
         print("=" * 60)
 
-    # Count results properly
-    total = len(results)
-    passed = len([r for r in results if r.get('status') == 'PASS'])
-    failed = len([r for r in results if r.get('status') == 'FAIL'])
-    skipped = len([r for r in results if r.get('status') == 'ERROR'])
+    # Normalize all results and count properly
+    normalized_results = []
+    for result in results:
+        normalized_status, normalized_details = normalize_status(result)
+        normalized_result = result.copy()
+        normalized_result['normalized_status'] = normalized_status
+        normalized_result['normalized_details'] = normalized_details
+        normalized_results.append(normalized_result)
+
+    # Count results using normalized status
+    total = len(normalized_results)
+    passed = len([r for r in normalized_results if r.get('normalized_status') == 'PASS'])
+    failed = len([r for r in normalized_results if r.get('normalized_status') == 'FAIL'])
+    skipped = len([r for r in normalized_results if r.get('normalized_status') == 'SKIP'])
     
-    # Verify counts add up
+    # Verify counts add up (should always be true now)
     calculated_total = passed + failed + skipped
     if calculated_total != total:
-        print(f"Warning: Count mismatch detected. Total: {total}, Calculated: {calculated_total}")
+        print(f"ERROR: Count mismatch - Total: {total}, Calculated: {calculated_total}")
 
-    # Group results by status
-    passed_results = [r for r in results if r.get('status') == 'PASS']
-    failed_results = [r for r in results if r.get('status') == 'FAIL']
-    skipped_results = [r for r in results if r.get('status') == 'ERROR']
+    # Group results by normalized status
+    passed_results = [r for r in normalized_results if r.get('normalized_status') == 'PASS']
+    failed_results = [r for r in normalized_results if r.get('normalized_status') == 'FAIL']
+    skipped_results = [r for r in normalized_results if r.get('normalized_status') == 'SKIP']
 
     print(f"\nTEST RESULTS")
     print("=" * 80)
@@ -56,8 +87,9 @@ def print_results(results, verbose=False, failed_only=False, detailed=False, sec
                 rule_id = result.get('rule_id', 'Unknown')
                 title = result.get('title', 'Unknown Check')
                 print(f"PASS  {rule_id}: {title}")
-                if detailed and result.get('details'):
-                    print(f"      Details: {result.get('details')}")
+                if detailed or verbose or section_details:
+                    details = result.get('normalized_details', 'No details available')
+                    print(f"      Details: {details}")
 
     # Show failed tests
     if failed_results:
@@ -66,9 +98,9 @@ def print_results(results, verbose=False, failed_only=False, detailed=False, sec
         for result in failed_results:
             rule_id = result.get('rule_id', 'Unknown')
             title = result.get('title', 'Unknown Check')
-            details = result.get('details', 'No details available')
+            details = result.get('normalized_details', 'No details available')
             print(f"FAIL  {rule_id}: {title}")
-            if detailed or verbose or failed_only:
+            if detailed or verbose or failed_only or section_details:
                 print(f"      Reason: {details}")
 
     # Show skipped tests
@@ -78,9 +110,9 @@ def print_results(results, verbose=False, failed_only=False, detailed=False, sec
         for result in skipped_results:
             rule_id = result.get('rule_id', 'Unknown')
             title = result.get('title', 'Unknown Check')
-            reason = result.get('details', 'No reason provided')
+            reason = result.get('normalized_details', 'No reason provided')
             print(f"SKIP  {rule_id}: {title}")
-            if detailed or verbose:
+            if detailed or verbose or section_details:
                 print(f"      Reason: {reason}")
 
     # Print summary
@@ -94,20 +126,22 @@ def print_results(results, verbose=False, failed_only=False, detailed=False, sec
 
     # Compliance score
     if total > 0:
-        compliance_score = (passed / (passed + failed)) * 100 if (passed + failed) > 0 else 0
-        print(f"Compliance Score: {compliance_score:.1f}% (excluding skipped tests)")
+        compliance_score = (passed / total) * 100
+        print(f"Compliance Score: {compliance_score:.1f}%")
     
     # Section breakdown if verbose or detailed
     if verbose or detailed or section_details:
-        print_section_summary(results)
+        print_section_summary(normalized_results)
 
-def print_section_summary(results):
-    """Print summary by CIS section"""
+def print_section_summary(normalized_results):
+    """Print summary by CIS section - SIMPLIFIED COUNTING"""
     sections = {}
-    for result in results:
+    
+    for result in normalized_results:
         rule_id = result.get('rule_id', '0.0.0')
         section = rule_id.split('.')[0]
         section_name = result.get('section_name', f'Section {section}')
+        status = result.get('normalized_status', 'SKIP')
         
         if section not in sections:
             sections[section] = {
@@ -119,28 +153,35 @@ def print_section_summary(results):
             }
         
         sections[section]['total'] += 1
-        status = result.get('status', 'UNKNOWN')
+        
+        # Count by normalized status (only 3 possible values now)
         if status == 'PASS':
             sections[section]['passed'] += 1
         elif status == 'FAIL':
             sections[section]['failed'] += 1
-        elif status == 'ERROR':
+        elif status == 'SKIP':
             sections[section]['skipped'] += 1
 
     print(f"\nSECTION BREAKDOWN:")
     print("-" * 80)
+    
     for section_id in sorted(sections.keys()):
         if section_id == '0':  # Skip invalid section IDs
             continue
+            
         section_data = sections[section_id]
         total = section_data['total']
         passed = section_data['passed']
         failed = section_data['failed']
         skipped = section_data['skipped']
         
+        # Verify math (should always be correct now)
+        calculated_total = passed + failed + skipped
+        if calculated_total != total:
+            print(f"ERROR: Section {section_id} math error - Total: {total}, Calculated: {calculated_total}")
+        
         # Calculate compliance for this section
-        testable = passed + failed
-        compliance = (passed / testable) * 100 if testable > 0 else 0
+        compliance = (passed / total) * 100 if total > 0 else 0
         
         print(f"Section {section_id} - {section_data['name']}:")
         print(f"  Total: {total}")
@@ -148,16 +189,31 @@ def print_section_summary(results):
         print(f"  Failed: {failed}")
         print(f"  Skipped: {skipped}")
         print(f"  Compliance: {compliance:.1f}%")
+        
+        # Verify math in output
+        display_total = passed + failed + skipped
+        if display_total != total:
+             print(f"  Math Check: {passed}+{failed}+{skipped}={display_total} ≠ {total} ✗")
+        
         print()
 
 def save_results_json(results, output_file):
-    """Save results to JSON file"""
+    """Save results to JSON file with normalized statuses"""
     try:
+        # Normalize results for JSON output
+        normalized_results = []
+        for result in results:
+            normalized_status, normalized_details = normalize_status(result)
+            normalized_result = result.copy()
+            normalized_result['final_status'] = normalized_status
+            normalized_result['final_details'] = normalized_details
+            normalized_results.append(normalized_result)
+        
         # Count results properly
-        total = len(results)
-        passed = len([r for r in results if r.get('status') == 'PASS'])
-        failed = len([r for r in results if r.get('status') == 'FAIL'])
-        skipped = len([r for r in results if r.get('status') == 'ERROR'])
+        total = len(normalized_results)
+        passed = len([r for r in normalized_results if r.get('final_status') == 'PASS'])
+        failed = len([r for r in normalized_results if r.get('final_status') == 'FAIL'])
+        skipped = len([r for r in normalized_results if r.get('final_status') == 'SKIP'])
         
         output_data = {
             'timestamp': datetime.now().isoformat(),
@@ -166,9 +222,9 @@ def save_results_json(results, output_file):
                 'passed': passed,
                 'failed': failed,
                 'skipped': skipped,
-                'compliance_score': (passed / (passed + failed)) * 100 if (passed + failed) > 0 else 0
+                'compliance_score': (passed / total) * 100 if total > 0 else 0
             },
-            'results': results
+            'results': normalized_results
         }
         
         with open(output_file, 'w') as f:
@@ -243,6 +299,8 @@ Examples:
 
 Available sections:
   initial_setup, services, network, firewall, access_control, logging, system_maintenance
+
+Note: All non-PASS/FAIL tests are categorized as SKIPPED with detailed reasons.
         """
     )
     
@@ -285,7 +343,7 @@ Available sections:
         print("Error: Cannot specify both --online and --offline")
         sys.exit(1)
 
-   
+    # Banner removed - proceeding directly to execution
 
     results = []
     
@@ -369,8 +427,14 @@ Available sections:
         save_results_json(results, args.output)
     
     # Exit with appropriate code
-    failed_count = len([r for r in results if r.get('status') == 'FAIL'])
-    sys.exit(1 if failed_count > 0 else 0)
+    # Count using normalized status for exit code
+    normalized_failed = 0
+    for result in results:
+        normalized_status, _ = normalize_status(result)
+        if normalized_status == 'FAIL':
+            normalized_failed += 1
+    
+    sys.exit(1 if normalized_failed > 0 else 0)
 
 if __name__ == '__main__':
     main()

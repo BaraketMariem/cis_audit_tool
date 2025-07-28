@@ -1,1 +1,1 @@
-Directory requires root access: /etc/sudoers.d
+Directory exists but empty or inaccessible: /etc/sudoers.d
