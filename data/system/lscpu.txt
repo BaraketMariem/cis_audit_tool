@@ -14,7 +14,7 @@ Thread(s) per core:                 1
 Core(s) per socket:                 1
 Socket(s):                          1
 Stepping:                           3
-BogoMIPS:                           5375.99
+BogoMIPS:                           5376.00
 Flags:                              fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon rep_good nopl xtopology tsc_reliable nonstop_tsc cpuid tsc_known_freq pni pclmulqdq ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch pti ssbd ibrs ibpb stibp fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves arat umip gfni vaes vpclmulqdq rdpid fsrm md_clear flush_l1d arch_capabilities
 Hypervisor vendor:                  VMware
 Virtualization type:                full

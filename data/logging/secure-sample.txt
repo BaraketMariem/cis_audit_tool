@@ -1,100 +1,21 @@
-Jul 27 22:29:23 localhost sudo[5963]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
-Jul 27 22:29:26 localhost sudo[5963]: pam_unix(sudo:session): session closed for user root
-Jul 27 22:29:26 localhost sudo[5966]:  mariem : TTY=pts/0 ; PWD=/home/mariem/cis_audit_tool/scripts ; USER=root ; COMMAND=/bin/systemctl is-enabled sshd
-Jul 27 22:29:26 localhost sudo[5966]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
-Jul 27 22:29:26 localhost sudo[5966]: pam_unix(sudo:session): session closed for user root
-Jul 27 22:29:26 localhost sudo[5969]:  mariem : TTY=pts/0 ; PWD=/home/mariem/cis_audit_tool/scripts ; USER=root ; COMMAND=/bin/systemctl is-active sshd
-Jul 27 22:29:26 localhost sudo[5969]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
-Jul 27 22:29:26 localhost sudo[5969]: pam_unix(sudo:session): session closed for user root
-Jul 27 22:29:27 localhost sudo[5972]:  mariem : TTY=pts/0 ; PWD=/home/mariem/cis_audit_tool/scripts ; USER=root ; COMMAND=/bin/systemctl is-enabled rsyslog
-Jul 27 22:29:27 localhost sudo[5972]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
-Jul 27 22:29:27 localhost sudo[5972]: pam_unix(sudo:session): session closed for user root
-Jul 27 22:29:27 localhost sudo[5975]:  mariem : TTY=pts/0 ; PWD=/home/mariem/cis_audit_tool/scripts ; USER=root ; COMMAND=/bin/systemctl is-active rsyslog
-Jul 27 22:29:27 localhost sudo[5975]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
-Jul 27 22:29:27 localhost sudo[5975]: pam_unix(sudo:session): session closed for user root
-Jul 27 22:29:28 localhost sudo[5978]:  mariem : TTY=pts/0 ; PWD=/home/mariem/cis_audit_tool/scripts ; USER=root ; COMMAND=/bin/systemctl is-enabled auditd
-Jul 27 22:29:28 localhost sudo[5978]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
-Jul 27 22:29:28 localhost sudo[5978]: pam_unix(sudo:session): session closed for user root
-Jul 27 22:29:29 localhost sudo[5981]:  mariem : TTY=pts/0 ; PWD=/home/mariem/cis_audit_tool/scripts ; USER=root ; COMMAND=/bin/systemctl is-active auditd
-Jul 27 22:29:29 localhost sudo[5981]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
-Jul 27 22:29:29 localhost sudo[5981]: pam_unix(sudo:session): session closed for user root
-Jul 27 22:29:29 localhost sudo[5984]:  mariem : TTY=pts/0 ; PWD=/home/mariem/cis_audit_tool/scripts ; USER=root ; COMMAND=/bin/systemctl is-enabled firewalld
-Jul 27 22:29:29 localhost sudo[5984]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
-Jul 27 22:29:29 localhost sudo[5984]: pam_unix(sudo:session): session closed for user root
-Jul 27 22:29:30 localhost sudo[5987]:  mariem : TTY=pts/0 ; PWD=/home/mariem/cis_audit_tool/scripts ; USER=root ; COMMAND=/bin/systemctl is-active firewalld
-Jul 27 22:29:30 localhost sudo[5987]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
-Jul 27 22:29:30 localhost sudo[5987]: pam_unix(sudo:session): session closed for user root
-Jul 27 22:29:30 localhost sudo[5990]:  mariem : TTY=pts/0 ; PWD=/home/mariem/cis_audit_tool/scripts ; USER=root ; COMMAND=/bin/systemctl is-enabled chronyd
-Jul 27 22:29:30 localhost sudo[5990]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
-Jul 27 22:29:30 localhost sudo[5990]: pam_unix(sudo:session): session closed for user root
-Jul 27 22:29:31 localhost sudo[5993]:  mariem : TTY=pts/0 ; PWD=/home/mariem/cis_audit_tool/scripts ; USER=root ; COMMAND=/bin/systemctl is-active chronyd
-Jul 27 22:29:31 localhost sudo[5993]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
-Jul 27 22:29:31 localhost sudo[5993]: pam_unix(sudo:session): session closed for user root
-Jul 27 22:29:31 localhost sudo[5996]:  mariem : TTY=pts/0 ; PWD=/home/mariem/cis_audit_tool/scripts ; USER=root ; COMMAND=/bin/systemctl is-enabled systemd-timesyncd
-Jul 27 22:29:31 localhost sudo[5996]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
-Jul 27 22:29:31 localhost sudo[5996]: pam_unix(sudo:session): session closed for user root
-Jul 27 22:29:32 localhost sudo[6001]:  mariem : TTY=pts/0 ; PWD=/home/mariem/cis_audit_tool/scripts ; USER=root ; COMMAND=/bin/systemctl is-active systemd-timesyncd
-Jul 27 22:29:32 localhost sudo[6001]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
-Jul 27 22:29:32 localhost sudo[6001]: pam_unix(sudo:session): session closed for user root
-Jul 27 22:29:32 localhost sudo[6004]:  mariem : TTY=pts/0 ; PWD=/home/mariem/cis_audit_tool/scripts ; USER=root ; COMMAND=/bin/systemctl is-enabled nfs-server
-Jul 27 22:29:32 localhost sudo[6004]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
-Jul 27 22:29:32 localhost sudo[6004]: pam_unix(sudo:session): session closed for user root
-Jul 27 22:29:33 localhost sudo[6009]:  mariem : TTY=pts/0 ; PWD=/home/mariem/cis_audit_tool/scripts ; USER=root ; COMMAND=/bin/systemctl is-active nfs-server
-Jul 27 22:29:33 localhost sudo[6009]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
-Jul 27 22:29:33 localhost sudo[6009]: pam_unix(sudo:session): session closed for user root
-Jul 27 22:29:33 localhost sudo[6012]:  mariem : TTY=pts/0 ; PWD=/home/mariem/cis_audit_tool/scripts ; USER=root ; COMMAND=/bin/systemctl is-enabled rpcbind
-Jul 27 22:29:33 localhost sudo[6012]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
-Jul 27 22:29:33 localhost sudo[6012]: pam_unix(sudo:session): session closed for user root
-Jul 27 22:29:34 localhost sudo[6015]:  mariem : TTY=pts/0 ; PWD=/home/mariem/cis_audit_tool/scripts ; USER=root ; COMMAND=/bin/systemctl is-active rpcbind
-Jul 27 22:29:34 localhost sudo[6015]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
-Jul 27 22:29:34 localhost sudo[6015]: pam_unix(sudo:session): session closed for user root
-Jul 27 22:29:34 localhost sudo[6018]:  mariem : TTY=pts/0 ; PWD=/home/mariem/cis_audit_tool/scripts ; USER=root ; COMMAND=/bin/ps aux
-Jul 27 22:29:34 localhost sudo[6018]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
-Jul 27 22:29:35 localhost sudo[6018]: pam_unix(sudo:session): session closed for user root
-Jul 27 22:29:35 localhost sudo[6021]:  mariem : TTY=pts/0 ; PWD=/home/mariem/cis_audit_tool/scripts ; USER=root ; COMMAND=/bin/crontab -l
-Jul 27 22:29:35 localhost sudo[6021]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
-Jul 27 22:29:35 localhost sudo[6021]: pam_unix(sudo:session): session closed for user root
-Jul 27 22:29:36 localhost sudo[6024]:  mariem : TTY=pts/0 ; PWD=/home/mariem/cis_audit_tool/scripts ; USER=root ; COMMAND=/bin/ls -la /etc/cron.d /etc/cron.daily /etc/cron.deny /etc/cron.hourly /etc/cron.monthly /etc/crontab /etc/cron.weekly
-Jul 27 22:29:36 localhost sudo[6024]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
-Jul 27 22:29:36 localhost sudo[6024]: pam_unix(sudo:session): session closed for user root
-Jul 27 22:29:36 localhost sudo[6032]:  mariem : TTY=pts/0 ; PWD=/home/mariem/cis_audit_tool/scripts ; USER=root ; COMMAND=/bin/cp /etc/ssh/sshd_config /home/mariem/cis_audit_tool/data/security/ssh/
-Jul 27 22:29:36 localhost sudo[6032]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
-Jul 27 22:29:36 localhost sudo[6032]: pam_unix(sudo:session): session closed for user root
-Jul 27 22:29:37 localhost sudo[6035]:  mariem : TTY=pts/0 ; PWD=/home/mariem/cis_audit_tool/scripts ; USER=root ; COMMAND=/bin/cp -r /etc/ssh/ssh_host_ecdsa_key /etc/ssh/ssh_host_ecdsa_key.pub /etc/ssh/ssh_host_ed25519_key /etc/ssh/ssh_host_ed25519_key.pub /etc/ssh/ssh_host_rsa_key /etc/ssh/ssh_host_rsa_key.pub /home/mariem/cis_audit_tool/data/security/ssh/
-Jul 27 22:29:37 localhost sudo[6035]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
-Jul 27 22:29:37 localhost sudo[6035]: pam_unix(sudo:session): session closed for user root
-Jul 27 22:47:30 localhost polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.615 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:mariem)
-Jul 27 22:47:36 localhost polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.619 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all-zones] (owned by unix-user:mariem)
-Jul 27 22:54:48 localhost polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.658 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:mariem)
-Jul 27 22:54:55 localhost polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.662 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all-zones] (owned by unix-user:mariem)
-Jul 27 22:55:13 localhost sudo[7677]:  mariem : TTY=pts/0 ; PWD=/home/mariem/cis_audit_tool/scripts ; USER=root ; COMMAND=./collect_data.sh
-Jul 27 22:55:13 localhost sudo[7677]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
-Jul 27 22:55:26 localhost sudo[7677]: pam_unix(sudo:session): session closed for user root
-Jul 27 22:56:29 localhost polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.698 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:mariem)
-Jul 27 23:08:26 localhost sudo[8590]:  mariem : TTY=pts/0 ; PWD=/home/mariem/cis_audit_tool ; USER=root ; COMMAND=/bin/python3 main.py --offline --verbose
-Jul 27 23:08:26 localhost sudo[8590]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
-Jul 27 23:08:27 localhost sudo[8590]: pam_unix(sudo:session): session closed for user root
-Jul 27 23:10:12 localhost polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.737 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:mariem)
-Jul 27 23:28:52 localhost polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.773 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:mariem)
-Jul 27 23:34:27 localhost polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.818 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:mariem)
-Jul 27 23:34:33 localhost polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.822 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all-zones] (owned by unix-user:mariem)
-Jul 27 23:35:45 localhost polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.850 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:mariem)
-Jul 27 23:37:33 localhost polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.885 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:mariem)
-Jul 27 23:43:48 localhost polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.921 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:mariem)
-Jul 27 23:45:13 localhost polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.956 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:mariem)
-Jul 27 23:51:24 localhost polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.991 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:mariem)
-Jul 28 09:14:29 localhost gdm-password][12420]: gkr-pam: unlocked login keyring
-Jul 28 09:24:57 localhost polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.1032 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:mariem)
-Jul 28 09:31:40 localhost polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.1068 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:mariem)
-Jul 28 09:34:58 localhost sudo[13351]:  mariem : TTY=pts/0 ; PWD=/home/mariem/cis_audit_tool ; USER=root ; COMMAND=/bin/python3 main.py --online --detailed
-Jul 28 09:34:58 localhost sudo[13351]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
-Jul 28 09:35:57 localhost sudo[13351]: pam_unix(sudo:session): session closed for user root
-Jul 28 09:40:03 localhost polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.1108 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:mariem)
-Jul 28 09:43:45 localhost polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.1144 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:mariem)
-Jul 28 09:50:00 localhost polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.1179 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:mariem)
-Jul 28 09:52:11 localhost polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.1214 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:mariem)
-Jul 28 09:54:39 localhost unix_chkpwd[15494]: password check failed for user (mariem)
-Jul 28 09:54:39 localhost polkit-agent-helper-1[15487]: pam_unix(polkit-1:auth): authentication failure; logname= uid=1000 euid=0 tty= ruser=mariem rhost=  user=mariem
-Jul 28 09:54:46 localhost polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.1249 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:mariem)
-Jul 28 09:58:56 localhost sudo[15688]:  mariem : TTY=pts/0 ; PWD=/home/mariem/cis_audit_tool/scripts ; USER=root ; COMMAND=./collect_data.sh
-Jul 28 09:58:56 localhost sudo[15688]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+Sep  9 11:56:11 localhost polkitd[873]: Loading rules from directory /etc/polkit-1/rules.d
+Sep  9 11:56:11 localhost polkitd[873]: Loading rules from directory /usr/share/polkit-1/rules.d
+Sep  9 11:56:11 localhost polkitd[873]: Finished loading, compiling and executing 13 rules
+Sep  9 11:56:11 localhost polkitd[873]: Acquired the name org.freedesktop.PolicyKit1 on the system bus
+Sep  9 11:56:24 localhost sshd[1117]: Server listening on 0.0.0.0 port 22.
+Sep  9 11:56:24 localhost sshd[1117]: Server listening on :: port 22.
+Sep  9 11:56:33 localhost systemd[1245]: pam_unix(systemd-user:session): session opened for user gdm(uid=42) by (uid=0)
+Sep  9 11:56:36 localhost gdm-launch-environment][1218]: pam_unix(gdm-launch-environment:session): session opened for user gdm(uid=42) by (uid=0)
+Sep  9 11:56:58 localhost polkitd[873]: Registered Authentication Agent for unix-session:c1 (system bus name :1.26 [/usr/bin/gnome-shell], object path /org/freedesktop/PolicyKit1/AuthenticationAgent, locale en_US.UTF-8)
+Sep  9 11:58:25 localhost gdm-password][2067]: gkr-pam: unable to locate daemon control file
+Sep  9 11:58:25 localhost gdm-password][2067]: gkr-pam: stashed password to try later in open session
+Sep  9 11:58:28 localhost systemd[2091]: pam_unix(systemd-user:session): session opened for user mariem(uid=1000) by (uid=0)
+Sep  9 11:58:30 localhost gdm-password][2067]: pam_unix(gdm-password:session): session opened for user mariem(uid=1000) by (uid=0)
+Sep  9 11:58:30 localhost gdm-password][2067]: gkr-pam: gnome-keyring-daemon started properly and unlocked keyring
+Sep  9 11:58:43 localhost gdm-launch-environment][1218]: pam_unix(gdm-launch-environment:session): session closed for user gdm
+Sep  9 11:58:43 localhost polkitd[873]: Unregistered Authentication Agent for unix-session:c1 (system bus name :1.26, object path /org/freedesktop/PolicyKit1/AuthenticationAgent, locale en_US.UTF-8) (disconnected from bus)
+Sep  9 11:58:50 localhost polkitd[873]: Registered Authentication Agent for unix-session:2 (system bus name :1.71 [/usr/bin/gnome-shell], object path /org/freedesktop/PolicyKit1/AuthenticationAgent, locale en_US.UTF-8)
+Sep  9 12:06:59 localhost polkitd[873]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.139 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:mariem)
+Sep  9 13:08:34 localhost gdm-password][4987]: gkr-pam: unlocked login keyring
+Sep  9 13:22:26 localhost sudo[5407]:  mariem : TTY=pts/0 ; PWD=/home/mariem/cis_audit_tool/scripts ; USER=root ; COMMAND=./collect_data.sh
+Sep  9 13:22:26 localhost sudo[5407]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)

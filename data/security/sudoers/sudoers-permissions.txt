@@ -3,4 +3,4 @@
 /etc/sudoers.d:
 total 12
 drwxr-x---.   2 root root    6 Jan 19  2023 .
-drwxr-xr-x. 133 root root 8192 Jul 27 21:08 ..
+drwxr-xr-x. 133 root root 8192 Sep  9 11:56 ..

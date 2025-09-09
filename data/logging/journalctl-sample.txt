@@ -1,100 +1,100 @@
-Jul 28 09:13:44 localhost.localdomain PackageKit[1841]: uid 1000 is trying to obtain org.freedesktop.packagekit.system-sources-refresh auth (only_trusted:0)
-Jul 28 09:13:45 localhost.localdomain PackageKit[1841]: uid 1000 obtained auth for org.freedesktop.packagekit.system-sources-refresh
-Jul 28 09:13:46 localhost.localdomain PackageKit[1841]: refresh-cache transaction /181_eedacecd from uid 1000 finished with success after 1550ms
-Jul 28 09:13:48 localhost.localdomain packagekitd[1841]: Skipping refresh of media: Cannot update read-only repo
-Jul 28 09:14:21 localhost.localdomain systemd[1]: Starting Fingerprint Authentication Daemon...
-Jul 28 09:14:22 localhost.localdomain systemd[1]: Started Fingerprint Authentication Daemon.
-Jul 28 09:14:29 localhost.localdomain gdm-password][12420]: gkr-pam: unlocked login keyring
-Jul 28 09:14:32 localhost.localdomain NetworkManager[1077]: <info>  [1753690472.6556] agent-manager: agent[e843a16dc3f3d31c,:1.70/org.gnome.Shell.NetworkAgent/1000]: agent registered
-Jul 28 09:14:45 localhost.localdomain PackageKit[1841]: get-updates transaction /182_edbaeace from uid 1000 finished with success after 58201ms
-Jul 28 09:14:48 localhost.localdomain packagekitd[1841]: Skipping refresh of media: Cannot update read-only repo
-Jul 28 09:14:51 localhost.localdomain systemd[1]: fprintd.service: Deactivated successfully.
-Jul 28 09:14:54 localhost.localdomain PackageKit[1841]: get-update-detail transaction /183_ccbaedbd from uid 1000 finished with success after 8838ms
-Jul 28 09:14:56 localhost.localdomain packagekitd[1841]: Skipping refresh of media: Cannot update read-only repo
-Jul 28 09:15:47 localhost.localdomain PackageKit[1841]: get-updates transaction /184_ddebdaca from uid 1000 finished with success after 53047ms
-Jul 28 09:15:48 localhost.localdomain packagekitd[1841]: Skipping refresh of media: Cannot update read-only repo
-Jul 28 09:16:32 localhost.localdomain PackageKit[1841]: get-updates transaction /185_babddadd from uid 1000 finished with success after 44020ms
-Jul 28 09:16:32 localhost.localdomain PackageKit[1841]: new update-packages transaction /186_aebeabeb scheduled from uid 1000
-Jul 28 09:16:33 localhost.localdomain packagekitd[1841]: Skipping refresh of media: Cannot update read-only repo
-Jul 28 09:21:32 localhost.localdomain systemd[2290]: Started VTE child process 12487 launched by gnome-terminal-server process 6606.
-Jul 28 09:21:47 localhost.localdomain PackageKit[1841]: update-packages transaction /186_aebeabeb from uid 1000 finished with cancelled-priority after 315008ms
-Jul 28 09:21:48 localhost.localdomain packagekitd[1841]: Skipping refresh of media: Cannot update read-only repo
-Jul 28 09:21:49 localhost.localdomain PackageKit[1841]: new update-packages transaction /188_ebbcbebd scheduled from uid 1000
-Jul 28 09:21:52 localhost.localdomain PackageKit[1841]: search-file transaction /187_baddcbcd from uid 1000 finished with success after 5516ms
-Jul 28 09:21:54 localhost.localdomain packagekitd[1841]: Skipping refresh of media: Cannot update read-only repo
-Jul 28 09:22:02 localhost.localdomain gnome-shell[2405]: libinput error: event2  - VirtualPS/2 VMware VMMouse: client bug: event processing lagging behind by 23ms, your system is too slow
-Jul 28 09:22:02 localhost.localdomain gnome-shell[2405]: libinput error: event2  - VirtualPS/2 VMware VMMouse: client bug: event processing lagging behind by 12ms, your system is too slow
-Jul 28 09:22:05 localhost.localdomain gnome-shell[2405]: libinput error: event2  - VirtualPS/2 VMware VMMouse: client bug: event processing lagging behind by 12ms, your system is too slow
-Jul 28 09:22:25 localhost.localdomain gsd-color[2617]: unable to get EDID for xrandr-Virtual-1: unable to get EDID for output
-Jul 28 09:22:25 localhost.localdomain gnome-shell[2405]: libinput error: event2  - VirtualPS/2 VMware VMMouse: client bug: event processing lagging behind by 20ms, your system is too slow
-Jul 28 09:22:25 localhost.localdomain gnome-shell[2405]: libinput error: event2  - VirtualPS/2 VMware VMMouse: WARNING: log rate limit exceeded (5 msgs per 60min). Discarding future messages.
-Jul 28 09:22:32 localhost.localdomain gnome-shell[2405]: Source ID 1888 was not found when attempting to remove it
-Jul 28 09:24:44 localhost.localdomain systemd[1]: Starting Fingerprint Authentication Daemon...
-Jul 28 09:24:45 localhost.localdomain systemd[1]: Started Fingerprint Authentication Daemon.
-Jul 28 09:24:57 localhost.localdomain polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.1032 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:mariem)
-Jul 28 09:25:06 localhost.localdomain crontab[12892]: (mariem) LIST (mariem)
-Jul 28 09:25:07 localhost.localdomain NetworkManager[1077]: <info>  [1753691107.7789] dhcp4 (ens160): state changed new lease, address=192.168.136.135
-Jul 28 09:25:07 localhost.localdomain systemd[1]: Starting Network Manager Script Dispatcher Service...
-Jul 28 09:25:08 localhost.localdomain systemd[1]: Started Network Manager Script Dispatcher Service.
-Jul 28 09:25:15 localhost.localdomain systemd[1]: fprintd.service: Deactivated successfully.
-Jul 28 09:25:18 localhost.localdomain systemd[1]: NetworkManager-dispatcher.service: Deactivated successfully.
-Jul 28 09:26:53 localhost.localdomain PackageKit[1841]: update-packages transaction /188_ebbcbebd from uid 1000 finished with success after 300384ms
-Jul 28 09:28:35 localhost.localdomain chronyd[906]: Selected source 160.119.216.206 (2.rhel.pool.ntp.org)
-Jul 28 09:31:33 localhost.localdomain systemd[1]: Starting Fingerprint Authentication Daemon...
-Jul 28 09:31:33 localhost.localdomain systemd[1]: Started Fingerprint Authentication Daemon.
-Jul 28 09:31:40 localhost.localdomain polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.1068 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:mariem)
-Jul 28 09:31:46 localhost.localdomain crontab[13293]: (mariem) LIST (mariem)
-Jul 28 09:32:03 localhost.localdomain systemd[1]: fprintd.service: Deactivated successfully.
-Jul 28 09:34:46 localhost.localdomain pipewire[2507]: spa.alsa: front:0: (0 missed) snd_pcm_avail after recover: Broken pipe
-Jul 28 09:34:52 localhost.localdomain systemd[1]: Starting Fingerprint Authentication Daemon...
-Jul 28 09:34:53 localhost.localdomain systemd[1]: Started Fingerprint Authentication Daemon.
-Jul 28 09:34:58 localhost.localdomain sudo[13351]:   mariem : TTY=pts/0 ; PWD=/home/mariem/cis_audit_tool ; USER=root ; COMMAND=/bin/python3 main.py --online --detailed
-Jul 28 09:34:58 localhost.localdomain sudo[13351]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
-Jul 28 09:35:13 localhost.localdomain crontab[13692]: (root) LIST (root)
-Jul 28 09:35:23 localhost.localdomain systemd[1]: fprintd.service: Deactivated successfully.
-Jul 28 09:35:57 localhost.localdomain sudo[13351]: pam_unix(sudo:session): session closed for user root
-Jul 28 09:39:56 localhost.localdomain systemd[1]: Starting Fingerprint Authentication Daemon...
-Jul 28 09:39:56 localhost.localdomain systemd[1]: Started Fingerprint Authentication Daemon.
-Jul 28 09:40:03 localhost.localdomain polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.1108 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:mariem)
-Jul 28 09:40:07 localhost.localdomain NetworkManager[1077]: <info>  [1753692007.7661] dhcp4 (ens160): state changed new lease, address=192.168.136.135
-Jul 28 09:40:07 localhost.localdomain systemd[1]: Starting Network Manager Script Dispatcher Service...
-Jul 28 09:40:07 localhost.localdomain systemd[1]: Started Network Manager Script Dispatcher Service.
-Jul 28 09:40:09 localhost.localdomain crontab[14090]: (mariem) LIST (mariem)
-Jul 28 09:40:18 localhost.localdomain systemd[1]: NetworkManager-dispatcher.service: Deactivated successfully.
-Jul 28 09:40:26 localhost.localdomain systemd[1]: fprintd.service: Deactivated successfully.
-Jul 28 09:43:39 localhost.localdomain systemd[1]: Starting Fingerprint Authentication Daemon...
-Jul 28 09:43:39 localhost.localdomain systemd[1]: Started Fingerprint Authentication Daemon.
-Jul 28 09:43:45 localhost.localdomain polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.1144 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:mariem)
-Jul 28 09:43:50 localhost.localdomain crontab[14473]: (mariem) LIST (mariem)
-Jul 28 09:44:09 localhost.localdomain systemd[1]: fprintd.service: Deactivated successfully.
-Jul 28 09:46:38 localhost.localdomain pipewire[2507]: spa.alsa: front:0: (0 missed) snd_pcm_avail after recover: Broken pipe
-Jul 28 09:49:15 localhost.localdomain gnome-shell[2405]: Source ID 110810 was not found when attempting to remove it
-Jul 28 09:49:54 localhost.localdomain systemd[1]: Starting Fingerprint Authentication Daemon...
-Jul 28 09:49:54 localhost.localdomain systemd[1]: Started Fingerprint Authentication Daemon.
-Jul 28 09:50:00 localhost.localdomain polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.1179 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:mariem)
-Jul 28 09:50:05 localhost.localdomain crontab[14866]: (mariem) LIST (mariem)
-Jul 28 09:50:24 localhost.localdomain systemd[1]: fprintd.service: Deactivated successfully.
-Jul 28 09:52:05 localhost.localdomain systemd[1]: Starting Fingerprint Authentication Daemon...
-Jul 28 09:52:06 localhost.localdomain systemd[1]: Started Fingerprint Authentication Daemon.
-Jul 28 09:52:11 localhost.localdomain polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.1214 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:mariem)
-Jul 28 09:52:17 localhost.localdomain crontab[15236]: (mariem) LIST (mariem)
-Jul 28 09:52:36 localhost.localdomain systemd[1]: fprintd.service: Deactivated successfully.
-Jul 28 09:54:34 localhost.localdomain systemd[1]: Starting Fingerprint Authentication Daemon...
-Jul 28 09:54:34 localhost.localdomain systemd[1]: Started Fingerprint Authentication Daemon.
-Jul 28 09:54:39 localhost.localdomain unix_chkpwd[15494]: password check failed for user (mariem)
-Jul 28 09:54:39 localhost.localdomain polkit-agent-helper-1[15487]: pam_unix(polkit-1:auth): authentication failure; logname= uid=1000 euid=0 tty= ruser=mariem rhost=  user=mariem
-Jul 28 09:54:40 localhost.localdomain gnome-shell[15487]: polkit-agent-helper-1: pam_authenticate failed: Authentication failure
-Jul 28 09:54:46 localhost.localdomain polkitd[869]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.1249 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:mariem)
-Jul 28 09:54:51 localhost.localdomain crontab[15613]: (mariem) LIST (mariem)
-Jul 28 09:55:04 localhost.localdomain systemd[1]: fprintd.service: Deactivated successfully.
-Jul 28 09:55:07 localhost.localdomain NetworkManager[1077]: <info>  [1753692907.7656] dhcp4 (ens160): state changed new lease, address=192.168.136.135
-Jul 28 09:55:07 localhost.localdomain systemd[1]: Starting Network Manager Script Dispatcher Service...
-Jul 28 09:55:07 localhost.localdomain systemd[1]: Started Network Manager Script Dispatcher Service.
-Jul 28 09:55:18 localhost.localdomain systemd[1]: NetworkManager-dispatcher.service: Deactivated successfully.
-Jul 28 09:58:51 localhost.localdomain systemd[1]: Starting Fingerprint Authentication Daemon...
-Jul 28 09:58:51 localhost.localdomain systemd[1]: Started Fingerprint Authentication Daemon.
-Jul 28 09:58:56 localhost.localdomain sudo[15688]:   mariem : TTY=pts/0 ; PWD=/home/mariem/cis_audit_tool/scripts ; USER=root ; COMMAND=./collect_data.sh
-Jul 28 09:58:56 localhost.localdomain sudo[15688]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
-Jul 28 09:58:56 localhost.localdomain systemd[1]: Starting Hostname Service...
-Jul 28 09:58:56 localhost.localdomain systemd[1]: Started Hostname Service.
-Jul 28 09:59:06 localhost.localdomain crontab[15854]: (root) LIST (root)
+Sep 09 12:47:56 localhost.localdomain anacron[2967]: Job `cron.daily' started
+Sep 09 12:47:56 localhost.localdomain anacron[2967]: Job `cron.daily' terminated
+Sep 09 12:48:44 localhost.localdomain firefox.desktop[4203]: Crash Annotation GraphicsCriticalError: |[C0][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=937.769) |[C1][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=1146.31) [GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM;
+Sep 09 12:49:22 localhost.localdomain chronyd[904]: Selected source 197.17.32.249 (2.rhel.pool.ntp.org)
+Sep 09 12:49:22 localhost.localdomain chronyd[904]: System clock wrong by -3.536816 seconds
+Sep 09 12:52:07 localhost.localdomain firefox.desktop[4203]: Crash Annotation GraphicsCriticalError: |[C0][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=937.769) |[C1][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=1146.31) |[C2][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=1348.91) [GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM;
+Sep 09 12:52:08 localhost.localdomain firefox.desktop[4203]: Crash Annotation GraphicsCriticalError: |[C0][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=937.769) |[C1][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=1146.31) |[C2][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=1348.91) |[C3][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=1350.55) [GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM;
+Sep 09 12:52:57 localhost.localdomain rtkit-daemon[875]: Supervising 0 threads of 0 processes of 0 users.
+Sep 09 12:52:57 localhost.localdomain rtkit-daemon[875]: Supervising 0 threads of 0 processes of 0 users.
+Sep 09 12:54:19 localhost.localdomain systemd[1]: Starting Hostname Service...
+Sep 09 12:54:20 localhost.localdomain systemd[1]: Started Hostname Service.
+Sep 09 12:54:44 localhost.localdomain firefox[3634]: Failed to fetch network locations: Timeout was reached
+Sep 09 12:54:50 localhost.localdomain systemd[1]: systemd-hostnamed.service: Deactivated successfully.
+Sep 09 12:58:21 localhost.localdomain NetworkManager[1086]: <info>  [1757419101.8202] dhcp4 (ens160): state changed new lease, address=192.168.136.135
+Sep 09 12:58:21 localhost.localdomain systemd[1]: Starting Network Manager Script Dispatcher Service...
+Sep 09 12:58:21 localhost.localdomain systemd[1]: Started Network Manager Script Dispatcher Service.
+Sep 09 12:58:31 localhost.localdomain systemd[1]: NetworkManager-dispatcher.service: Deactivated successfully.
+Sep 09 12:58:48 localhost.localdomain gsd-color[2418]: unable to get EDID for xrandr-Virtual-1: unable to get EDID for output
+Sep 09 12:59:19 localhost.localdomain cupsd[1115]: REQUEST localhost - - "POST / HTTP/1.1" 200 185 Renew-Subscription client-error-not-found
+Sep 09 13:00:37 localhost.localdomain rtkit-daemon[875]: Supervising 0 threads of 0 processes of 0 users.
+Sep 09 13:00:37 localhost.localdomain rtkit-daemon[875]: Supervising 0 threads of 0 processes of 0 users.
+Sep 09 13:00:38 localhost.localdomain rtkit-daemon[875]: Supervising 0 threads of 0 processes of 0 users.
+Sep 09 13:00:38 localhost.localdomain rtkit-daemon[875]: Supervising 0 threads of 0 processes of 0 users.
+Sep 09 13:00:45 localhost.localdomain rtkit-daemon[875]: Supervising 0 threads of 0 processes of 0 users.
+Sep 09 13:00:45 localhost.localdomain rtkit-daemon[875]: Supervising 0 threads of 0 processes of 0 users.
+Sep 09 13:00:49 localhost.localdomain rtkit-daemon[875]: Supervising 0 threads of 0 processes of 0 users.
+Sep 09 13:00:49 localhost.localdomain rtkit-daemon[875]: Supervising 0 threads of 0 processes of 0 users.
+Sep 09 13:01:01 localhost.localdomain CROND[4876]: (root) CMD (run-parts /etc/cron.hourly)
+Sep 09 13:01:01 localhost.localdomain run-parts[4879]: (/etc/cron.hourly) starting 0anacron
+Sep 09 13:01:01 localhost.localdomain run-parts[4885]: (/etc/cron.hourly) finished 0anacron
+Sep 09 13:01:01 localhost.localdomain CROND[4875]: (root) CMDEND (run-parts /etc/cron.hourly)
+Sep 09 13:06:01 localhost.localdomain anacron[2967]: Job `cron.weekly' started
+Sep 09 13:06:01 localhost.localdomain anacron[2967]: Job `cron.weekly' terminated
+Sep 09 13:08:20 localhost.localdomain gsd-color[2418]: unable to get EDID for xrandr-Virtual-1: unable to get EDID for output
+Sep 09 13:08:24 localhost.localdomain systemd[1]: Starting Fingerprint Authentication Daemon...
+Sep 09 13:08:24 localhost.localdomain systemd[1]: Started Fingerprint Authentication Daemon.
+Sep 09 13:08:34 localhost.localdomain gdm-password][4987]: gkr-pam: unlocked login keyring
+Sep 09 13:08:35 localhost.localdomain NetworkManager[1086]: <info>  [1757419715.2522] agent-manager: agent[faa04f8889cd1f49,:1.71/org.gnome.Shell.NetworkAgent/1000]: agent registered
+Sep 09 13:08:55 localhost.localdomain systemd[1]: fprintd.service: Deactivated successfully.
+Sep 09 13:09:28 localhost.localdomain packagekitd[1699]: Skipping refresh of media: Cannot update read-only repo
+Sep 09 13:09:40 localhost.localdomain PackageKit[1699]: search-file transaction /213_bebaebde from uid 1000 finished with success after 12368ms
+Sep 09 13:11:47 localhost.localdomain systemd[1]: Starting Fingerprint Authentication Daemon...
+Sep 09 13:11:47 localhost.localdomain systemd[1]: Started Fingerprint Authentication Daemon.
+Sep 09 13:12:08 localhost.localdomain packagekitd[1699]: Skipping refresh of media: Cannot update read-only repo
+Sep 09 13:12:09 localhost.localdomain gnome-shell[2200]: libinput error: event2  - VirtualPS/2 VMware VMMouse: client bug: event processing lagging behind by 20ms, your system is too slow
+Sep 09 13:12:09 localhost.localdomain pipewire[2301]: spa.alsa: front:0: (0 missed) snd_pcm_avail after recover: Broken pipe
+Sep 09 13:12:12 localhost.localdomain gsd-color[2418]: unable to get EDID for xrandr-Virtual-1: unable to get EDID for output
+Sep 09 13:12:14 localhost.localdomain gsd-color[2418]: unable to get EDID for xrandr-Virtual-1: unable to get EDID for output
+Sep 09 13:12:17 localhost.localdomain PackageKit[1699]: search-file transaction /214_aacabdae from uid 1000 finished with success after 9737ms
+Sep 09 13:12:18 localhost.localdomain systemd[1]: fprintd.service: Deactivated successfully.
+Sep 09 13:12:59 localhost.localdomain systemd[2091]: Created slice Slice /app/dbus-:1.2-org.gnome.gedit.
+Sep 09 13:12:59 localhost.localdomain systemd[2091]: Started dbus-:1.2-org.gnome.gedit@0.service.
+Sep 09 13:13:02 localhost.localdomain gnome-shell[2200]: meta_window_set_stack_position_no_sync: assertion 'window->stack_position >= 0' failed
+Sep 09 13:13:13 localhost.localdomain systemd[2091]: dbus-:1.2-org.gnome.gedit@0.service: Consumed 4.998s CPU time.
+Sep 09 13:13:21 localhost.localdomain NetworkManager[1086]: <info>  [1757420001.8105] dhcp4 (ens160): state changed new lease, address=192.168.136.135
+Sep 09 13:13:21 localhost.localdomain systemd[1]: Starting Network Manager Script Dispatcher Service...
+Sep 09 13:13:21 localhost.localdomain systemd[1]: Started Network Manager Script Dispatcher Service.
+Sep 09 13:13:32 localhost.localdomain systemd[1]: NetworkManager-dispatcher.service: Deactivated successfully.
+Sep 09 13:13:55 localhost.localdomain gnome-shell[2200]: Source ID 11687 was not found when attempting to remove it
+Sep 09 13:14:06 localhost.localdomain packagekitd[1699]: Skipping refresh of media: Cannot update read-only repo
+Sep 09 13:14:09 localhost.localdomain PackageKit[1699]: search-file transaction /215_aecdcedd from uid 1000 finished with success after 4167ms
+Sep 09 13:14:42 localhost.localdomain systemd[2091]: Started dbus-:1.2-org.gnome.gedit@1.service.
+Sep 09 13:14:43 localhost.localdomain gnome-shell[2200]: meta_window_set_stack_position_no_sync: assertion 'window->stack_position >= 0' failed
+Sep 09 13:18:10 localhost.localdomain systemd[2091]: dbus-:1.2-org.gnome.gedit@1.service: Consumed 42.462s CPU time.
+Sep 09 13:18:29 localhost.localdomain systemd[1]: Starting Fingerprint Authentication Daemon...
+Sep 09 13:18:30 localhost.localdomain systemd[1]: Started Fingerprint Authentication Daemon.
+Sep 09 13:18:45 localhost.localdomain packagekitd[1699]: Skipping refresh of media: Cannot update read-only repo
+Sep 09 13:18:50 localhost.localdomain PackageKit[1699]: search-file transaction /216_cdbcadec from uid 1000 finished with success after 6023ms
+Sep 09 13:19:00 localhost.localdomain systemd[1]: fprintd.service: Deactivated successfully.
+Sep 09 13:19:33 localhost.localdomain chronyd[904]: Can't synchronise: no selectable sources
+Sep 09 13:19:33 localhost.localdomain chronyd[904]: Source 197.17.32.249 replaced with 102.64.113.151 (2.rhel.pool.ntp.org)
+Sep 09 13:19:39 localhost.localdomain chronyd[904]: Selected source 160.119.216.197 (2.rhel.pool.ntp.org)
+Sep 09 13:20:20 localhost.localdomain systemd[2091]: Started dbus-:1.2-org.gnome.gedit@2.service.
+Sep 09 13:20:22 localhost.localdomain gnome-shell[2200]: meta_window_set_stack_position_no_sync: assertion 'window->stack_position >= 0' failed
+Sep 09 13:20:47 localhost.localdomain chronyd[904]: Selected source 155.232.19.7 (2.rhel.pool.ntp.org)
+Sep 09 13:22:15 localhost.localdomain rhsm-service[2696]:  INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Sep 09 13:22:15 localhost.localdomain rhsm-service[2696]:  INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Sep 09 13:22:15 localhost.localdomain rhsm-service[2696]:  INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Sep 09 13:22:15 localhost.localdomain rhsm-service[2696]:  INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Sep 09 13:22:19 localhost.localdomain rhsm-service[2696]:  INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Sep 09 13:22:19 localhost.localdomain rhsm-service[2696]:  INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Sep 09 13:22:19 localhost.localdomain rhsm-service[2696]:  INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Sep 09 13:22:19 localhost.localdomain rhsm-service[2696]:  INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Sep 09 13:22:20 localhost.localdomain rhsm-service[2696]:  INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Sep 09 13:22:20 localhost.localdomain rhsm-service[2696]:  INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Sep 09 13:22:20 localhost.localdomain rhsm-service[2696]:  INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Sep 09 13:22:20 localhost.localdomain rhsm-service[2696]:  INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Sep 09 13:22:22 localhost.localdomain rhsm-service[2696]:  INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Sep 09 13:22:22 localhost.localdomain rhsm-service[2696]:  INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Sep 09 13:22:22 localhost.localdomain rhsm-service[2696]:  INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Sep 09 13:22:22 localhost.localdomain rhsm-service[2696]:  INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Sep 09 13:22:26 localhost.localdomain sudo[5407]:   mariem : TTY=pts/0 ; PWD=/home/mariem/cis_audit_tool/scripts ; USER=root ; COMMAND=./collect_data.sh
+Sep 09 13:22:26 localhost.localdomain sudo[5407]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+Sep 09 13:22:27 localhost.localdomain systemd[1]: Starting Hostname Service...
+Sep 09 13:22:28 localhost.localdomain systemd[1]: Started Hostname Service.
+Sep 09 13:22:34 localhost.localdomain systemd[1]: proc-sys-fs-binfmt_misc.automount: Got automount request for /proc/sys/fs/binfmt_misc, triggered by 5636 (sysctl)
+Sep 09 13:22:34 localhost.localdomain systemd[1]: Mounting Arbitrary Executable File Formats File System...
+Sep 09 13:22:35 localhost.localdomain systemd[1]: Mounted Arbitrary Executable File Formats File System.
+Sep 09 13:22:45 localhost.localdomain crontab[5787]: (root) LIST (root)
+Sep 09 13:22:58 localhost.localdomain systemd[1]: systemd-hostnamed.service: Deactivated successfully.

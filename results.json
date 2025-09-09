@@ -1,267 +1,332 @@
 {
-  "timestamp": "2025-07-21T11:06:30.229807",
-  "total_checks": 243,
+  "timestamp": "2025-07-28T13:48:51.874073",
+  "total_checks": 278,
   "summary": {
-    "passed": 24,
-    "failed": 103,
-    "skipped": 90
+    "passed": 127,
+    "failed": 134,
+    "skipped": 17,
+    "compliance_score": 45.68345323741007
   },
   "results": [
     {
       "rule_id": "1.1.1.1",
       "title": "Ensure cramfs kernel module is not available",
       "status": "FAIL",
-      "details": "No modprobe data available for cramfs",
+      "details": "Checked modprobe configuration: Module cramfs not found in blacklist configuration - FAIL",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "Checked modprobe configuration: Module cramfs not found in blacklist configuration - FAIL"
     },
     {
       "rule_id": "1.1.1.2",
       "title": "Ensure freevxfs kernel module is not available",
       "status": "FAIL",
-      "details": "No modprobe data available for freevxfs",
+      "details": "Checked modprobe configuration: Module freevxfs not found in blacklist configuration - FAIL",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "Checked modprobe configuration: Module freevxfs not found in blacklist configuration - FAIL"
     },
     {
       "rule_id": "1.1.1.3",
       "title": "Ensure hfs kernel module is not available",
       "status": "FAIL",
-      "details": "No modprobe data available for hfs",
+      "details": "Checked modprobe configuration: Module hfs not found in blacklist configuration - FAIL",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "Checked modprobe configuration: Module hfs not found in blacklist configuration - FAIL"
     },
     {
       "rule_id": "1.1.1.4",
       "title": "Ensure hfsplus kernel module is not available",
       "status": "FAIL",
-      "details": "No modprobe data available for hfsplus",
+      "details": "Checked modprobe configuration: Module hfsplus not found in blacklist configuration - FAIL",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "Checked modprobe configuration: Module hfsplus not found in blacklist configuration - FAIL"
     },
     {
       "rule_id": "1.1.1.5",
       "title": "Ensure jffs2 kernel module is not available",
       "status": "FAIL",
-      "details": "No modprobe data available for jffs2",
+      "details": "Checked modprobe configuration: Module jffs2 not found in blacklist configuration - FAIL",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "Checked modprobe configuration: Module jffs2 not found in blacklist configuration - FAIL"
     },
     {
       "rule_id": "1.1.1.6",
       "title": "Ensure squashfs kernel module is not available",
       "status": "FAIL",
-      "details": "No modprobe data available for squashfs",
+      "details": "Checked modprobe configuration: Module squashfs not found in blacklist configuration - FAIL",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "Checked modprobe configuration: Module squashfs not found in blacklist configuration - FAIL"
     },
     {
       "rule_id": "1.1.1.7",
       "title": "Ensure udf kernel module is not available",
       "status": "FAIL",
-      "details": "No modprobe data available for udf",
+      "details": "Checked modprobe configuration: Module udf not found in blacklist configuration - FAIL",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "Checked modprobe configuration: Module udf not found in blacklist configuration - FAIL"
     },
     {
       "rule_id": "1.1.1.8",
       "title": "Ensure usb-storage kernel module is not available",
       "status": "FAIL",
-      "details": "No modprobe data available for usb-storage",
+      "details": "Checked modprobe configuration: Module usb-storage not found in blacklist configuration - FAIL",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "Checked modprobe configuration: Module usb-storage not found in blacklist configuration - FAIL"
     },
     {
       "rule_id": "1.1.2.1",
       "title": "Ensure /tmp is a separate partition",
       "status": "FAIL",
-      "details": "No mount data available for /tmp",
+      "details": "Checked findmnt output: /tmp is not configured as a separate partition - FAIL",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "Checked findmnt output: /tmp is not configured as a separate partition - FAIL"
     },
     {
       "rule_id": "1.1.2.2",
       "title": "Ensure nodev option set on /tmp partition",
       "status": "FAIL",
-      "details": "No mount data available for /tmp",
+      "details": "/tmp is not a separate partition",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "/tmp is not a separate partition"
     },
     {
       "rule_id": "1.1.2.3",
       "title": "Ensure noexec option set on /tmp partition",
       "status": "FAIL",
-      "details": "No mount data available for /tmp",
+      "details": "/tmp is not a separate partition",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "/tmp is not a separate partition"
     },
     {
       "rule_id": "1.1.2.4",
       "title": "Ensure nosuid option set on /tmp partition",
       "status": "FAIL",
-      "details": "No mount data available for /tmp",
+      "details": "/tmp is not a separate partition",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "/tmp is not a separate partition"
     },
     {
       "rule_id": "1.1.3.1",
       "title": "Ensure /var is a separate partition",
       "status": "FAIL",
-      "details": "No mount data available for /var",
+      "details": "Checked findmnt output: /var is not configured as a separate partition - FAIL",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "Checked findmnt output: /var is not configured as a separate partition - FAIL"
     },
     {
       "rule_id": "1.1.4.1",
       "title": "Ensure /var/tmp is a separate partition",
       "status": "FAIL",
-      "details": "No mount data available for /var/tmp",
+      "details": "Checked findmnt output: /var/tmp is not configured as a separate partition - FAIL",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "Checked findmnt output: /var/tmp is not configured as a separate partition - FAIL"
     },
     {
       "rule_id": "1.1.4.2",
       "title": "Ensure nodev option set on /var/tmp partition",
       "status": "FAIL",
-      "details": "No mount data available for /var/tmp",
+      "details": "Checked findmnt output: /var/tmp is not configured as a separate partition - FAIL",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "Checked findmnt output: /var/tmp is not configured as a separate partition - FAIL"
     },
     {
       "rule_id": "1.1.4.3",
       "title": "Ensure noexec option set on /var/tmp partition",
       "status": "FAIL",
-      "details": "No mount data available for /var/tmp",
+      "details": "Checked findmnt output: /var/tmp is not configured as a separate partition - FAIL",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "Checked findmnt output: /var/tmp is not configured as a separate partition - FAIL"
     },
     {
       "rule_id": "1.1.4.4",
       "title": "Ensure nosuid option set on /var/tmp partition",
       "status": "FAIL",
-      "details": "No mount data available for /var/tmp",
+      "details": "Checked findmnt output: /var/tmp is not configured as a separate partition - FAIL",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "Checked findmnt output: /var/tmp is not configured as a separate partition - FAIL"
     },
     {
       "rule_id": "1.1.5.1",
       "title": "Ensure /var/log is a separate partition",
       "status": "FAIL",
-      "details": "No mount data available for /var/log",
+      "details": "Checked findmnt output: /var/log is not configured as a separate partition - FAIL",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "Checked findmnt output: /var/log is not configured as a separate partition - FAIL"
     },
     {
       "rule_id": "1.1.6.1",
       "title": "Ensure /var/log/audit is a separate partition",
       "status": "FAIL",
-      "details": "No mount data available for /var/log/audit",
+      "details": "Checked findmnt output: /var/log/audit is not configured as a separate partition - FAIL",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "Checked findmnt output: /var/log/audit is not configured as a separate partition - FAIL"
     },
     {
       "rule_id": "1.1.7.1",
       "title": "Ensure /home is a separate partition",
-      "status": "FAIL",
-      "details": "No mount data available for /home",
+      "status": "PASS",
+      "details": "Checked findmnt output: /home partition found mounted at /home - PASS",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "PASS",
+      "final_details": "Checked findmnt output: /home partition found mounted at /home - PASS"
     },
     {
       "rule_id": "1.1.7.2",
       "title": "Ensure nodev option set on /home partition",
       "status": "FAIL",
-      "details": "No mount data available for /home",
+      "details": "Checked mount options in findmnt: 'nodev' option not found in mount options for /home - FAIL",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "Checked mount options in findmnt: 'nodev' option not found in mount options for /home - FAIL"
     },
     {
       "rule_id": "1.1.8.1",
       "title": "Ensure nodev option set on /dev/shm partition",
-      "status": "FAIL",
-      "details": "No mount data available for /dev/shm",
+      "status": "PASS",
+      "details": "Checked mount options in findmnt: 'nodev' option found in mount options for /dev/shm - PASS",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "PASS",
+      "final_details": "Checked mount options in findmnt: 'nodev' option found in mount options for /dev/shm - PASS"
     },
     {
       "rule_id": "1.1.8.2",
       "title": "Ensure noexec option set on /dev/shm partition",
       "status": "FAIL",
-      "details": "No mount data available for /dev/shm",
+      "details": "Checked mount options in findmnt: 'noexec' option not found in mount options for /dev/shm - FAIL",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "Checked mount options in findmnt: 'noexec' option not found in mount options for /dev/shm - FAIL"
     },
     {
       "rule_id": "1.1.8.3",
       "title": "Ensure nosuid option set on /dev/shm partition",
-      "status": "FAIL",
-      "details": "No mount data available for /dev/shm",
+      "status": "PASS",
+      "details": "Checked mount options in findmnt: 'nosuid' option found in mount options for /dev/shm - PASS",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "PASS",
+      "final_details": "Checked mount options in findmnt: 'nosuid' option found in mount options for /dev/shm - PASS"
     },
     {
       "rule_id": "1.1.9.1",
       "title": "Disable USB Storage",
       "status": "FAIL",
-      "details": "No modprobe data available for usb-storage",
+      "details": "USB storage module is not disabled",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "USB storage module is not disabled"
     },
     {
       "rule_id": "1.2.1",
       "title": "Ensure GPG keys are configured",
-      "status": "FAIL",
-      "details": "No GPG key data available",
+      "status": "PASS",
+      "details": "Checked 'rpm -q gpg-pubkey' output: Found 2 GPG keys installed - PASS",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "PASS",
+      "final_details": "Checked 'rpm -q gpg-pubkey' output: Found 2 GPG keys installed - PASS"
     },
     {
       "rule_id": "1.2.2",
       "title": "Ensure gpgcheck is globally activated",
-      "status": "FAIL",
-      "details": "gpgcheck is not globally activated",
+      "status": "PASS",
+      "details": "Checked /etc/yum.conf and /etc/dnf/dnf.conf: Found 'gpgcheck=1' setting - PASS",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "PASS",
+      "final_details": "Checked /etc/yum.conf and /etc/dnf/dnf.conf: Found 'gpgcheck=1' setting - PASS"
     },
     {
       "rule_id": "1.3.1",
       "title": "Ensure AIDE is installed",
       "status": "FAIL",
-      "details": "No package data available",
+      "details": "Checked 'rpm -q aide' output: AIDE package not found in system - FAIL",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "Checked 'rpm -q aide' output: AIDE package not found in system - FAIL"
     },
     {
       "rule_id": "1.3.2",
       "title": "Ensure filesystem integrity is regularly checked",
       "status": "FAIL",
-      "details": "AIDE is not scheduled to run regularly",
+      "details": "Checked crontab and /etc/cron.d/: No AIDE scheduling found in cron configuration - FAIL",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "Checked crontab and /etc/cron.d/: No AIDE scheduling found in cron configuration - FAIL"
     },
     {
       "rule_id": "1.4.1",
       "title": "Ensure bootloader password is set",
-      "status": "FAIL",
-      "details": "No bootloader config data available",
+      "status": "PASS",
+      "details": "Checked /boot/grub2/grub.cfg: Found 'password_pbkdf2' or 'password' entry - PASS",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "PASS",
+      "final_details": "Checked /boot/grub2/grub.cfg: Found 'password_pbkdf2' or 'password' entry - PASS"
     },
     {
       "rule_id": "1.4.2",
       "title": "Ensure permissions on bootloader config are configured",
-      "status": "FAIL",
-      "details": "No bootloader permission data available",
+      "status": "PASS",
+      "details": "/boot/grub2/grub.cfg: 600 (OK)",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "PASS",
+      "final_details": "/boot/grub2/grub.cfg: 600 (OK)"
     },
     {
       "rule_id": "1.4.3",
       "title": "Ensure authentication required for single user mode",
-      "status": "FAIL",
-      "details": "No shadow data available",
+      "status": "PASS",
+      "details": "Root password is set for single user mode",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "PASS",
+      "final_details": "Root password is set for single user mode"
     },
     {
       "rule_id": "1.5.1",
@@ -269,63 +334,79 @@
       "status": "FAIL",
       "details": "limits.conf not configured; sysctl fs.suid_dumpable not set to 0",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "limits.conf not configured; sysctl fs.suid_dumpable not set to 0"
     },
     {
       "rule_id": "1.5.2",
       "title": "Ensure XD/NX support is enabled",
-      "status": "FAIL",
-      "details": "No dmesg data available",
+      "status": "PASS",
+      "details": "Checked dmesg output: Found NX/XD support references in kernel messages - PASS",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "PASS",
+      "final_details": "Checked dmesg output: Found NX/XD support references in kernel messages - PASS"
     },
     {
       "rule_id": "1.5.3",
       "title": "Ensure address space layout randomization (ASLR) is enabled",
-      "status": "FAIL",
-      "details": "No sysctl data available",
+      "status": "PASS",
+      "details": "Checked 'sysctl kernel.randomize_va_space' output: Found value = 2 (full randomization) - PASS",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "PASS",
+      "final_details": "Checked 'sysctl kernel.randomize_va_space' output: Found value = 2 (full randomization) - PASS"
     },
     {
       "rule_id": "1.5.4",
       "title": "Ensure prelink is not installed",
-      "status": "FAIL",
-      "details": "No package data available",
+      "status": "PASS",
+      "details": "Checked 'rpm -q prelink' output: Package not found in system - PASS",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "PASS",
+      "final_details": "Checked 'rpm -q prelink' output: Package not found in system - PASS"
     },
     {
       "rule_id": "1.6.1.1",
       "title": "Ensure SELinux is installed",
-      "status": "FAIL",
-      "details": "No package data available",
+      "status": "PASS",
+      "details": "Checked 'rpm -q libselinux' output: Package found - libselinux-3.5-1.el9.x86_64 - PASS",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "PASS",
+      "final_details": "Checked 'rpm -q libselinux' output: Package found - libselinux-3.5-1.el9.x86_64 - PASS"
     },
     {
       "rule_id": "1.6.1.2",
       "title": "Ensure SELinux is not disabled in bootloader configuration",
-      "status": "FAIL",
-      "details": "No bootloader config data available",
+      "status": "PASS",
+      "details": "Checked /boot/grub2/grub.cfg: No 'selinux=0' or 'enforcing=0' parameters found - PASS",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "PASS",
+      "final_details": "Checked /boot/grub2/grub.cfg: No 'selinux=0' or 'enforcing=0' parameters found - PASS"
     },
     {
       "rule_id": "1.6.1.3",
       "title": "Ensure SELinux policy is configured",
-      "status": "FAIL",
-      "details": "No SELinux status data available",
+      "status": "PASS",
+      "details": "Checked 'sestatus' output: Found 'targeted' or 'mls' policy configured - PASS",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "PASS",
+      "final_details": "Checked 'sestatus' output: Found 'targeted' or 'mls' policy configured - PASS"
     },
     {
       "rule_id": "1.6.1.4",
       "title": "Ensure the SELinux mode is enforcing",
-      "status": "FAIL",
-      "details": "No SELinux mode data available",
+      "status": "PASS",
+      "details": "Checked 'getenforce' output: Current mode is 'Enforcing' - PASS",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "PASS",
+      "final_details": "Checked 'getenforce' output: Current mode is 'Enforcing' - PASS"
     },
     {
       "rule_id": "1.6.1.5",
@@ -333,299 +414,399 @@
       "status": "PASS",
       "details": "SELinux is not disabled",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "PASS",
+      "final_details": "SELinux is not disabled"
     },
     {
       "rule_id": "1.6.1.6",
       "title": "Ensure no unconfined services exist",
       "status": "FAIL",
-      "details": "No process SELinux data available",
+      "details": "Unconfined services found: 10",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "Unconfined services found: 10"
     },
     {
       "rule_id": "1.6.1.7",
       "title": "Ensure SETroubleshoot is not installed",
-      "status": "FAIL",
-      "details": "No package data available",
+      "status": "PASS",
+      "details": "SETroubleshoot is not installed",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "PASS",
+      "final_details": "SETroubleshoot is not installed"
     },
     {
       "rule_id": "1.6.1.8",
       "title": "Ensure the MCS Translation Service (mcstrans) is not installed",
-      "status": "FAIL",
-      "details": "No package data available",
+      "status": "PASS",
+      "details": "mcstrans is not installed",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "PASS",
+      "final_details": "mcstrans is not installed"
     },
     {
       "rule_id": "1.7.1",
       "title": "Ensure message of the day is configured properly",
-      "status": "FAIL",
-      "details": "No MOTD data available",
+      "status": "PASS",
+      "details": "Checked /etc/motd content: File is empty or contains appropriate warning content - PASS",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "PASS",
+      "final_details": "Checked /etc/motd content: File is empty or contains appropriate warning content - PASS"
     },
     {
       "rule_id": "1.7.2",
       "title": "Ensure local login warning banner is configured properly",
       "status": "FAIL",
-      "details": "No local login banner data available",
+      "details": "Local login banner contains inappropriate content",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "Local login banner contains inappropriate content"
     },
     {
       "rule_id": "1.7.3",
       "title": "Ensure remote login warning banner is configured properly",
       "status": "FAIL",
-      "details": "No remote login banner data available",
+      "details": "Remote login banner contains inappropriate content",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "Remote login banner contains inappropriate content"
     },
     {
       "rule_id": "1.7.4",
       "title": "Ensure permissions on /etc/motd are configured",
       "status": "PASS",
-      "details": "/etc/motd does not exist (acceptable)",
+      "details": "Checked file permissions: /etc/motd has mode 644 (expected 644) - PASS",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "PASS",
+      "final_details": "Checked file permissions: /etc/motd has mode 644 (expected 644) - PASS"
     },
     {
       "rule_id": "1.7.5",
       "title": "Ensure permissions on /etc/issue are configured",
-      "status": "FAIL",
-      "details": "No /etc/issue permission data available",
+      "status": "PASS",
+      "details": "Checked file permissions: /etc/issue has mode 644 (expected 644) - PASS",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "PASS",
+      "final_details": "Checked file permissions: /etc/issue has mode 644 (expected 644) - PASS"
     },
     {
       "rule_id": "1.7.6",
       "title": "Ensure permissions on /etc/issue.net are configured",
-      "status": "FAIL",
-      "details": "No /etc/issue.net permission data available",
+      "status": "PASS",
+      "details": "Checked file permissions: /etc/issue.net has mode 644 (expected 644) - PASS",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "PASS",
+      "final_details": "Checked file permissions: /etc/issue.net has mode 644 (expected 644) - PASS"
     },
     {
       "rule_id": "1.8.1",
       "title": "Ensure GNOME Display Manager is removed",
       "status": "FAIL",
-      "details": "No package data available",
+      "details": "Checked 'rpm -q gdm' output: Package found - gdm-40.1-21.el9.x86_64 - FAIL",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "Checked 'rpm -q gdm' output: Package found - gdm-40.1-21.el9.x86_64 - FAIL"
     },
     {
       "rule_id": "1.8.2",
       "title": "Ensure GDM login banner is configured",
       "status": "FAIL",
-      "details": "GDM login banner is not configured",
+      "details": "Checked /etc/gdm/custom.conf: 'banner-message-enable=true' setting not found - FAIL",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/gdm/custom.conf: 'banner-message-enable=true' setting not found - FAIL"
     },
     {
       "rule_id": "1.8.3",
       "title": "Ensure GDM disable-user-list option is enabled",
       "status": "FAIL",
-      "details": "No GDM login screen config data available",
+      "details": "Checked /etc/gdm/custom.conf: 'disable-user-list=true' setting not found - FAIL",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/gdm/custom.conf: 'disable-user-list=true' setting not found - FAIL"
     },
     {
       "rule_id": "1.8.4",
       "title": "Ensure GDM screen locks when the user is idle",
-      "status": "FAIL",
-      "details": "No GDM screensaver config data available",
+      "status": "PASS",
+      "details": "Checked gsettings: Screen lock is enabled with idle timeout configured - PASS",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "PASS",
+      "final_details": "Checked gsettings: Screen lock is enabled with idle timeout configured - PASS"
     },
     {
       "rule_id": "1.8.5",
       "title": "Ensure GDM screen locks cannot be overridden",
       "status": "FAIL",
-      "details": "No GDM screensaver locks config data available",
+      "details": "Checked /etc/dconf/db/*/locks/: Screen lock settings not locked - FAIL",
       "section": "initial_setup",
-      "section_name": "Initial Setup"
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/dconf/db/*/locks/: Screen lock settings not locked - FAIL"
+    },
+    {
+      "rule_id": "1.8.6",
+      "title": "Ensure GDM automatic mounting of removable media is disabled",
+      "status": "FAIL",
+      "details": "Checked gsettings: Automatic mounting is not disabled - FAIL",
+      "section": "initial_setup",
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "Checked gsettings: Automatic mounting is not disabled - FAIL"
+    },
+    {
+      "rule_id": "1.8.7",
+      "title": "Ensure GDM autorun-never is enabled",
+      "status": "FAIL",
+      "details": "Checked gsettings: autorun-never is not enabled - FAIL",
+      "section": "initial_setup",
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "Checked gsettings: autorun-never is not enabled - FAIL"
+    },
+    {
+      "rule_id": "1.8.8",
+      "title": "Ensure XDCMP is not enabled",
+      "status": "FAIL",
+      "details": "Checked /etc/gdm/custom.conf: XDMCP is enabled - FAIL",
+      "section": "initial_setup",
+      "section_name": "Initial Setup",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/gdm/custom.conf: XDMCP is enabled - FAIL"
     },
     {
       "rule_id": "2.1.1",
       "title": "Ensure autofs services are not in use",
-      "status": "FAIL",
-      "details": "autofs package may be installed - manual verification required",
+      "status": "PASS",
+      "details": "Executed \"rpm -q autofs\": package not installed - PASS",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "PASS",
+      "final_details": "Executed \"rpm -q autofs\": package not installed - PASS"
     },
     {
       "rule_id": "2.1.2",
       "title": "Ensure avahi daemon services are not in use",
       "status": "FAIL",
-      "details": "avahi package may be installed - manual verification required",
+      "details": "Executed \"rpm -q avahi\" and \"systemctl is-enabled avahi-daemon\": service enabled or package installed - FAIL",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "FAIL",
+      "final_details": "Executed \"rpm -q avahi\" and \"systemctl is-enabled avahi-daemon\": service enabled or package installed - FAIL"
     },
     {
       "rule_id": "2.1.3",
       "title": "Ensure dhcp server services are not in use",
-      "status": "FAIL",
-      "details": "dhcp-server package may be installed - manual verification required",
+      "status": "PASS",
+      "details": "dhcp-server package is not installed",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "PASS",
+      "final_details": "dhcp-server package is not installed"
     },
     {
       "rule_id": "2.1.4",
       "title": "Ensure dns server services are not in use",
-      "status": "FAIL",
-      "details": "bind package may be installed - manual verification required",
+      "status": "PASS",
+      "details": "bind package is not installed",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "PASS",
+      "final_details": "bind package is not installed"
     },
     {
       "rule_id": "2.1.5",
       "title": "Ensure dnsmasq services are not in use",
-      "status": "FAIL",
-      "details": "dnsmasq package may be installed - manual verification required",
+      "status": "PASS",
+      "details": "dnsmasq service is disabled/masked",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "PASS",
+      "final_details": "dnsmasq service is disabled/masked"
     },
     {
       "rule_id": "2.1.6",
       "title": "Ensure samba file server services are not in use",
-      "status": "FAIL",
-      "details": "samba package may be installed - manual verification required",
+      "status": "PASS",
+      "details": "samba package is not installed",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "PASS",
+      "final_details": "samba package is not installed"
     },
     {
       "rule_id": "2.1.7",
       "title": "Ensure ftp server services are not in use",
-      "status": "FAIL",
-      "details": "vsftpd package may be installed - manual verification required",
+      "status": "PASS",
+      "details": "vsftpd package is not installed",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "PASS",
+      "final_details": "vsftpd package is not installed"
     },
     {
       "rule_id": "2.1.8",
       "title": "Ensure message access server services are not in use",
-      "status": "FAIL",
-      "details": "dovecot package may be installed - manual verification required",
+      "status": "PASS",
+      "details": "dovecot package is not installed",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "PASS",
+      "final_details": "dovecot package is not installed"
     },
     {
       "rule_id": "2.1.9",
       "title": "Ensure network file system services are not in use",
-      "status": "FAIL",
-      "details": "nfs-utils package may be installed - manual verification required",
+      "status": "PASS",
+      "details": "nfs-utils package is not installed",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "PASS",
+      "final_details": "nfs-utils package is not installed"
     },
     {
       "rule_id": "2.1.10",
       "title": "Ensure nis server services are not in use",
-      "status": "FAIL",
-      "details": "ypserv package may be installed - manual verification required",
+      "status": "PASS",
+      "details": "ypserv package is not installed",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "PASS",
+      "final_details": "ypserv package is not installed"
     },
     {
       "rule_id": "2.1.11",
       "title": "Ensure print server services are not in use",
       "status": "FAIL",
-      "details": "cups package may be installed - manual verification required",
+      "details": "cups service is enabled or package is installed",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "FAIL",
+      "final_details": "cups service is enabled or package is installed"
     },
     {
       "rule_id": "2.1.12",
       "title": "Ensure rpcbind services are not in use",
-      "status": "FAIL",
-      "details": "rpcbind package may be installed - manual verification required",
+      "status": "PASS",
+      "details": "rpcbind package is not installed",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "PASS",
+      "final_details": "rpcbind package is not installed"
     },
     {
       "rule_id": "2.1.13",
       "title": "Ensure rsync services are not in use",
-      "status": "FAIL",
-      "details": "rsync-daemon package may be installed - manual verification required",
+      "status": "PASS",
+      "details": "rsync-daemon package is not installed",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "PASS",
+      "final_details": "rsync-daemon package is not installed"
     },
     {
       "rule_id": "2.1.14",
       "title": "Ensure snmp services are not in use",
-      "status": "FAIL",
-      "details": "net-snmp package may be installed - manual verification required",
+      "status": "PASS",
+      "details": "net-snmp package is not installed",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "PASS",
+      "final_details": "net-snmp package is not installed"
     },
     {
       "rule_id": "2.1.15",
       "title": "Ensure telnet server services are not in use",
-      "status": "FAIL",
-      "details": "telnet-server package may be installed - manual verification required",
+      "status": "PASS",
+      "details": "telnet-server package is not installed",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "PASS",
+      "final_details": "telnet-server package is not installed"
     },
     {
       "rule_id": "2.1.16",
       "title": "Ensure tftp server services are not in use",
-      "status": "FAIL",
-      "details": "tftp-server package may be installed - manual verification required",
+      "status": "PASS",
+      "details": "tftp-server package is not installed",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "PASS",
+      "final_details": "tftp-server package is not installed"
     },
     {
       "rule_id": "2.1.17",
       "title": "Ensure web proxy server services are not in use",
-      "status": "FAIL",
-      "details": "squid package may be installed - manual verification required",
+      "status": "PASS",
+      "details": "squid package is not installed",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "PASS",
+      "final_details": "squid package is not installed"
     },
     {
       "rule_id": "2.1.18",
       "title": "Ensure web server services are not in use",
-      "status": "FAIL",
-      "details": "httpd package may be installed - manual verification required",
+      "status": "PASS",
+      "details": "httpd package is not installed",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "PASS",
+      "final_details": "httpd package is not installed"
     },
     {
       "rule_id": "2.1.19",
       "title": "Ensure xinetd services are not in use",
-      "status": "FAIL",
-      "details": "xinetd package may be installed - manual verification required",
+      "status": "PASS",
+      "details": "xinetd package is not installed",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "PASS",
+      "final_details": "xinetd package is not installed"
     },
     {
       "rule_id": "2.1.20",
       "title": "Ensure X window server services are not in use",
       "status": "FAIL",
-      "details": "xorg-x11-server-Xorg package may be installed - manual verification required",
+      "details": "xorg-x11-server-Xorg package is installed",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "FAIL",
+      "final_details": "xorg-x11-server-Xorg package is installed"
     },
     {
       "rule_id": "2.1.21",
@@ -634,7 +815,9 @@
       "details": "No mail transfer agent configuration found",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "PASS",
+      "final_details": "No mail transfer agent configuration found"
     },
     {
       "rule_id": "2.1.22",
@@ -643,187 +826,230 @@
       "details": "Found 10 listening services. Manual review required to ensure only approved services are listening.",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "SKIP",
+      "final_details": "Test skipped (status: MANUAL): Found 10 listening services. Manual review required to ensure only approved services are listening."
     },
     {
       "rule_id": "2.2.1",
       "title": "Ensure ftp client is not installed",
-      "status": "FAIL",
-      "details": "ftp client may be installed",
+      "status": "PASS",
+      "details": "ftp client is not installed",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "PASS",
+      "final_details": "ftp client is not installed"
     },
     {
       "rule_id": "2.2.2",
       "title": "Ensure ldap client is not installed",
-      "status": "FAIL",
-      "details": "openldap-clients may be installed",
+      "status": "PASS",
+      "details": "openldap-clients is not installed",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "PASS",
+      "final_details": "openldap-clients is not installed"
     },
     {
       "rule_id": "2.2.3",
       "title": "Ensure nis client is not installed",
-      "status": "FAIL",
-      "details": "ypbind may be installed",
+      "status": "PASS",
+      "details": "ypbind is not installed",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "PASS",
+      "final_details": "ypbind is not installed"
     },
     {
       "rule_id": "2.2.4",
       "title": "Ensure telnet client is not installed",
-      "status": "FAIL",
-      "details": "telnet client may be installed",
+      "status": "PASS",
+      "details": "telnet client is not installed",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "PASS",
+      "final_details": "telnet client is not installed"
     },
     {
       "rule_id": "2.2.5",
       "title": "Ensure tftp client is not installed",
-      "status": "FAIL",
-      "details": "tftp client may be installed",
+      "status": "PASS",
+      "details": "tftp client is not installed",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "PASS",
+      "final_details": "tftp client is not installed"
     },
     {
       "rule_id": "2.3.1",
       "title": "Ensure time synchronization is in use",
-      "status": "FAIL",
-      "details": "chrony installed: False, enabled: False, active: False",
+      "status": "PASS",
+      "details": "chrony is installed, enabled, and active",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "PASS",
+      "final_details": "chrony is installed, enabled, and active"
     },
     {
       "rule_id": "2.3.2",
       "title": "Ensure chrony is configured",
-      "status": "FAIL",
-      "details": "chrony configuration data not available",
+      "status": "PASS",
+      "details": "chrony is configured with time servers",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "PASS",
+      "final_details": "chrony is configured with time servers"
     },
     {
       "rule_id": "2.3.3",
       "title": "Ensure chrony is not run as the root user",
-      "status": "ERROR",
-      "details": "chronyd process data not available",
+      "status": "PASS",
+      "details": "chronyd is running as non-root user",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "PASS",
+      "final_details": "chronyd is running as non-root user"
     },
     {
       "rule_id": "2.4.1.1",
       "title": "Ensure cron daemon is enabled and active",
-      "status": "FAIL",
-      "details": "crond status - enabled: False, active: False",
+      "status": "PASS",
+      "details": "crond is enabled and active",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "PASS",
+      "final_details": "crond is enabled and active"
     },
     {
       "rule_id": "2.4.1.2",
       "title": "Ensure permissions on /etc/crontab are configured",
-      "status": "ERROR",
-      "details": "Permission data not available",
+      "status": "FAIL",
+      "details": "/etc/crontab permissions: 644 (expected 600), owner: 0:0 (expected 0:0)",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "FAIL",
+      "final_details": "/etc/crontab permissions: 644 (expected 600), owner: 0:0 (expected 0:0)"
     },
     {
       "rule_id": "2.4.1.3",
       "title": "Ensure permissions on /etc/cron.hourly are configured",
-      "status": "ERROR",
-      "details": "Permission data not available",
+      "status": "FAIL",
+      "details": "/etc/cron.hourly permissions: 755 (expected 700), owner: 0:0 (expected 0:0)",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "FAIL",
+      "final_details": "/etc/cron.hourly permissions: 755 (expected 700), owner: 0:0 (expected 0:0)"
     },
     {
       "rule_id": "2.4.1.4",
       "title": "Ensure permissions on /etc/cron.daily are configured",
-      "status": "ERROR",
-      "details": "Permission data not available",
+      "status": "FAIL",
+      "details": "/etc/cron.daily permissions: 755 (expected 700), owner: 0:0 (expected 0:0)",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "FAIL",
+      "final_details": "/etc/cron.daily permissions: 755 (expected 700), owner: 0:0 (expected 0:0)"
     },
     {
       "rule_id": "2.4.1.5",
       "title": "Ensure permissions on /etc/cron.weekly are configured",
-      "status": "ERROR",
-      "details": "Permission data not available",
+      "status": "FAIL",
+      "details": "/etc/cron.weekly permissions: 755 (expected 700), owner: 0:0 (expected 0:0)",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "FAIL",
+      "final_details": "/etc/cron.weekly permissions: 755 (expected 700), owner: 0:0 (expected 0:0)"
     },
     {
       "rule_id": "2.4.1.6",
       "title": "Ensure permissions on /etc/cron.monthly are configured",
-      "status": "ERROR",
-      "details": "Permission data not available",
+      "status": "FAIL",
+      "details": "/etc/cron.monthly permissions: 755 (expected 700), owner: 0:0 (expected 0:0)",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "FAIL",
+      "final_details": "/etc/cron.monthly permissions: 755 (expected 700), owner: 0:0 (expected 0:0)"
     },
     {
       "rule_id": "2.4.1.7",
       "title": "Ensure permissions on /etc/cron.d are configured",
-      "status": "ERROR",
-      "details": "Permission data not available",
+      "status": "FAIL",
+      "details": "/etc/cron.d permissions: 755 (expected 700), owner: 0:0 (expected 0:0)",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "FAIL",
+      "final_details": "/etc/cron.d permissions: 755 (expected 700), owner: 0:0 (expected 0:0)"
     },
     {
       "rule_id": "2.4.1.8",
       "title": "Ensure crontab is restricted to authorized users",
       "status": "FAIL",
-      "details": "Neither /etc/cron.allow nor /etc/cron.deny exists",
+      "details": "Checked /etc/cron.deny: permissions 644 (expected 600), owner 0:0 (expected 0:0) - FAIL",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/cron.deny: permissions 644 (expected 600), owner 0:0 (expected 0:0) - FAIL"
     },
     {
       "rule_id": "2.4.2.1",
       "title": "Ensure at is restricted to authorized users",
       "status": "FAIL",
-      "details": "Neither /etc/at.allow nor /etc/at.deny exists",
+      "details": "Checked /etc/at.deny: permissions 644 (expected 600), owner 0:0 (expected 0:0) - FAIL",
       "severity": "Medium",
       "section": "services",
-      "section_name": "Services"
+      "section_name": "Services",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/at.deny: permissions 644 (expected 600), owner 0:0 (expected 0:0) - FAIL"
     },
     {
       "rule_id": "3.1.1",
       "title": "Ensure IPv6 status is identified",
       "status": "MANUAL",
-      "details": "IPv6 appears to be enabled - manual review required",
+      "details": "IPv6 is enabled - manual review required to determine if this is appropriate",
       "severity": "Medium",
       "section": "network",
-      "section_name": "Network Configuration"
+      "section_name": "Network Configuration",
+      "final_status": "SKIP",
+      "final_details": "Test skipped (status: MANUAL): IPv6 is enabled - manual review required to determine if this is appropriate"
     },
     {
       "rule_id": "3.1.2",
       "title": "Ensure wireless interfaces are disabled",
-      "status": "ERROR",
-      "details": "No network interface data available",
+      "status": "PASS",
+      "details": "No wireless interfaces found",
       "severity": "Medium",
       "section": "network",
-      "section_name": "Network Configuration"
+      "section_name": "Network Configuration",
+      "final_status": "PASS",
+      "final_details": "No wireless interfaces found"
     },
     {
       "rule_id": "3.1.3",
       "title": "Ensure bluetooth services are not in use",
-      "status": "ERROR",
-      "details": "No services data available",
+      "status": "FAIL",
+      "details": "Bluetooth service status - enabled: True, active: True",
       "severity": "Medium",
       "section": "network",
-      "section_name": "Network Configuration"
+      "remediation": "Disable bluetooth service: systemctl disable bluetooth && systemctl stop bluetooth",
+      "section_name": "Network Configuration",
+      "final_status": "FAIL",
+      "final_details": "Bluetooth service status - enabled: True, active: True"
     },
     {
       "rule_id": "3.2.1",
@@ -832,7 +1058,9 @@
       "details": "dccp module is not loaded",
       "severity": "Medium",
       "section": "network",
-      "section_name": "Network Configuration"
+      "section_name": "Network Configuration",
+      "final_status": "PASS",
+      "final_details": "dccp module is not loaded"
     },
     {
       "rule_id": "3.2.2",
@@ -841,7 +1069,9 @@
       "details": "tipc module is not loaded",
       "severity": "Medium",
       "section": "network",
-      "section_name": "Network Configuration"
+      "section_name": "Network Configuration",
+      "final_status": "PASS",
+      "final_details": "tipc module is not loaded"
     },
     {
       "rule_id": "3.2.3",
@@ -850,7 +1080,9 @@
       "details": "rds module is not loaded",
       "severity": "Medium",
       "section": "network",
-      "section_name": "Network Configuration"
+      "section_name": "Network Configuration",
+      "final_status": "PASS",
+      "final_details": "rds module is not loaded"
     },
     {
       "rule_id": "3.2.4",
@@ -859,151 +1091,193 @@
       "details": "sctp module is not loaded",
       "severity": "Medium",
       "section": "network",
-      "section_name": "Network Configuration"
+      "section_name": "Network Configuration",
+      "final_status": "PASS",
+      "final_details": "sctp module is not loaded"
     },
     {
       "rule_id": "3.3.1",
       "title": "Ensure ip forwarding is disabled",
-      "status": "ERROR",
-      "details": "No sysctl data available",
+      "status": "PASS",
+      "details": "net.ipv4.ip_forward = 0 (expected 0)",
       "severity": "Medium",
       "section": "network",
-      "section_name": "Network Configuration"
+      "section_name": "Network Configuration",
+      "final_status": "PASS",
+      "final_details": "net.ipv4.ip_forward = 0 (expected 0)"
     },
     {
       "rule_id": "3.3.2",
       "title": "Ensure packet redirect sending is disabled",
-      "status": "ERROR",
-      "details": "No sysctl data available",
+      "status": "FAIL",
+      "details": "net.ipv4.conf.all.send_redirects = 1 (expected 0)",
       "severity": "Medium",
       "section": "network",
-      "section_name": "Network Configuration"
+      "remediation": "Set net.ipv4.conf.all.send_redirects = 0 in /etc/sysctl.conf and run sysctl -p",
+      "section_name": "Network Configuration",
+      "final_status": "FAIL",
+      "final_details": "net.ipv4.conf.all.send_redirects = 1 (expected 0)"
     },
     {
       "rule_id": "3.3.3",
       "title": "Ensure bogus icmp responses are ignored",
-      "status": "ERROR",
-      "details": "No sysctl data available",
+      "status": "PASS",
+      "details": "net.ipv4.icmp_ignore_bogus_error_responses = 1 (expected 1)",
       "severity": "Medium",
       "section": "network",
-      "section_name": "Network Configuration"
+      "section_name": "Network Configuration",
+      "final_status": "PASS",
+      "final_details": "net.ipv4.icmp_ignore_bogus_error_responses = 1 (expected 1)"
     },
     {
       "rule_id": "3.3.4",
       "title": "Ensure broadcast icmp requests are ignored",
-      "status": "ERROR",
-      "details": "No sysctl data available",
+      "status": "PASS",
+      "details": "net.ipv4.icmp_echo_ignore_broadcasts = 1 (expected 1)",
       "severity": "Medium",
       "section": "network",
-      "section_name": "Network Configuration"
+      "section_name": "Network Configuration",
+      "final_status": "PASS",
+      "final_details": "net.ipv4.icmp_echo_ignore_broadcasts = 1 (expected 1)"
     },
     {
       "rule_id": "3.3.5",
       "title": "Ensure icmp redirects are not accepted",
-      "status": "ERROR",
-      "details": "No sysctl data available",
+      "status": "FAIL",
+      "details": "net.ipv4.conf.all.accept_redirects = 1 (expected 0)",
       "severity": "Medium",
       "section": "network",
-      "section_name": "Network Configuration"
+      "remediation": "Set net.ipv4.conf.all.accept_redirects = 0 in /etc/sysctl.conf and run sysctl -p",
+      "section_name": "Network Configuration",
+      "final_status": "FAIL",
+      "final_details": "net.ipv4.conf.all.accept_redirects = 1 (expected 0)"
     },
     {
       "rule_id": "3.3.6",
       "title": "Ensure secure icmp redirects are not accepted",
-      "status": "ERROR",
-      "details": "No sysctl data available",
+      "status": "FAIL",
+      "details": "net.ipv4.conf.all.secure_redirects = 1 (expected 0)",
       "severity": "Medium",
       "section": "network",
-      "section_name": "Network Configuration"
+      "remediation": "Set net.ipv4.conf.all.secure_redirects = 0 in /etc/sysctl.conf and run sysctl -p",
+      "section_name": "Network Configuration",
+      "final_status": "FAIL",
+      "final_details": "net.ipv4.conf.all.secure_redirects = 1 (expected 0)"
     },
     {
       "rule_id": "3.3.7",
       "title": "Ensure reverse path filtering is enabled",
-      "status": "ERROR",
-      "details": "No sysctl data available",
+      "status": "FAIL",
+      "details": "net.ipv4.conf.all.rp_filter = 0 (expected 1)",
       "severity": "Medium",
       "section": "network",
-      "section_name": "Network Configuration"
+      "remediation": "Set net.ipv4.conf.all.rp_filter = 1 in /etc/sysctl.conf and run sysctl -p",
+      "section_name": "Network Configuration",
+      "final_status": "FAIL",
+      "final_details": "net.ipv4.conf.all.rp_filter = 0 (expected 1)"
     },
     {
       "rule_id": "3.3.8",
       "title": "Ensure source routed packets are not accepted",
-      "status": "ERROR",
-      "details": "No sysctl data available",
+      "status": "PASS",
+      "details": "net.ipv4.conf.all.accept_source_route = 0 (expected 0)",
       "severity": "Medium",
       "section": "network",
-      "section_name": "Network Configuration"
+      "section_name": "Network Configuration",
+      "final_status": "PASS",
+      "final_details": "net.ipv4.conf.all.accept_source_route = 0 (expected 0)"
     },
     {
       "rule_id": "3.3.9",
       "title": "Ensure suspicious packets are logged",
-      "status": "ERROR",
-      "details": "No sysctl data available",
+      "status": "FAIL",
+      "details": "net.ipv4.conf.all.log_martians = 0 (expected 1)",
       "severity": "Medium",
       "section": "network",
-      "section_name": "Network Configuration"
+      "remediation": "Set net.ipv4.conf.all.log_martians = 1 in /etc/sysctl.conf and run sysctl -p",
+      "section_name": "Network Configuration",
+      "final_status": "FAIL",
+      "final_details": "net.ipv4.conf.all.log_martians = 0 (expected 1)"
     },
     {
       "rule_id": "3.3.10",
       "title": "Ensure tcp syn cookies is enabled",
-      "status": "ERROR",
-      "details": "No sysctl data available",
+      "status": "PASS",
+      "details": "net.ipv4.tcp_syncookies = 1 (expected 1)",
       "severity": "Medium",
       "section": "network",
-      "section_name": "Network Configuration"
+      "section_name": "Network Configuration",
+      "final_status": "PASS",
+      "final_details": "net.ipv4.tcp_syncookies = 1 (expected 1)"
     },
     {
       "rule_id": "3.3.11",
       "title": "Ensure ipv6 router advertisements are not accepted",
-      "status": "ERROR",
-      "details": "No sysctl data available",
+      "status": "FAIL",
+      "details": "net.ipv6.conf.all.accept_ra = 1 (expected 0)",
       "severity": "Medium",
       "section": "network",
-      "section_name": "Network Configuration"
+      "remediation": "Set net.ipv6.conf.all.accept_ra = 0 in /etc/sysctl.conf and run sysctl -p",
+      "section_name": "Network Configuration",
+      "final_status": "FAIL",
+      "final_details": "net.ipv6.conf.all.accept_ra = 1 (expected 0)"
     },
     {
       "rule_id": "4.1.1",
       "title": "Ensure nftables is installed",
-      "status": "ERROR",
-      "details": "No package data available",
+      "status": "PASS",
+      "details": "nftables is installed: nftables-1.0.4-11.el9_3.x86_64",
       "severity": "High",
       "section": "firewall",
-      "section_name": "Host Based Firewall"
+      "section_name": "Host Based Firewall",
+      "final_status": "PASS",
+      "final_details": "nftables is installed: nftables-1.0.4-11.el9_3.x86_64"
     },
     {
       "rule_id": "4.1.2",
       "title": "Ensure a single firewall configuration utility is in use",
-      "status": "ERROR",
-      "details": "Required data files not available",
+      "status": "PASS",
+      "details": "Single firewall utility in use: firewalld",
       "severity": "High",
       "section": "firewall",
-      "section_name": "Host Based Firewall"
+      "section_name": "Host Based Firewall",
+      "final_status": "PASS",
+      "final_details": "Single firewall utility in use: firewalld"
     },
     {
       "rule_id": "4.2.1",
       "title": "Ensure firewalld drops unnecessary services and ports",
-      "status": "ERROR",
-      "details": "No firewalld configuration data available",
+      "status": "MANUAL",
+      "details": "Manual review required for firewalld services and ports configuration",
       "severity": "Medium",
       "section": "firewall",
-      "section_name": "Host Based Firewall"
+      "section_name": "Host Based Firewall",
+      "final_status": "SKIP",
+      "final_details": "Test skipped (status: MANUAL): Manual review required for firewalld services and ports configuration"
     },
     {
       "rule_id": "4.2.2",
       "title": "Ensure firewalld loopback traffic is configured",
-      "status": "ERROR",
-      "details": "No firewalld rules data available",
+      "status": "FAIL",
+      "details": "Loopback interface is not properly configured",
       "severity": "High",
       "section": "firewall",
-      "section_name": "Host Based Firewall"
+      "remediation": "Configure loopback interface: firewall-cmd --zone=trusted --add-interface=lo --permanent",
+      "section_name": "Host Based Firewall",
+      "final_status": "FAIL",
+      "final_details": "Loopback interface is not properly configured"
     },
     {
       "rule_id": "4.3.1",
       "title": "Ensure nftables base chains exist",
-      "status": "MANUAL",
-      "details": "Manual verification required - nftables ruleset data not available offline",
+      "status": "FAIL",
+      "details": "Missing base chains: input, forward, output",
       "severity": "High",
       "section": "firewall",
-      "section_name": "Host Based Firewall"
+      "remediation": "Create missing base chains in nftables configuration",
+      "section_name": "Host Based Firewall",
+      "final_status": "FAIL",
+      "final_details": "Missing base chains: input, forward, output"
     },
     {
       "rule_id": "4.3.2",
@@ -1012,448 +1286,1055 @@
       "details": "Manual review required for nftables established connections configuration",
       "severity": "Medium",
       "section": "firewall",
-      "section_name": "Host Based Firewall"
+      "section_name": "Host Based Firewall",
+      "final_status": "SKIP",
+      "final_details": "Test skipped (status: MANUAL): Manual review required for nftables established connections configuration"
     },
     {
       "rule_id": "4.3.3",
       "title": "Ensure nftables default deny firewall policy",
-      "status": "MANUAL",
-      "details": "Manual verification required - nftables ruleset data not available offline",
+      "status": "FAIL",
+      "details": "Default deny policy is not properly configured",
       "severity": "High",
       "section": "firewall",
-      "section_name": "Host Based Firewall"
+      "remediation": "Configure default drop policy for input and forward chains",
+      "section_name": "Host Based Firewall",
+      "final_status": "FAIL",
+      "final_details": "Default deny policy is not properly configured"
     },
     {
       "rule_id": "4.3.4",
       "title": "Ensure nftables loopback traffic is configured",
-      "status": "MANUAL",
-      "details": "Manual verification required - nftables ruleset data not available offline",
+      "status": "PASS",
+      "details": "Loopback traffic is properly configured in nftables",
       "severity": "High",
       "section": "firewall",
-      "section_name": "Host Based Firewall"
+      "section_name": "Host Based Firewall",
+      "final_status": "PASS",
+      "final_details": "Loopback traffic is properly configured in nftables"
+    },
+    {
+      "rule_id": "5.1.1",
+      "title": "Ensure permissions on /etc/ssh/sshd_config are configured",
+      "status": "PASS",
+      "details": "Checked /etc/ssh/sshd_config file: Found permissions 600 and ownership root:root - PASS",
+      "severity": "Medium",
+      "section": "access_control",
+      "section_name": "Access Control",
+      "final_status": "PASS",
+      "final_details": "Checked /etc/ssh/sshd_config file: Found permissions 600 and ownership root:root - PASS"
+    },
+    {
+      "rule_id": "5.1.2",
+      "title": "Ensure permissions on SSH private host key files are configured",
+      "status": "FAIL",
+      "details": "Checked SSH private host key files: /etc/ssh/ssh_host_ecdsa_key: FAIL (640, 0:993); /etc/ssh/ssh_host_ed25519_key: FAIL (640, 0:993); /etc/ssh/ssh_host_rsa_key: FAIL (640, 0:993) - FAIL",
+      "severity": "High",
+      "section": "access_control",
+      "remediation": "Run: find /etc/ssh -xdev -type f -name \"ssh_host_*_key\" -exec chown root:root {} \\; -exec chmod 600 {} \\;",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked SSH private host key files: /etc/ssh/ssh_host_ecdsa_key: FAIL (640, 0:993); /etc/ssh/ssh_host_ed25519_key: FAIL (640, 0:993); /etc/ssh/ssh_host_rsa_key: FAIL (640, 0:993) - FAIL"
+    },
+    {
+      "rule_id": "5.1.3",
+      "title": "Ensure permissions on SSH public host key files are configured",
+      "status": "PASS",
+      "details": "Checked SSH public host key files: /etc/ssh/ssh_host_ecdsa_key.pub: OK (644, root:root); /etc/ssh/ssh_host_ed25519_key.pub: OK (644, root:root); /etc/ssh/ssh_host_rsa_key.pub: OK (644, root:root) - PASS",
+      "severity": "Medium",
+      "section": "access_control",
+      "remediation": null,
+      "section_name": "Access Control",
+      "final_status": "PASS",
+      "final_details": "Checked SSH public host key files: /etc/ssh/ssh_host_ecdsa_key.pub: OK (644, root:root); /etc/ssh/ssh_host_ed25519_key.pub: OK (644, root:root); /etc/ssh/ssh_host_rsa_key.pub: OK (644, root:root) - PASS"
     },
     {
       "rule_id": "5.1.4",
       "title": "Ensure sshd Ciphers are configured",
       "status": "FAIL",
-      "details": "Ciphers is not configured",
+      "details": "Checked /etc/ssh/sshd_config file: Ciphers setting not found or not configured - FAIL",
       "severity": "Medium",
       "section": "access_control",
-      "section_name": "Access Control"
+      "remediation": "Edit /etc/ssh/sshd_config and add: Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/ssh/sshd_config file: Ciphers setting not found or not configured - FAIL"
     },
     {
       "rule_id": "5.1.5",
       "title": "Ensure sshd KexAlgorithms is configured",
       "status": "FAIL",
-      "details": "KexAlgorithms is not configured",
+      "details": "Checked /etc/ssh/sshd_config file: KexAlgorithms setting not found or not configured - FAIL",
       "severity": "Medium",
       "section": "access_control",
-      "section_name": "Access Control"
+      "remediation": "Edit /etc/ssh/sshd_config and add: KexAlgorithms curve25519-sha256,curve25519-sha256@libssh.org,diffie-hellman-group14-sha256,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512,ecdh-sha2-nistp521,ecdh-sha2-nistp384,ecdh-sha2-nistp256,diffie-hellman-group-exchange-sha256",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/ssh/sshd_config file: KexAlgorithms setting not found or not configured - FAIL"
     },
     {
       "rule_id": "5.1.6",
       "title": "Ensure sshd MACs are configured",
       "status": "FAIL",
-      "details": "MACs is not configured",
+      "details": "Checked /etc/ssh/sshd_config file: MACs setting not found or not configured - FAIL",
       "severity": "Medium",
       "section": "access_control",
-      "section_name": "Access Control"
+      "remediation": "Edit /etc/ssh/sshd_config and add: MACs umac-64-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com,hmac-sha1-etm@openssh.com,umac-64@openssh.com,umac-128@openssh.com,hmac-sha2-256,hmac-sha2-512,hmac-sha1",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/ssh/sshd_config file: MACs setting not found or not configured - FAIL"
     },
     {
       "rule_id": "5.1.8",
       "title": "Ensure sshd Banner is configured",
       "status": "FAIL",
-      "details": "Banner is not configured",
+      "details": "Checked /etc/ssh/sshd_config file: Banner setting not found or not configured - FAIL",
       "severity": "Medium",
       "section": "access_control",
-      "section_name": "Access Control"
+      "remediation": "Edit /etc/ssh/sshd_config and add: Banner /etc/issue.net",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/ssh/sshd_config file: Banner setting not found or not configured - FAIL"
     },
     {
       "rule_id": "5.1.10",
       "title": "Ensure sshd DisableForwarding is enabled",
       "status": "FAIL",
-      "details": "DisableForwarding is not configured",
+      "details": "Checked /etc/ssh/sshd_config file: DisableForwarding setting not found or not configured - FAIL",
       "severity": "Medium",
       "section": "access_control",
-      "section_name": "Access Control"
+      "remediation": "Edit /etc/ssh/sshd_config and add: DisableForwarding yes",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/ssh/sshd_config file: DisableForwarding setting not found or not configured - FAIL"
     },
     {
       "rule_id": "5.1.11",
       "title": "Ensure sshd GSSAPIAuthentication is disabled",
       "status": "FAIL",
-      "details": "GSSAPIAuthentication is not configured",
+      "details": "Checked /etc/ssh/sshd_config file: GSSAPIAuthentication setting not found or not configured - FAIL",
       "severity": "Medium",
       "section": "access_control",
-      "section_name": "Access Control"
+      "remediation": "Edit /etc/ssh/sshd_config and add: GSSAPIAuthentication no",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/ssh/sshd_config file: GSSAPIAuthentication setting not found or not configured - FAIL"
     },
     {
       "rule_id": "5.1.12",
       "title": "Ensure sshd HostbasedAuthentication is disabled",
       "status": "FAIL",
-      "details": "HostbasedAuthentication is not configured",
+      "details": "Checked /etc/ssh/sshd_config file: HostbasedAuthentication setting not found or not configured - FAIL",
       "severity": "Medium",
       "section": "access_control",
-      "section_name": "Access Control"
+      "remediation": "Edit /etc/ssh/sshd_config and add: HostbasedAuthentication no",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/ssh/sshd_config file: HostbasedAuthentication setting not found or not configured - FAIL"
     },
     {
       "rule_id": "5.1.13",
       "title": "Ensure sshd IgnoreRhosts is enabled",
       "status": "FAIL",
-      "details": "IgnoreRhosts is not configured",
+      "details": "Checked /etc/ssh/sshd_config file: IgnoreRhosts setting not found or not configured - FAIL",
       "severity": "Medium",
       "section": "access_control",
-      "section_name": "Access Control"
+      "remediation": "Edit /etc/ssh/sshd_config and add: IgnoreRhosts yes",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/ssh/sshd_config file: IgnoreRhosts setting not found or not configured - FAIL"
+    },
+    {
+      "rule_id": "5.1.14",
+      "title": "Ensure sshd LoginGraceTime is configured",
+      "status": "FAIL",
+      "details": "Checked /etc/ssh/sshd_config file: LoginGraceTime setting not found or not configured - FAIL",
+      "severity": "Medium",
+      "section": "access_control",
+      "remediation": "Edit /etc/ssh/sshd_config and add: LoginGraceTime 60",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/ssh/sshd_config file: LoginGraceTime setting not found or not configured - FAIL"
     },
     {
       "rule_id": "5.1.15",
       "title": "Ensure sshd LogLevel is configured",
       "status": "FAIL",
-      "details": "LogLevel is not configured",
+      "details": "Checked /etc/ssh/sshd_config file: LogLevel setting not found or not configured - FAIL",
       "severity": "Medium",
       "section": "access_control",
-      "section_name": "Access Control"
+      "remediation": "Edit /etc/ssh/sshd_config and add: LogLevel VERBOSE",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/ssh/sshd_config file: LogLevel setting not found or not configured - FAIL"
+    },
+    {
+      "rule_id": "5.1.16",
+      "title": "Ensure sshd MaxAuthTries is configured",
+      "status": "FAIL",
+      "details": "Checked /etc/ssh/sshd_config file: MaxAuthTries setting not found or not configured - FAIL",
+      "severity": "Medium",
+      "section": "access_control",
+      "remediation": "Edit /etc/ssh/sshd_config and add: MaxAuthTries 4",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/ssh/sshd_config file: MaxAuthTries setting not found or not configured - FAIL"
+    },
+    {
+      "rule_id": "5.1.17",
+      "title": "Ensure sshd MaxStartups is configured",
+      "status": "FAIL",
+      "details": "Checked /etc/ssh/sshd_config file: MaxStartups setting not found or not configured - FAIL",
+      "severity": "Medium",
+      "section": "access_control",
+      "remediation": "Edit /etc/ssh/sshd_config and add: MaxStartups 10:30:60",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/ssh/sshd_config file: MaxStartups setting not found or not configured - FAIL"
+    },
+    {
+      "rule_id": "5.1.18",
+      "title": "Ensure sshd MaxSessions is configured",
+      "status": "FAIL",
+      "details": "Checked /etc/ssh/sshd_config file: MaxSessions setting not found or not configured - FAIL",
+      "severity": "Medium",
+      "section": "access_control",
+      "remediation": "Edit /etc/ssh/sshd_config and add: MaxSessions 10",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/ssh/sshd_config file: MaxSessions setting not found or not configured - FAIL"
     },
     {
       "rule_id": "5.1.19",
       "title": "Ensure sshd PermitEmptyPasswords is disabled",
       "status": "FAIL",
-      "details": "PermitEmptyPasswords is not configured",
+      "details": "Checked /etc/ssh/sshd_config file: PermitEmptyPasswords setting not found or not configured - FAIL",
       "severity": "Medium",
       "section": "access_control",
-      "section_name": "Access Control"
+      "remediation": "Edit /etc/ssh/sshd_config and add: PermitEmptyPasswords no",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/ssh/sshd_config file: PermitEmptyPasswords setting not found or not configured - FAIL"
     },
     {
       "rule_id": "5.1.20",
       "title": "Ensure sshd PermitRootLogin is disabled",
       "status": "FAIL",
-      "details": "PermitRootLogin is not configured",
+      "details": "Checked /etc/ssh/sshd_config file: PermitRootLogin setting not found or not configured - FAIL",
       "severity": "Medium",
       "section": "access_control",
-      "section_name": "Access Control"
+      "remediation": "Edit /etc/ssh/sshd_config and add: PermitRootLogin no",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/ssh/sshd_config file: PermitRootLogin setting not found or not configured - FAIL"
     },
     {
       "rule_id": "5.1.21",
       "title": "Ensure sshd PermitUserEnvironment is disabled",
       "status": "FAIL",
-      "details": "PermitUserEnvironment is not configured",
+      "details": "Checked /etc/ssh/sshd_config file: PermitUserEnvironment setting not found or not configured - FAIL",
       "severity": "Medium",
       "section": "access_control",
-      "section_name": "Access Control"
+      "remediation": "Edit /etc/ssh/sshd_config and add: PermitUserEnvironment no",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/ssh/sshd_config file: PermitUserEnvironment setting not found or not configured - FAIL"
     },
     {
       "rule_id": "5.1.22",
       "title": "Ensure sshd UsePAM is enabled",
       "status": "FAIL",
-      "details": "UsePAM is not configured",
+      "details": "Checked /etc/ssh/sshd_config file: UsePAM setting not found or not configured - FAIL",
       "severity": "Medium",
       "section": "access_control",
-      "section_name": "Access Control"
+      "remediation": "Edit /etc/ssh/sshd_config and add: UsePAM yes",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/ssh/sshd_config file: UsePAM setting not found or not configured - FAIL"
+    },
+    {
+      "rule_id": "5.1.7",
+      "title": "Ensure sshd access is configured",
+      "status": "MANUAL",
+      "details": "Checked /etc/ssh/sshd_config file: No SSH access controls configured - manual review required",
+      "severity": "Medium",
+      "section": "access_control",
+      "remediation": "Configure AllowUsers, AllowGroups, DenyUsers, or DenyGroups in /etc/ssh/sshd_config",
+      "section_name": "Access Control",
+      "final_status": "SKIP",
+      "final_details": "Test skipped (status: MANUAL): Checked /etc/ssh/sshd_config file: No SSH access controls configured - manual review required"
+    },
+    {
+      "rule_id": "5.1.9",
+      "title": "Ensure sshd ClientAliveInterval and ClientAliveCountMax are configured",
+      "status": "FAIL",
+      "details": "Checked /etc/ssh/sshd_config file: ClientAliveInterval and ClientAliveCountMax: ClientAliveInterval: not configured; ClientAliveCountMax: not configured - FAIL",
+      "severity": "Medium",
+      "section": "access_control",
+      "remediation": "Edit /etc/ssh/sshd_config and set: ClientAliveInterval 300, ClientAliveCountMax 3",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/ssh/sshd_config file: ClientAliveInterval and ClientAliveCountMax: ClientAliveInterval: not configured; ClientAliveCountMax: not configured - FAIL"
     },
     {
       "rule_id": "5.2.1",
       "title": "Ensure sudo is installed",
       "status": "PASS",
-      "details": "sudo package found in installed packages",
+      "details": "Checked installed packages: Found sudo package sudo-1.9.5p2-9.el9.x86_64 - PASS",
       "severity": "High",
       "section": "access_control",
-      "section_name": "Access Control"
+      "section_name": "Access Control",
+      "final_status": "PASS",
+      "final_details": "Checked installed packages: Found sudo package sudo-1.9.5p2-9.el9.x86_64 - PASS"
     },
     {
       "rule_id": "5.2.2",
-      "title": "Privilege Escalation Configuration Check",
-      "status": "ERROR",
-      "details": "Error checking privilege escalation configuration: [Errno 21] Is a directory: 'data/security/sudoers'",
+      "title": "Ensure sudo commands use pty",
+      "status": "FAIL",
+      "details": "Checked /etc/sudoers file: \"Defaults use_pty\" setting not found or disabled - FAIL",
       "severity": "Medium",
       "section": "access_control",
-      "section_name": "Access Control"
+      "remediation": "Add \"Defaults use_pty\" to /etc/sudoers",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/sudoers file: \"Defaults use_pty\" setting not found or disabled - FAIL"
+    },
+    {
+      "rule_id": "5.2.3",
+      "title": "Ensure sudo log file exists",
+      "status": "FAIL",
+      "details": "Checked /etc/sudoers file: Sudo log file not configured - FAIL",
+      "severity": "Medium",
+      "section": "access_control",
+      "remediation": "Add \"Defaults logfile=/var/log/sudo.log\" to /etc/sudoers",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/sudoers file: Sudo log file not configured - FAIL"
+    },
+    {
+      "rule_id": "5.2.4",
+      "title": "Ensure users must provide password for escalation",
+      "status": "PASS",
+      "details": "Checked /etc/sudoers and /etc/sudoers.d/* files: No NOPASSWD entries found - PASS",
+      "severity": "High",
+      "section": "access_control",
+      "section_name": "Access Control",
+      "final_status": "PASS",
+      "final_details": "Checked /etc/sudoers and /etc/sudoers.d/* files: No NOPASSWD entries found - PASS"
+    },
+    {
+      "rule_id": "5.2.5",
+      "title": "Ensure re-authentication for privilege escalation is not disabled globally",
+      "status": "PASS",
+      "details": "Checked /etc/sudoers and /etc/sudoers.d/* files: No global !authenticate entries found - PASS",
+      "severity": "Medium",
+      "section": "access_control",
+      "section_name": "Access Control",
+      "final_status": "PASS",
+      "final_details": "Checked /etc/sudoers and /etc/sudoers.d/* files: No global !authenticate entries found - PASS"
+    },
+    {
+      "rule_id": "5.2.6",
+      "title": "Ensure sudo authentication timeout is configured correctly",
+      "status": "FAIL",
+      "details": "Checked /etc/sudoers and /etc/sudoers.d/* files: sudo timeout is not configured - FAIL",
+      "severity": "Medium",
+      "section": "access_control",
+      "remediation": "Add \"Defaults timestamp_timeout=15\" to /etc/sudoers",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/sudoers and /etc/sudoers.d/* files: sudo timeout is not configured - FAIL"
+    },
+    {
+      "rule_id": "5.2.7",
+      "title": "Ensure access to the su command is restricted",
+      "status": "FAIL",
+      "details": "Checked /etc/pam.d/su file: su access is not restricted to wheel group - FAIL",
+      "severity": "Medium",
+      "section": "access_control",
+      "remediation": "Add \"auth required pam_wheel.so use_uid\" to /etc/pam.d/su",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/pam.d/su file: su access is not restricted to wheel group - FAIL"
     },
     {
       "rule_id": "5.3.1.1",
       "title": "Ensure latest version of pam is installed",
       "status": "PASS",
-      "details": "pam- package found in installed packages",
+      "details": "Checked installed packages: Found PAM package pam-1.5.1-15.el9.x86_64 - PASS",
       "severity": "Medium",
       "section": "access_control",
-      "section_name": "Access Control"
+      "section_name": "Access Control",
+      "final_status": "PASS",
+      "final_details": "Checked installed packages: Found PAM package pam-1.5.1-15.el9.x86_64 - PASS"
     },
     {
       "rule_id": "5.3.1.2",
       "title": "Ensure latest version of authselect is installed",
       "status": "PASS",
-      "details": "authselect- package found in installed packages",
+      "details": "Checked installed packages: Found authselect package authselect-1.2.6-2.el9.x86_64 - PASS",
       "severity": "Medium",
       "section": "access_control",
-      "section_name": "Access Control"
+      "section_name": "Access Control",
+      "final_status": "PASS",
+      "final_details": "Checked installed packages: Found authselect package authselect-1.2.6-2.el9.x86_64 - PASS"
     },
     {
       "rule_id": "5.3.1.3",
       "title": "Ensure latest version of libpwquality is installed",
       "status": "PASS",
-      "details": "libpwquality- package found in installed packages",
+      "details": "Checked installed packages: Found libpwquality package libpwquality-1.4.4-8.el9.x86_64 - PASS",
       "severity": "Medium",
       "section": "access_control",
-      "section_name": "Access Control"
+      "section_name": "Access Control",
+      "final_status": "PASS",
+      "final_details": "Checked installed packages: Found libpwquality package libpwquality-1.4.4-8.el9.x86_64 - PASS"
+    },
+    {
+      "rule_id": "5.3.2.1",
+      "title": "Ensure active authselect profile includes pam modules",
+      "status": "MANUAL",
+      "details": "Current authselect profile: Profile ID: sssd\nEnabled features:\n- with-fingerprint\n- with-silent-lastlog - manual review required",
+      "severity": "Medium",
+      "section": "access_control",
+      "section_name": "Access Control",
+      "final_status": "SKIP",
+      "final_details": "Test skipped (status: MANUAL): Current authselect profile: Profile ID: sssd\nEnabled features:\n- with-fingerprint\n- with-silent-lastlog - manual review required"
     },
     {
       "rule_id": "5.3.2.2",
       "title": "Ensure pam_faillock module is enabled",
       "status": "FAIL",
-      "details": "pam_faillock module not found in PAM configuration",
+      "details": "Checked /etc/pam.d/ files: pam_faillock module is not configured - FAIL",
       "severity": "Medium",
       "section": "access_control",
-      "section_name": "Access Control"
+      "remediation": "Configure pam_faillock module in appropriate PAM files",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/pam.d/ files: pam_faillock module is not configured - FAIL"
     },
     {
       "rule_id": "5.3.2.3",
       "title": "Ensure pam_pwquality module is enabled",
-      "status": "PASS",
-      "details": "pam_pwquality module found in PAM configuration",
+      "status": "FAIL",
+      "details": "Checked /etc/pam.d/ files: pam_pwquality module is not configured - FAIL",
       "severity": "Medium",
       "section": "access_control",
-      "section_name": "Access Control"
+      "remediation": "Configure pam_pwquality module in appropriate PAM files",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/pam.d/ files: pam_pwquality module is not configured - FAIL"
     },
     {
       "rule_id": "5.3.2.4",
       "title": "Ensure pam_pwhistory module is enabled",
       "status": "FAIL",
-      "details": "pam_pwhistory module not found in PAM configuration",
+      "details": "Checked /etc/pam.d/ files: pam_pwhistory module is not configured - FAIL",
       "severity": "Medium",
       "section": "access_control",
-      "section_name": "Access Control"
+      "remediation": "Configure pam_pwhistory module in appropriate PAM files",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/pam.d/ files: pam_pwhistory module is not configured - FAIL"
     },
     {
       "rule_id": "5.3.2.5",
       "title": "Ensure pam_unix module is enabled",
       "status": "PASS",
-      "details": "pam_unix module found in PAM configuration",
+      "details": "Checked /etc/pam.d/ files: Found pam_unix module configured - PASS",
       "severity": "Medium",
       "section": "access_control",
-      "section_name": "Access Control"
+      "section_name": "Access Control",
+      "final_status": "PASS",
+      "final_details": "Checked /etc/pam.d/ files: Found pam_unix module configured - PASS"
+    },
+    {
+      "rule_id": "5.3.3.1.1",
+      "title": "Ensure password failed attempts lockout is configured",
+      "status": "PASS",
+      "details": "Checked /etc/security/faillock.conf file: deny is set to 3 - PASS",
+      "severity": "Medium",
+      "section": "access_control",
+      "section_name": "Access Control",
+      "final_status": "PASS",
+      "final_details": "Checked /etc/security/faillock.conf file: deny is set to 3 - PASS"
+    },
+    {
+      "rule_id": "5.3.3.1.2",
+      "title": "Ensure password unlock time is configured",
+      "status": "FAIL",
+      "details": "Checked /etc/security/faillock.conf file: unlock_time is set to 600 (expected 900) - FAIL",
+      "severity": "Medium",
+      "section": "access_control",
+      "remediation": "Set unlock_time=900 in /etc/security/faillock.conf",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/security/faillock.conf file: unlock_time is set to 600 (expected 900) - FAIL"
+    },
+    {
+      "rule_id": "5.3.3.1.3",
+      "title": "Ensure password failed attempts lockout includes root account",
+      "status": "PASS",
+      "details": "Checked /etc/security/faillock.conf and /etc/pam.d/* files: even_deny_root is configured - PASS",
+      "severity": "Medium",
+      "section": "access_control",
+      "section_name": "Access Control",
+      "final_status": "PASS",
+      "final_details": "Checked /etc/security/faillock.conf and /etc/pam.d/* files: even_deny_root is configured - PASS"
+    },
+    {
+      "rule_id": "5.3.3.2.1",
+      "title": "Ensure password number of changed characters is configured",
+      "status": "FAIL",
+      "details": "Checked /etc/security/pwquality.conf file: difok is not configured - FAIL",
+      "severity": "Medium",
+      "section": "access_control",
+      "remediation": "Set difok=2 in /etc/security/pwquality.conf",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/security/pwquality.conf file: difok is not configured - FAIL"
+    },
+    {
+      "rule_id": "5.3.3.2.2",
+      "title": "Ensure password length is configured",
+      "status": "FAIL",
+      "details": "Checked /etc/security/pwquality.conf file: minlen is not configured - FAIL",
+      "severity": "Medium",
+      "section": "access_control",
+      "remediation": "Set minlen=14 in /etc/security/pwquality.conf",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/security/pwquality.conf file: minlen is not configured - FAIL"
+    },
+    {
+      "rule_id": "5.3.3.2.4",
+      "title": "Ensure password same consecutive characters is configured",
+      "status": "FAIL",
+      "details": "Checked /etc/security/pwquality.conf file: maxrepeat is not configured - FAIL",
+      "severity": "Medium",
+      "section": "access_control",
+      "remediation": "Set maxrepeat=3 in /etc/security/pwquality.conf",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/security/pwquality.conf file: maxrepeat is not configured - FAIL"
+    },
+    {
+      "rule_id": "5.3.3.2.5",
+      "title": "Ensure password maximum sequential characters is configured",
+      "status": "FAIL",
+      "details": "Checked /etc/security/pwquality.conf file: maxsequence is not configured - FAIL",
+      "severity": "Medium",
+      "section": "access_control",
+      "remediation": "Set maxsequence=3 in /etc/security/pwquality.conf",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/security/pwquality.conf file: maxsequence is not configured - FAIL"
+    },
+    {
+      "rule_id": "5.3.3.2.6",
+      "title": "Ensure password dictionary check is enabled",
+      "status": "FAIL",
+      "details": "Checked /etc/security/pwquality.conf file: dictcheck is not configured - FAIL",
+      "severity": "Medium",
+      "section": "access_control",
+      "remediation": "Set dictcheck=1 in /etc/security/pwquality.conf",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/security/pwquality.conf file: dictcheck is not configured - FAIL"
+    },
+    {
+      "rule_id": "5.3.3.2.7",
+      "title": "Ensure password quality is enforced for the root user",
+      "status": "PASS",
+      "details": "Checked /etc/security/pwquality.conf and /etc/pam.d/* files: enforce_for_root is configured - PASS",
+      "severity": "Medium",
+      "section": "access_control",
+      "section_name": "Access Control",
+      "final_status": "PASS",
+      "final_details": "Checked /etc/security/pwquality.conf and /etc/pam.d/* files: enforce_for_root is configured - PASS"
+    },
+    {
+      "rule_id": "5.3.3.2.3",
+      "title": "Ensure password complexity is configured",
+      "status": "MANUAL",
+      "details": "Password complexity settings require manual review of pwquality.conf",
+      "severity": "Medium",
+      "section": "access_control",
+      "remediation": "Review and configure dcredit, ucredit, ocredit, lcredit in /etc/security/pwquality.conf",
+      "section_name": "Access Control",
+      "final_status": "SKIP",
+      "final_details": "Test skipped (status: MANUAL): Password complexity settings require manual review of pwquality.conf"
+    },
+    {
+      "rule_id": "5.3.3.3.1",
+      "title": "Ensure password history remember is configured",
+      "status": "FAIL",
+      "details": "Checked /etc/pam.d/* files: remember is not configured for pam_pwhistory - FAIL",
+      "severity": "Medium",
+      "section": "access_control",
+      "remediation": "Set remember=5 in pam_pwhistory configuration",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/pam.d/* files: remember is not configured for pam_pwhistory - FAIL"
+    },
+    {
+      "rule_id": "5.3.3.3.2",
+      "title": "Ensure password history is enforced for the root user",
+      "status": "FAIL",
+      "details": "Checked /etc/pam.d/* files: enforce_for_root is not configured for pam_pwhistory - FAIL",
+      "severity": "Medium",
+      "section": "access_control",
+      "remediation": "Add enforce_for_root to pam_pwhistory configuration",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/pam.d/* files: enforce_for_root is not configured for pam_pwhistory - FAIL"
+    },
+    {
+      "rule_id": "5.3.3.3.3",
+      "title": "Ensure pam_pwhistory includes use_authtok",
+      "status": "FAIL",
+      "details": "Checked /etc/pam.d/* files: use_authtok is not configured for pam_pwhistory - FAIL",
+      "severity": "Medium",
+      "section": "access_control",
+      "remediation": "Add use_authtok to pam_pwhistory configuration",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/pam.d/* files: use_authtok is not configured for pam_pwhistory - FAIL"
+    },
+    {
+      "rule_id": "5.3.3.4.1",
+      "title": "Ensure pam_unix does not include nullok",
+      "status": "FAIL",
+      "details": "Checked /etc/pam.d/* files: nullok is configured for pam_unix (should not be) - FAIL",
+      "severity": "Medium",
+      "section": "access_control",
+      "remediation": "Remove nullok from pam_unix configuration",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/pam.d/* files: nullok is configured for pam_unix (should not be) - FAIL"
+    },
+    {
+      "rule_id": "5.3.3.4.2",
+      "title": "Ensure pam_unix does not include remember",
+      "status": "PASS",
+      "details": "Checked /etc/pam.d/* files: remember is not configured for pam_unix - PASS",
+      "severity": "Medium",
+      "section": "access_control",
+      "section_name": "Access Control",
+      "final_status": "PASS",
+      "final_details": "Checked /etc/pam.d/* files: remember is not configured for pam_unix - PASS"
+    },
+    {
+      "rule_id": "5.3.3.4.3",
+      "title": "Ensure pam_unix includes a strong password hashing algorithm",
+      "status": "PASS",
+      "details": "Checked /etc/pam.d/* files: sha512 is configured for pam_unix - PASS",
+      "severity": "Medium",
+      "section": "access_control",
+      "section_name": "Access Control",
+      "final_status": "PASS",
+      "final_details": "Checked /etc/pam.d/* files: sha512 is configured for pam_unix - PASS"
+    },
+    {
+      "rule_id": "5.3.3.4.4",
+      "title": "Ensure pam_unix includes use_authtok",
+      "status": "PASS",
+      "details": "Checked /etc/pam.d/* files: use_authtok is configured for pam_unix - PASS",
+      "severity": "Medium",
+      "section": "access_control",
+      "section_name": "Access Control",
+      "final_status": "PASS",
+      "final_details": "Checked /etc/pam.d/* files: use_authtok is configured for pam_unix - PASS"
     },
     {
       "rule_id": "5.4.1.1",
       "title": "Ensure password expiration is configured",
-      "status": "MANUAL",
-      "details": "PASS_MAX_DAYS is set to: 99999 - manual review required",
+      "status": "FAIL",
+      "details": "Checked /etc/login.defs file: Found PASS_MAX_DAYS set to 99999 days (should be <= 365) - FAIL",
       "severity": "Medium",
       "section": "access_control",
-      "section_name": "Access Control"
+      "remediation": "Set PASS_MAX_DAYS 365 in /etc/login.defs",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/login.defs file: Found PASS_MAX_DAYS set to 99999 days (should be <= 365) - FAIL"
     },
     {
       "rule_id": "5.4.1.2",
       "title": "Ensure minimum password days is configured",
       "status": "MANUAL",
-      "details": "PASS_MIN_DAYS is set to: 0 - manual review required",
+      "details": "Checked /etc/login.defs file: Found PASS_MIN_DAYS set to 0 - manual review required",
       "severity": "Medium",
       "section": "access_control",
-      "section_name": "Access Control"
+      "section_name": "Access Control",
+      "final_status": "SKIP",
+      "final_details": "Test skipped (status: MANUAL): Checked /etc/login.defs file: Found PASS_MIN_DAYS set to 0 - manual review required"
     },
     {
       "rule_id": "5.4.1.3",
       "title": "Ensure password expiration warning days is configured",
-      "status": "MANUAL",
-      "details": "PASS_WARN_AGE is set to: 7 - manual review required",
+      "status": "PASS",
+      "details": "Checked /etc/login.defs file: Found PASS_WARN_AGE set to 7 days (>= 7) - PASS",
       "severity": "Medium",
       "section": "access_control",
-      "section_name": "Access Control"
+      "section_name": "Access Control",
+      "final_status": "PASS",
+      "final_details": "Checked /etc/login.defs file: Found PASS_WARN_AGE set to 7 days (>= 7) - PASS"
     },
     {
       "rule_id": "5.4.1.4",
       "title": "Ensure strong password hashing algorithm is configured",
-      "status": "MANUAL",
-      "details": "ENCRYPT_METHOD is set to: SHA512 - manual review required",
+      "status": "PASS",
+      "details": "Checked /etc/login.defs file: Found ENCRYPT_METHOD set to SHA512 - PASS",
       "severity": "Medium",
       "section": "access_control",
-      "section_name": "Access Control"
+      "section_name": "Access Control",
+      "final_status": "PASS",
+      "final_details": "Checked /etc/login.defs file: Found ENCRYPT_METHOD set to SHA512 - PASS"
+    },
+    {
+      "rule_id": "5.4.1.5",
+      "title": "Ensure inactive password lock is configured",
+      "status": "FAIL",
+      "details": "Checked useradd defaults: INACTIVE value not found - FAIL",
+      "severity": "Medium",
+      "section": "access_control",
+      "remediation": "Run: useradd -D -f 30",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked useradd defaults: INACTIVE value not found - FAIL"
+    },
+    {
+      "rule_id": "5.4.1.6",
+      "title": "Ensure all users last password change date is in the past",
+      "status": "PASS",
+      "details": "Checked /etc/shadow file: All user password change dates are valid - PASS",
+      "severity": "Medium",
+      "section": "access_control",
+      "section_name": "Access Control",
+      "final_status": "PASS",
+      "final_details": "Checked /etc/shadow file: All user password change dates are valid - PASS"
     },
     {
       "rule_id": "5.4.2.1",
       "title": "Ensure root is the only UID 0 account",
       "status": "PASS",
-      "details": "Only root has UID 0",
+      "details": "Checked /etc/passwd file: Found only root account with UID 0 - PASS",
       "severity": "High",
       "section": "access_control",
-      "section_name": "Access Control"
+      "section_name": "Access Control",
+      "final_status": "PASS",
+      "final_details": "Checked /etc/passwd file: Found only root account with UID 0 - PASS"
     },
     {
       "rule_id": "5.4.2.2",
       "title": "Ensure root is the only GID 0 account",
       "status": "FAIL",
-      "details": "Users with GID 0: root, sync, shutdown, halt, operator",
+      "details": "Checked /etc/passwd file: Found users with GID 0: root, sync, shutdown, halt, operator - FAIL",
       "severity": "High",
       "section": "access_control",
-      "section_name": "Access Control"
+      "remediation": "Change GID for non-root accounts with GID 0",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/passwd file: Found users with GID 0: root, sync, shutdown, halt, operator - FAIL"
     },
     {
       "rule_id": "5.4.2.3",
       "title": "Ensure group root is the only GID 0 group",
       "status": "PASS",
-      "details": "Only root group has GID 0",
+      "details": "Checked /etc/group file: Only root group has GID 0 - PASS",
       "severity": "High",
       "section": "access_control",
-      "section_name": "Access Control"
-    },
-    {
-      "rule_id": "5.4.1.5",
-      "title": "Ensure inactive password lock is configured",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "access_control",
-      "section_name": "Access Control"
-    },
-    {
-      "rule_id": "5.4.1.6",
-      "title": "Ensure all users last password change date is in the past",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "access_control",
-      "section_name": "Access Control"
+      "section_name": "Access Control",
+      "final_status": "PASS",
+      "final_details": "Checked /etc/group file: Only root group has GID 0 - PASS"
     },
     {
       "rule_id": "5.4.2.4",
       "title": "Ensure root account access is controlled",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
+      "status": "MANUAL",
+      "details": "Root account is not locked - manual review required",
+      "severity": "High",
       "section": "access_control",
-      "section_name": "Access Control"
+      "remediation": "Consider locking root account: passwd -l root",
+      "section_name": "Access Control",
+      "final_status": "SKIP",
+      "final_details": "Test skipped (status: MANUAL): Root account is not locked - manual review required"
     },
     {
       "rule_id": "5.4.2.5",
       "title": "Ensure root path integrity",
-      "status": "ERROR",
-      "details": "Check requires live system access",
+      "status": "PASS",
+      "details": "Root PATH integrity is maintained",
       "severity": "Medium",
       "section": "access_control",
-      "section_name": "Access Control"
+      "section_name": "Access Control",
+      "final_status": "PASS",
+      "final_details": "Root PATH integrity is maintained"
     },
     {
       "rule_id": "5.4.2.6",
       "title": "Ensure root user umask is configured",
-      "status": "ERROR",
-      "details": "Check requires live system access",
+      "status": "FAIL",
+      "details": "Checked root profile files: Root umask is set to 022 (should be 027 or 077) - FAIL",
       "severity": "Medium",
       "section": "access_control",
-      "section_name": "Access Control"
+      "remediation": "Set umask 027 in root profile files",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked root profile files: Root umask is set to 022 (should be 027 or 077) - FAIL"
     },
     {
       "rule_id": "5.4.2.7",
       "title": "Ensure system accounts do not have a valid login shell",
-      "status": "ERROR",
-      "details": "Check requires live system access",
+      "status": "FAIL",
+      "details": "Checked /etc/passwd file: System accounts with valid shells: bin:/sbin/nologin\ndaemon:/sbin/nologin\nadm:/sbin/nologin\nlp:/sbin/nologin\nmail:/sbin/nologin\noperator:/sbin/nologin\ngames:/sbin/nologin\nftp:/sbin/nologin\ntss:/sbin/nologin\nsystemd-coredump:/sbin/nologin\ndbus:/sbin/nologin\npolkitd:/sbin/nologin\navahi:/sbin/nologin\ncolord:/sbin/nologin\nrtkit:/sbin/nologin\npipewire:/sbin/nologin\nsssd:/sbin/nologin\ngeoclue:/sbin/nologin\nflatpak:/sbin/nologin\ngdm:/sbin/nologin\ncockpit-ws:/sbin/nologin\ncockpit-wsinstance:/sbin/nologin\ngnome-initial-setup:/sbin/nologin\nsshd:/sbin/nologin\nchrony:/sbin/nologin\ntcpdump:/sbin/nologin - FAIL",
       "severity": "Medium",
       "section": "access_control",
-      "section_name": "Access Control"
+      "remediation": "Set invalid shell for system accounts: usermod -s /usr/sbin/nologin <account>",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/passwd file: System accounts with valid shells: bin:/sbin/nologin\ndaemon:/sbin/nologin\nadm:/sbin/nologin\nlp:/sbin/nologin\nmail:/sbin/nologin\noperator:/sbin/nologin\ngames:/sbin/nologin\nftp:/sbin/nologin\ntss:/sbin/nologin\nsystemd-coredump:/sbin/nologin\ndbus:/sbin/nologin\npolkitd:/sbin/nologin\navahi:/sbin/nologin\ncolord:/sbin/nologin\nrtkit:/sbin/nologin\npipewire:/sbin/nologin\nsssd:/sbin/nologin\ngeoclue:/sbin/nologin\nflatpak:/sbin/nologin\ngdm:/sbin/nologin\ncockpit-ws:/sbin/nologin\ncockpit-wsinstance:/sbin/nologin\ngnome-initial-setup:/sbin/nologin\nsshd:/sbin/nologin\nchrony:/sbin/nologin\ntcpdump:/sbin/nologin - FAIL"
     },
     {
       "rule_id": "5.4.2.8",
       "title": "Ensure accounts without a valid login shell are locked",
-      "status": "ERROR",
-      "details": "Check requires live system access",
+      "status": "PASS",
+      "details": "Checked /etc/passwd and /etc/shadow files: All accounts without valid shells are locked - PASS",
       "severity": "Medium",
       "section": "access_control",
-      "section_name": "Access Control"
+      "section_name": "Access Control",
+      "final_status": "PASS",
+      "final_details": "Checked /etc/passwd and /etc/shadow files: All accounts without valid shells are locked - PASS"
     },
     {
       "rule_id": "5.4.3.1",
       "title": "Ensure nologin is not listed in /etc/shells",
-      "status": "ERROR",
-      "details": "Check requires live system access",
+      "status": "PASS",
+      "details": "Checked /etc/shells file: nologin is not listed - PASS",
       "severity": "Medium",
       "section": "access_control",
-      "section_name": "Access Control"
+      "section_name": "Access Control",
+      "final_status": "PASS",
+      "final_details": "Checked /etc/shells file: nologin is not listed - PASS"
     },
     {
       "rule_id": "5.4.3.2",
       "title": "Ensure default user shell timeout is configured",
-      "status": "ERROR",
-      "details": "Check requires live system access",
+      "status": "FAIL",
+      "details": "Checked /etc/bashrc, /etc/profile, /etc/profile.d/* files: TMOUT is not configured - FAIL",
       "severity": "Medium",
       "section": "access_control",
-      "section_name": "Access Control"
+      "remediation": "Set TMOUT=900 in /etc/profile or /etc/bashrc",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/bashrc, /etc/profile, /etc/profile.d/* files: TMOUT is not configured - FAIL"
     },
     {
       "rule_id": "5.4.3.3",
       "title": "Ensure default user umask is configured",
-      "status": "ERROR",
-      "details": "Check requires live system access",
+      "status": "FAIL",
+      "details": "Checked /etc/bashrc, /etc/profile, /etc/login.defs files: Default umask not restrictive enough: /etc/bashrc: 022; /etc/login.defs: 022 - FAIL",
       "severity": "Medium",
       "section": "access_control",
-      "section_name": "Access Control"
+      "remediation": "Set umask 027 in /etc/profile and /etc/bashrc",
+      "section_name": "Access Control",
+      "final_status": "FAIL",
+      "final_details": "Checked /etc/bashrc, /etc/profile, /etc/login.defs files: Default umask not restrictive enough: /etc/bashrc: 022; /etc/login.defs: 022 - FAIL"
     },
     {
       "rule_id": "6.1.1",
       "title": "Ensure AIDE is installed",
       "status": "FAIL",
-      "details": "AIDE package not found in installed packages",
+      "details": "AIDE is not installed",
       "severity": "High",
       "section": "logging",
-      "section_name": "Logging and Auditing"
+      "remediation": "Run: dnf install aide",
+      "section_name": "Logging and Auditing",
+      "final_status": "FAIL",
+      "final_details": "AIDE is not installed"
     },
     {
       "rule_id": "6.1.2",
       "title": "Ensure filesystem integrity is regularly checked",
-      "status": "ERROR",
-      "details": "Check requires live system access",
+      "status": "FAIL",
+      "details": "AIDE database not found",
       "severity": "High",
       "section": "logging",
-      "section_name": "Logging and Auditing"
+      "remediation": "Initialize AIDE database: aide --init && mv /var/lib/aide/aide.db.new.gz /var/lib/aide/aide.db.gz",
+      "section_name": "Logging and Auditing",
+      "final_status": "FAIL",
+      "final_details": "AIDE database not found"
     },
     {
       "rule_id": "6.1.3",
       "title": "Ensure cryptographic mechanisms are used to protect the integrity of audit tools",
-      "status": "ERROR",
-      "details": "Check requires live system access",
+      "status": "FAIL",
+      "details": "AIDE configuration file not found",
       "severity": "High",
       "section": "logging",
-      "section_name": "Logging and Auditing"
+      "remediation": "Configure AIDE to protect audit tools",
+      "section_name": "Logging and Auditing",
+      "final_status": "FAIL",
+      "final_details": "AIDE configuration file not found"
+    },
+    {
+      "rule_id": "6.2.1.1",
+      "title": "Ensure journald service is enabled and active",
+      "status": "FAIL",
+      "details": "systemd-journald status: Enabled: False, Active: True",
+      "severity": "High",
+      "section": "logging",
+      "remediation": "Run: systemctl enable systemd-journald && systemctl start systemd-journald",
+      "section_name": "Logging and Auditing",
+      "final_status": "FAIL",
+      "final_details": "systemd-journald status: Enabled: False, Active: True"
+    },
+    {
+      "rule_id": "6.2.1.2",
+      "title": "Ensure journald log file access is configured",
+      "status": "MANUAL",
+      "details": "/var/log/journal directory does not exist - manual review required",
+      "severity": "Medium",
+      "section": "logging",
+      "section_name": "Logging and Auditing",
+      "final_status": "SKIP",
+      "final_details": "Test skipped (status: MANUAL): /var/log/journal directory does not exist - manual review required"
+    },
+    {
+      "rule_id": "6.2.1.3",
+      "title": "Ensure journald log file rotation is configured",
+      "status": "MANUAL",
+      "details": "No explicit log rotation settings found - manual review required",
+      "severity": "Medium",
+      "section": "logging",
+      "remediation": "Configure log rotation settings in /etc/systemd/journald.conf",
+      "section_name": "Logging and Auditing",
+      "final_status": "SKIP",
+      "final_details": "Test skipped (status: MANUAL): No explicit log rotation settings found - manual review required"
+    },
+    {
+      "rule_id": "6.2.1.4",
+      "title": "Ensure only one logging system is in use",
+      "status": "PASS",
+      "details": "Active logging systems: ['rsyslog']",
+      "severity": "Medium",
+      "section": "logging",
+      "section_name": "Logging and Auditing",
+      "final_status": "PASS",
+      "final_details": "Active logging systems: ['rsyslog']"
     },
     {
       "rule_id": "6.2.2.1.1",
       "title": "Ensure systemd-journal-remote is installed",
       "status": "FAIL",
-      "details": "systemd-journal-remote- package not found in installed packages",
+      "details": "systemd-journal-remote is not installed",
       "severity": "Medium",
       "section": "logging",
-      "section_name": "Logging and Auditing"
+      "remediation": "Run: dnf install systemd-journal-remote",
+      "section_name": "Logging and Auditing",
+      "final_status": "FAIL",
+      "final_details": "systemd-journal-remote is not installed"
+    },
+    {
+      "rule_id": "6.2.2.1.2",
+      "title": "Ensure systemd-journal-upload authentication is configured",
+      "status": "MANUAL",
+      "details": "journal-upload.conf not found - manual review required",
+      "severity": "Medium",
+      "section": "logging",
+      "section_name": "Logging and Auditing",
+      "final_status": "SKIP",
+      "final_details": "Test skipped (status: MANUAL): journal-upload.conf not found - manual review required"
+    },
+    {
+      "rule_id": "6.2.2.1.3",
+      "title": "Ensure systemd-journal-upload is enabled and active",
+      "status": "FAIL",
+      "details": "systemd-journal-upload status: Enabled: False, Active: False",
+      "severity": "Medium",
+      "section": "logging",
+      "remediation": "Run: systemctl enable systemd-journal-upload && systemctl start systemd-journal-upload",
+      "section_name": "Logging and Auditing",
+      "final_status": "FAIL",
+      "final_details": "systemd-journal-upload status: Enabled: False, Active: False"
+    },
+    {
+      "rule_id": "6.2.2.1.4",
+      "title": "Ensure systemd-journal-remote service is not in use",
+      "status": "PASS",
+      "details": "systemd-journal-remote is not enabled or active",
+      "severity": "Medium",
+      "section": "logging",
+      "section_name": "Logging and Auditing",
+      "final_status": "PASS",
+      "final_details": "systemd-journal-remote is not enabled or active"
+    },
+    {
+      "rule_id": "6.2.2.2",
+      "title": "Ensure journald ForwardToSyslog is disabled",
+      "status": "PASS",
+      "details": "ForwardToSyslog is not configured (default: no)",
+      "severity": "Medium",
+      "section": "logging",
+      "section_name": "Logging and Auditing",
+      "final_status": "PASS",
+      "final_details": "ForwardToSyslog is not configured (default: no)"
+    },
+    {
+      "rule_id": "6.2.2.3",
+      "title": "Ensure journald Compress is configured",
+      "status": "PASS",
+      "details": "Compress is not configured (default: yes)",
+      "severity": "Medium",
+      "section": "logging",
+      "section_name": "Logging and Auditing",
+      "final_status": "PASS",
+      "final_details": "Compress is not configured (default: yes)"
+    },
+    {
+      "rule_id": "6.2.2.4",
+      "title": "Ensure journald Storage is configured",
+      "status": "PASS",
+      "details": "Storage is set to: not configured (default: auto)",
+      "severity": "Medium",
+      "section": "logging",
+      "section_name": "Logging and Auditing",
+      "final_status": "PASS",
+      "final_details": "Storage is set to: not configured (default: auto)"
     },
     {
       "rule_id": "6.2.3.1",
       "title": "Ensure rsyslog is installed",
       "status": "PASS",
-      "details": "rsyslog- package found in installed packages",
+      "details": "rsyslog is installed: rsyslog-8.2102.0-117.el9.x86_64",
       "severity": "Medium",
       "section": "logging",
-      "section_name": "Logging and Auditing"
+      "section_name": "Logging and Auditing",
+      "final_status": "PASS",
+      "final_details": "rsyslog is installed: rsyslog-8.2102.0-117.el9.x86_64"
     },
     {
-      "rule_id": "6.2.2.2",
-      "title": "Ensure journald ForwardToSyslog is disabled",
-      "status": "MANUAL",
-      "details": "ForwardToSyslog is not configured - manual review required",
+      "rule_id": "6.2.3.2",
+      "title": "Ensure rsyslog service is enabled and active",
+      "status": "PASS",
+      "details": "rsyslog is enabled and active",
       "severity": "Medium",
       "section": "logging",
-      "section_name": "Logging and Auditing"
+      "section_name": "Logging and Auditing",
+      "final_status": "PASS",
+      "final_details": "rsyslog is enabled and active"
     },
     {
-      "rule_id": "6.2.2.3",
-      "title": "Ensure journald Compress is configured",
-      "status": "MANUAL",
-      "details": "Compress is not configured - manual review required",
+      "rule_id": "6.2.3.3",
+      "title": "Ensure journald is configured to send logs to rsyslog",
+      "status": "FAIL",
+      "details": "ForwardToSyslog is not configured",
       "severity": "Medium",
       "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.2.2.4",
-      "title": "Ensure journald Storage is configured",
-      "status": "MANUAL",
-      "details": "Storage is not configured - manual review required",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
+      "remediation": "Set ForwardToSyslog=yes in /etc/systemd/journald.conf",
+      "section_name": "Logging and Auditing",
+      "final_status": "FAIL",
+      "final_details": "ForwardToSyslog is not configured"
     },
     {
       "rule_id": "6.2.3.4",
@@ -1462,169 +2343,385 @@
       "details": "FileCreateMode is not configured",
       "severity": "Medium",
       "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.2.1.1",
-      "title": "Ensure journald service is enabled and active",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.2.1.2",
-      "title": "Ensure journald log file access is configured",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.2.1.3",
-      "title": "Ensure journald log file rotation is configured",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.2.1.4",
-      "title": "Ensure only one logging system is in use",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.2.2.1.2",
-      "title": "Ensure systemd-journal-upload authentication is configured",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.2.2.1.3",
-      "title": "Ensure systemd-journal-upload is enabled and active",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.2.2.1.4",
-      "title": "Ensure systemd-journal-remote service is not in use",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.2.3.2",
-      "title": "Ensure rsyslog service is enabled and active",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.2.3.3",
-      "title": "Ensure journald is configured to send logs to rsyslog",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
+      "remediation": "Add $FileCreateMode 0640 to /etc/rsyslog.conf",
+      "section_name": "Logging and Auditing",
+      "final_status": "FAIL",
+      "final_details": "FileCreateMode is not configured"
     },
     {
       "rule_id": "6.2.3.5",
       "title": "Ensure rsyslog logging is configured",
-      "status": "ERROR",
-      "details": "Check requires live system access",
+      "status": "MANUAL",
+      "details": "rsyslog logging configuration requires manual review",
       "severity": "Medium",
       "section": "logging",
-      "section_name": "Logging and Auditing"
+      "remediation": "Review and configure appropriate logging rules in /etc/rsyslog.conf",
+      "section_name": "Logging and Auditing",
+      "final_status": "SKIP",
+      "final_details": "Test skipped (status: MANUAL): rsyslog logging configuration requires manual review"
     },
     {
       "rule_id": "6.2.3.6",
       "title": "Ensure rsyslog is configured to send logs to a remote log host",
-      "status": "ERROR",
-      "details": "Check requires live system access",
+      "status": "MANUAL",
+      "details": "Remote log host configuration requires manual review",
       "severity": "Medium",
       "section": "logging",
-      "section_name": "Logging and Auditing"
+      "remediation": "Configure remote log host in /etc/rsyslog.conf if required",
+      "section_name": "Logging and Auditing",
+      "final_status": "SKIP",
+      "final_details": "Test skipped (status: MANUAL): Remote log host configuration requires manual review"
     },
     {
       "rule_id": "6.2.3.7",
       "title": "Ensure rsyslog is not configured to receive logs from a remote client",
-      "status": "ERROR",
-      "details": "Check requires live system access",
+      "status": "PASS",
+      "details": "rsyslog is not configured to receive remote logs",
       "severity": "Medium",
       "section": "logging",
-      "section_name": "Logging and Auditing"
+      "section_name": "Logging and Auditing",
+      "final_status": "PASS",
+      "final_details": "rsyslog is not configured to receive remote logs"
     },
     {
       "rule_id": "6.2.3.8",
       "title": "Ensure rsyslog logrotate is configured",
-      "status": "ERROR",
-      "details": "Check requires live system access",
+      "status": "MANUAL",
+      "details": "rsyslog logrotate configuration requires manual review",
       "severity": "Medium",
       "section": "logging",
-      "section_name": "Logging and Auditing"
+      "remediation": "Review and configure logrotate for rsyslog in /etc/logrotate.d/rsyslog",
+      "section_name": "Logging and Auditing",
+      "final_status": "SKIP",
+      "final_details": "Test skipped (status: MANUAL): rsyslog logrotate configuration requires manual review"
     },
     {
       "rule_id": "6.2.4.1",
       "title": "Ensure access to all logfiles has been configured",
-      "status": "ERROR",
-      "details": "Check requires live system access",
+      "status": "FAIL",
+      "details": "Log files with improper permissions: /var/log/README: world accessible; /var/log/wtmp: world accessible; /var/log/lastlog: world accessible; /var/log/dnf.log: world accessible; /var/log/dnf.librepo.log: world accessible; ... and 28 more",
       "severity": "Medium",
       "section": "logging",
-      "section_name": "Logging and Auditing"
+      "remediation": "Review and fix log file permissions",
+      "section_name": "Logging and Auditing",
+      "final_status": "FAIL",
+      "final_details": "Log files with improper permissions: /var/log/README: world accessible; /var/log/wtmp: world accessible; /var/log/lastlog: world accessible; /var/log/dnf.log: world accessible; /var/log/dnf.librepo.log: world accessible; ... and 28 more"
     },
     {
       "rule_id": "6.3.1.1",
       "title": "Ensure auditd packages are installed",
       "status": "PASS",
-      "details": "All audit packages found: audit, audit-libs",
+      "details": "All audit packages installed: audit: audit-3.0.7-104.el9.x86_64; audit-libs: audit-libs-3.0.7-104.el9.x86_64",
       "severity": "High",
       "section": "logging",
-      "section_name": "Logging and Auditing"
+      "section_name": "Logging and Auditing",
+      "final_status": "PASS",
+      "final_details": "All audit packages installed: audit: audit-3.0.7-104.el9.x86_64; audit-libs: audit-libs-3.0.7-104.el9.x86_64"
+    },
+    {
+      "rule_id": "6.3.1.2",
+      "title": "Ensure auditing for processes that start prior to auditd is enabled",
+      "status": "FAIL",
+      "details": "audit=1 not found in GRUB configuration",
+      "severity": "High",
+      "section": "logging",
+      "remediation": "Add audit=1 to GRUB_CMDLINE_LINUX in /etc/default/grub and run grub2-mkconfig",
+      "section_name": "Logging and Auditing",
+      "final_status": "FAIL",
+      "final_details": "audit=1 not found in GRUB configuration"
+    },
+    {
+      "rule_id": "6.3.1.3",
+      "title": "Ensure audit_backlog_limit is sufficient",
+      "status": "FAIL",
+      "details": "audit_backlog_limit is not set",
+      "severity": "Medium",
+      "section": "logging",
+      "remediation": "Add audit_backlog_limit=8192 to GRUB_CMDLINE_LINUX in /etc/default/grub",
+      "section_name": "Logging and Auditing",
+      "final_status": "FAIL",
+      "final_details": "audit_backlog_limit is not set"
+    },
+    {
+      "rule_id": "6.3.1.4",
+      "title": "Ensure auditd service is enabled and active",
+      "status": "PASS",
+      "details": "auditd is enabled and active",
+      "severity": "High",
+      "section": "logging",
+      "section_name": "Logging and Auditing",
+      "final_status": "PASS",
+      "final_details": "auditd is enabled and active"
     },
     {
       "rule_id": "6.3.2.1",
       "title": "Ensure audit log storage size is configured",
-      "status": "MANUAL",
-      "details": "max_log_file is set to: 8 - manual review required",
+      "status": "PASS",
+      "details": "max_log_file is set to 8 MB",
       "severity": "Medium",
       "section": "logging",
-      "section_name": "Logging and Auditing"
+      "section_name": "Logging and Auditing",
+      "final_status": "PASS",
+      "final_details": "max_log_file is set to 8 MB"
     },
     {
       "rule_id": "6.3.2.2",
       "title": "Ensure audit logs are not automatically deleted",
-      "status": "MANUAL",
-      "details": "max_log_file_action is set to: ROTATE - manual review required",
+      "status": "PASS",
+      "details": "max_log_file_action is set to rotate",
       "severity": "Medium",
       "section": "logging",
-      "section_name": "Logging and Auditing"
+      "section_name": "Logging and Auditing",
+      "final_status": "PASS",
+      "final_details": "max_log_file_action is set to rotate"
+    },
+    {
+      "rule_id": "6.3.2.3",
+      "title": "Ensure system is disabled when audit logs are full",
+      "status": "FAIL",
+      "details": "Configuration issues: space_left_action not properly configured; admin_space_left_action not set to halt",
+      "severity": "High",
+      "section": "logging",
+      "remediation": "Configure space_left_action, action_mail_acct, and admin_space_left_action in /etc/audit/auditd.conf",
+      "section_name": "Logging and Auditing",
+      "final_status": "FAIL",
+      "final_details": "Configuration issues: space_left_action not properly configured; admin_space_left_action not set to halt"
     },
     {
       "rule_id": "6.3.2.4",
       "title": "Ensure system warns when audit logs are low on space",
-      "status": "MANUAL",
-      "details": "space_left is set to: 75 - manual review required",
+      "status": "PASS",
+      "details": "Space warnings configured: space_left=75, admin_space_left=50",
       "severity": "Medium",
       "section": "logging",
-      "section_name": "Logging and Auditing"
+      "section_name": "Logging and Auditing",
+      "final_status": "PASS",
+      "final_details": "Space warnings configured: space_left=75, admin_space_left=50"
+    },
+    {
+      "rule_id": "6.3.3.1",
+      "title": "Ensure changes to system administration scope (sudoers) is collected",
+      "status": "FAIL",
+      "details": "Audit rules for sudoers are not configured",
+      "severity": "Medium",
+      "section": "logging",
+      "remediation": "Configure audit rules for sudoers monitoring",
+      "section_name": "Logging and Auditing",
+      "final_status": "FAIL",
+      "final_details": "Audit rules for sudoers are not configured"
+    },
+    {
+      "rule_id": "6.3.3.2",
+      "title": "Ensure actions as another user are always logged",
+      "status": "PASS",
+      "details": "Audit rules for su are configured",
+      "severity": "Medium",
+      "section": "logging",
+      "section_name": "Logging and Auditing",
+      "final_status": "PASS",
+      "final_details": "Audit rules for su are configured"
+    },
+    {
+      "rule_id": "6.3.3.3",
+      "title": "Ensure events that modify the sudo log file are collected",
+      "status": "FAIL",
+      "details": "Audit rules for sudo.log are not configured",
+      "severity": "Medium",
+      "section": "logging",
+      "remediation": "Configure audit rules for sudo.log monitoring",
+      "section_name": "Logging and Auditing",
+      "final_status": "FAIL",
+      "final_details": "Audit rules for sudo.log are not configured"
+    },
+    {
+      "rule_id": "6.3.3.4",
+      "title": "Ensure events that modify date and time information are collected",
+      "status": "PASS",
+      "details": "Audit rules for time are configured",
+      "severity": "Medium",
+      "section": "logging",
+      "section_name": "Logging and Auditing",
+      "final_status": "PASS",
+      "final_details": "Audit rules for time are configured"
+    },
+    {
+      "rule_id": "6.3.3.5",
+      "title": "Ensure events that modify the system's network environment are collected",
+      "status": "FAIL",
+      "details": "Audit rules for network are not configured",
+      "severity": "Medium",
+      "section": "logging",
+      "remediation": "Configure audit rules for network monitoring",
+      "section_name": "Logging and Auditing",
+      "final_status": "FAIL",
+      "final_details": "Audit rules for network are not configured"
+    },
+    {
+      "rule_id": "6.3.3.6",
+      "title": "Ensure use of privileged commands are collected",
+      "status": "FAIL",
+      "details": "Audit rules for privileged are not configured",
+      "severity": "Medium",
+      "section": "logging",
+      "remediation": "Configure audit rules for privileged monitoring",
+      "section_name": "Logging and Auditing",
+      "final_status": "FAIL",
+      "final_details": "Audit rules for privileged are not configured"
+    },
+    {
+      "rule_id": "6.3.3.7",
+      "title": "Ensure unsuccessful file access attempts are collected",
+      "status": "FAIL",
+      "details": "Audit rules for access are not configured",
+      "severity": "Medium",
+      "section": "logging",
+      "remediation": "Configure audit rules for access monitoring",
+      "section_name": "Logging and Auditing",
+      "final_status": "FAIL",
+      "final_details": "Audit rules for access are not configured"
+    },
+    {
+      "rule_id": "6.3.3.8",
+      "title": "Ensure events that modify user/group information are collected",
+      "status": "FAIL",
+      "details": "Audit rules for identity are not configured",
+      "severity": "Medium",
+      "section": "logging",
+      "remediation": "Configure audit rules for identity monitoring",
+      "section_name": "Logging and Auditing",
+      "final_status": "FAIL",
+      "final_details": "Audit rules for identity are not configured"
+    },
+    {
+      "rule_id": "6.3.3.9",
+      "title": "Ensure discretionary access control permission modification events are collected",
+      "status": "FAIL",
+      "details": "Audit rules for perm_mod are not configured",
+      "severity": "Medium",
+      "section": "logging",
+      "remediation": "Configure audit rules for perm_mod monitoring",
+      "section_name": "Logging and Auditing",
+      "final_status": "FAIL",
+      "final_details": "Audit rules for perm_mod are not configured"
+    },
+    {
+      "rule_id": "6.3.3.10",
+      "title": "Ensure successful file system mounts are collected",
+      "status": "FAIL",
+      "details": "Audit rules for mounts are not configured",
+      "severity": "Medium",
+      "section": "logging",
+      "remediation": "Configure audit rules for mounts monitoring",
+      "section_name": "Logging and Auditing",
+      "final_status": "FAIL",
+      "final_details": "Audit rules for mounts are not configured"
+    },
+    {
+      "rule_id": "6.3.3.11",
+      "title": "Ensure session initiation information is collected",
+      "status": "FAIL",
+      "details": "Audit rules for session are not configured",
+      "severity": "Medium",
+      "section": "logging",
+      "remediation": "Configure audit rules for session monitoring",
+      "section_name": "Logging and Auditing",
+      "final_status": "FAIL",
+      "final_details": "Audit rules for session are not configured"
+    },
+    {
+      "rule_id": "6.3.3.12",
+      "title": "Ensure login and logout events are collected",
+      "status": "FAIL",
+      "details": "Audit rules for logins are not configured",
+      "severity": "Medium",
+      "section": "logging",
+      "remediation": "Configure audit rules for logins monitoring",
+      "section_name": "Logging and Auditing",
+      "final_status": "FAIL",
+      "final_details": "Audit rules for logins are not configured"
+    },
+    {
+      "rule_id": "6.3.3.13",
+      "title": "Ensure file deletion events by users are collected",
+      "status": "PASS",
+      "details": "Audit rules for delete are configured",
+      "severity": "Medium",
+      "section": "logging",
+      "section_name": "Logging and Auditing",
+      "final_status": "PASS",
+      "final_details": "Audit rules for delete are configured"
+    },
+    {
+      "rule_id": "6.3.3.14",
+      "title": "Ensure events that modify the system's Mandatory Access Controls are collected",
+      "status": "FAIL",
+      "details": "Audit rules for MAC-policy are not configured",
+      "severity": "Medium",
+      "section": "logging",
+      "remediation": "Configure audit rules for MAC-policy monitoring",
+      "section_name": "Logging and Auditing",
+      "final_status": "FAIL",
+      "final_details": "Audit rules for MAC-policy are not configured"
+    },
+    {
+      "rule_id": "6.3.3.15",
+      "title": "Ensure successful and unsuccessful attempts to use the chcon command are collected",
+      "status": "FAIL",
+      "details": "Audit rules for chcon are not configured",
+      "severity": "Medium",
+      "section": "logging",
+      "remediation": "Configure audit rules for chcon monitoring",
+      "section_name": "Logging and Auditing",
+      "final_status": "FAIL",
+      "final_details": "Audit rules for chcon are not configured"
+    },
+    {
+      "rule_id": "6.3.3.16",
+      "title": "Ensure successful and unsuccessful attempts to use the setfacl command are collected",
+      "status": "FAIL",
+      "details": "Audit rules for setfacl are not configured",
+      "severity": "Medium",
+      "section": "logging",
+      "remediation": "Configure audit rules for setfacl monitoring",
+      "section_name": "Logging and Auditing",
+      "final_status": "FAIL",
+      "final_details": "Audit rules for setfacl are not configured"
+    },
+    {
+      "rule_id": "6.3.3.17",
+      "title": "Ensure successful and unsuccessful attempts to use the chacl command are collected",
+      "status": "FAIL",
+      "details": "Audit rules for chacl are not configured",
+      "severity": "Medium",
+      "section": "logging",
+      "remediation": "Configure audit rules for chacl monitoring",
+      "section_name": "Logging and Auditing",
+      "final_status": "FAIL",
+      "final_details": "Audit rules for chacl are not configured"
+    },
+    {
+      "rule_id": "6.3.3.18",
+      "title": "Ensure successful and unsuccessful attempts to use the usermod command are collected",
+      "status": "FAIL",
+      "details": "Audit rules for usermod are not configured",
+      "severity": "Medium",
+      "section": "logging",
+      "remediation": "Configure audit rules for usermod monitoring",
+      "section_name": "Logging and Auditing",
+      "final_status": "FAIL",
+      "final_details": "Audit rules for usermod are not configured"
+    },
+    {
+      "rule_id": "6.3.3.19",
+      "title": "Ensure kernel module loading unloading and modification is collected",
+      "status": "FAIL",
+      "details": "Audit rules for modules are not configured",
+      "severity": "Medium",
+      "section": "logging",
+      "remediation": "Configure audit rules for modules monitoring",
+      "section_name": "Logging and Auditing",
+      "final_status": "FAIL",
+      "final_details": "Audit rules for modules are not configured"
     },
     {
       "rule_id": "6.3.3.20",
@@ -1633,436 +2730,282 @@
       "details": "Audit configuration is not set to immutable",
       "severity": "High",
       "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.3.1.2",
-      "title": "Ensure auditing for processes that start prior to auditd is enabled",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.3.1.3",
-      "title": "Ensure audit_backlog_limit is sufficient",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.3.1.4",
-      "title": "Ensure auditd service is enabled and active",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.3.2.3",
-      "title": "Ensure system is disabled when audit logs are full",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.3.3.1",
-      "title": "Ensure changes to system administration scope (sudoers) is collected",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.3.3.2",
-      "title": "Ensure actions as another user are always logged",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.3.3.3",
-      "title": "Ensure events that modify the sudo log file are collected",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.3.3.4",
-      "title": "Ensure events that modify date and time information are collected",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.3.3.5",
-      "title": "Ensure events that modify the system's network environment are collected",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.3.3.6",
-      "title": "Ensure use of privileged commands are collected",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.3.3.7",
-      "title": "Ensure unsuccessful file access attempts are collected",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.3.3.8",
-      "title": "Ensure events that modify user/group information are collected",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.3.3.9",
-      "title": "Ensure discretionary access control permission modification events are collected",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.3.3.10",
-      "title": "Ensure successful file system mounts are collected",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.3.3.11",
-      "title": "Ensure session initiation information is collected",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.3.3.12",
-      "title": "Ensure login and logout events are collected",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.3.3.13",
-      "title": "Ensure file deletion events by users are collected",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.3.3.14",
-      "title": "Ensure events that modify the system's Mandatory Access Controls are collected",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.3.3.15",
-      "title": "Ensure successful and unsuccessful attempts to use the chcon command are collected",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.3.3.16",
-      "title": "Ensure successful and unsuccessful attempts to use the setfacl command are collected",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.3.3.17",
-      "title": "Ensure successful and unsuccessful attempts to use the chacl command are collected",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.3.3.18",
-      "title": "Ensure successful and unsuccessful attempts to use the usermod command are collected",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
-    },
-    {
-      "rule_id": "6.3.3.19",
-      "title": "Ensure kernel module loading unloading and modification is collected",
-      "status": "ERROR",
-      "details": "Check requires live system access",
-      "severity": "Medium",
-      "section": "logging",
-      "section_name": "Logging and Auditing"
+      "remediation": "Add \"-e 2\" to audit rules",
+      "section_name": "Logging and Auditing",
+      "final_status": "FAIL",
+      "final_details": "Audit configuration is not set to immutable"
     },
     {
       "rule_id": "6.3.3.21",
       "title": "Ensure the running and on disk configuration is the same",
-      "status": "ERROR",
-      "details": "Check requires live system access",
+      "status": "MANUAL",
+      "details": "Running and on-disk configuration comparison requires manual review",
       "severity": "Medium",
       "section": "logging",
-      "section_name": "Logging and Auditing"
+      "remediation": "Compare auditctl -l output with /etc/audit/rules.d/ files",
+      "section_name": "Logging and Auditing",
+      "final_status": "SKIP",
+      "final_details": "Test skipped (status: MANUAL): Running and on-disk configuration comparison requires manual review"
     },
     {
       "rule_id": "6.3.4.1",
       "title": "Ensure the audit log file directory mode is configured",
-      "status": "ERROR",
-      "details": "Check requires live system access",
+      "status": "FAIL",
+      "details": "/var/log/audit mode is 700 (expected 750)",
       "severity": "Medium",
       "section": "logging",
-      "section_name": "Logging and Auditing"
+      "remediation": "Run: chmod 750 /var/log/audit",
+      "section_name": "Logging and Auditing",
+      "final_status": "FAIL",
+      "final_details": "/var/log/audit mode is 700 (expected 750)"
     },
     {
       "rule_id": "6.3.4.2",
       "title": "Ensure audit log files mode is configured",
-      "status": "ERROR",
-      "details": "Check requires live system access",
+      "status": "FAIL",
+      "details": "/var/log/audit/audit.log mode is 600 (expected 640)",
       "severity": "Medium",
       "section": "logging",
-      "section_name": "Logging and Auditing"
+      "remediation": "Run: chmod 640 /var/log/audit/audit.log",
+      "section_name": "Logging and Auditing",
+      "final_status": "FAIL",
+      "final_details": "/var/log/audit/audit.log mode is 600 (expected 640)"
     },
     {
       "rule_id": "6.3.4.3",
       "title": "Ensure audit log files owner is configured",
-      "status": "ERROR",
-      "details": "Check requires live system access",
+      "status": "PASS",
+      "details": "/var/log/audit/audit.log has correct owner (root)",
       "severity": "Medium",
       "section": "logging",
-      "section_name": "Logging and Auditing"
+      "section_name": "Logging and Auditing",
+      "final_status": "PASS",
+      "final_details": "/var/log/audit/audit.log has correct owner (root)"
     },
     {
       "rule_id": "6.3.4.4",
       "title": "Ensure audit log files group owner is configured",
-      "status": "ERROR",
-      "details": "Check requires live system access",
+      "status": "PASS",
+      "details": "/var/log/audit/audit.log has correct group owner (root)",
       "severity": "Medium",
       "section": "logging",
-      "section_name": "Logging and Auditing"
+      "section_name": "Logging and Auditing",
+      "final_status": "PASS",
+      "final_details": "/var/log/audit/audit.log has correct group owner (root)"
     },
     {
       "rule_id": "6.3.4.5",
       "title": "Ensure audit configuration files mode is configured",
-      "status": "ERROR",
-      "details": "Check requires live system access",
+      "status": "PASS",
+      "details": "/etc/audit/auditd.conf has correct mode (640)",
       "severity": "Medium",
       "section": "logging",
-      "section_name": "Logging and Auditing"
+      "section_name": "Logging and Auditing",
+      "final_status": "PASS",
+      "final_details": "/etc/audit/auditd.conf has correct mode (640)"
     },
     {
       "rule_id": "6.3.4.6",
       "title": "Ensure audit configuration files owner is configured",
-      "status": "ERROR",
-      "details": "Check requires live system access",
+      "status": "PASS",
+      "details": "/etc/audit/auditd.conf has correct owner (root)",
       "severity": "Medium",
       "section": "logging",
-      "section_name": "Logging and Auditing"
+      "section_name": "Logging and Auditing",
+      "final_status": "PASS",
+      "final_details": "/etc/audit/auditd.conf has correct owner (root)"
     },
     {
       "rule_id": "6.3.4.7",
       "title": "Ensure audit configuration files group owner is configured",
-      "status": "ERROR",
-      "details": "Check requires live system access",
+      "status": "PASS",
+      "details": "/etc/audit/auditd.conf has correct group owner (root)",
       "severity": "Medium",
       "section": "logging",
-      "section_name": "Logging and Auditing"
+      "section_name": "Logging and Auditing",
+      "final_status": "PASS",
+      "final_details": "/etc/audit/auditd.conf has correct group owner (root)"
     },
     {
       "rule_id": "6.3.4.8",
       "title": "Ensure audit tools mode is configured",
-      "status": "ERROR",
-      "details": "Check requires live system access",
+      "status": "PASS",
+      "details": "/sbin/auditctl has correct mode (755)",
       "severity": "Medium",
       "section": "logging",
-      "section_name": "Logging and Auditing"
+      "section_name": "Logging and Auditing",
+      "final_status": "PASS",
+      "final_details": "/sbin/auditctl has correct mode (755)"
     },
     {
       "rule_id": "6.3.4.9",
       "title": "Ensure audit tools owner is configured",
-      "status": "ERROR",
-      "details": "Check requires live system access",
+      "status": "PASS",
+      "details": "/sbin/auditctl has correct owner (root)",
       "severity": "Medium",
       "section": "logging",
-      "section_name": "Logging and Auditing"
+      "section_name": "Logging and Auditing",
+      "final_status": "PASS",
+      "final_details": "/sbin/auditctl has correct owner (root)"
     },
     {
       "rule_id": "6.3.4.10",
       "title": "Ensure audit tools group owner is configured",
-      "status": "ERROR",
-      "details": "Check requires live system access",
+      "status": "PASS",
+      "details": "/sbin/auditctl has correct group owner (root)",
       "severity": "Medium",
       "section": "logging",
-      "section_name": "Logging and Auditing"
+      "section_name": "Logging and Auditing",
+      "final_status": "PASS",
+      "final_details": "/sbin/auditctl has correct group owner (root)"
     },
     {
       "rule_id": "7.1.1",
       "title": "Ensure permissions on /etc/passwd are configured",
-      "status": "MANUAL",
-      "details": "passwd file found in collected data - manual review of permissions required",
+      "status": "PASS",
+      "details": "/etc/passwd has correct permissions (644) and ownership (root:root)",
       "severity": "High",
       "section": "system_maintenance",
-      "remediation": "Verify permissions: should be 644 root:root",
-      "section_name": "System Maintenance"
+      "section_name": "System Maintenance",
+      "final_status": "PASS",
+      "final_details": "/etc/passwd has correct permissions (644) and ownership (root:root)"
     },
     {
       "rule_id": "7.1.2",
       "title": "Ensure permissions on /etc/passwd- are configured",
-      "status": "INFO",
-      "details": "passwd- not found in collected data (acceptable for backup files)",
+      "status": "PASS",
+      "details": "/etc/passwd- has correct permissions (644) and ownership (root:root)",
       "severity": "High",
       "section": "system_maintenance",
-      "section_name": "System Maintenance"
+      "section_name": "System Maintenance",
+      "final_status": "PASS",
+      "final_details": "/etc/passwd- has correct permissions (644) and ownership (root:root)"
     },
     {
       "rule_id": "7.1.3",
       "title": "Ensure permissions on /etc/group are configured",
-      "status": "MANUAL",
-      "details": "group file found in collected data - manual review of permissions required",
+      "status": "PASS",
+      "details": "/etc/group has correct permissions (644) and ownership (root:root)",
       "severity": "High",
       "section": "system_maintenance",
-      "remediation": "Verify permissions: should be 644 root:root",
-      "section_name": "System Maintenance"
+      "section_name": "System Maintenance",
+      "final_status": "PASS",
+      "final_details": "/etc/group has correct permissions (644) and ownership (root:root)"
     },
     {
       "rule_id": "7.1.4",
       "title": "Ensure permissions on /etc/group- are configured",
-      "status": "INFO",
-      "details": "group- not found in collected data (acceptable for backup files)",
+      "status": "PASS",
+      "details": "/etc/group- has correct permissions (644) and ownership (root:root)",
       "severity": "High",
       "section": "system_maintenance",
-      "section_name": "System Maintenance"
+      "section_name": "System Maintenance",
+      "final_status": "PASS",
+      "final_details": "/etc/group- has correct permissions (644) and ownership (root:root)"
     },
     {
       "rule_id": "7.1.5",
       "title": "Ensure permissions on /etc/shadow are configured",
-      "status": "MANUAL",
-      "details": "shadow file found in collected data - manual review of permissions required",
+      "status": "FAIL",
+      "details": "/etc/shadow issues: mode: 000 (expected 640)",
       "severity": "High",
       "section": "system_maintenance",
-      "remediation": "Verify permissions: should be 640 root:root",
-      "section_name": "System Maintenance"
+      "remediation": "Run: chown root:root /etc/shadow && chmod 640 /etc/shadow",
+      "section_name": "System Maintenance",
+      "final_status": "FAIL",
+      "final_details": "/etc/shadow issues: mode: 000 (expected 640)"
     },
     {
       "rule_id": "7.1.6",
       "title": "Ensure permissions on /etc/shadow- are configured",
-      "status": "INFO",
-      "details": "shadow- not found in collected data (acceptable for backup files)",
+      "status": "FAIL",
+      "details": "/etc/shadow- issues: mode: 000 (expected 640)",
       "severity": "High",
       "section": "system_maintenance",
-      "section_name": "System Maintenance"
+      "remediation": "Run: chown root:root /etc/shadow- && chmod 640 /etc/shadow-",
+      "section_name": "System Maintenance",
+      "final_status": "FAIL",
+      "final_details": "/etc/shadow- issues: mode: 000 (expected 640)"
     },
     {
       "rule_id": "7.1.7",
       "title": "Ensure permissions on /etc/gshadow are configured",
-      "status": "MANUAL",
-      "details": "gshadow file found in collected data - manual review of permissions required",
+      "status": "FAIL",
+      "details": "/etc/gshadow issues: mode: 000 (expected 640)",
       "severity": "High",
       "section": "system_maintenance",
-      "remediation": "Verify permissions: should be 640 root:root",
-      "section_name": "System Maintenance"
+      "remediation": "Run: chown root:root /etc/gshadow && chmod 640 /etc/gshadow",
+      "section_name": "System Maintenance",
+      "final_status": "FAIL",
+      "final_details": "/etc/gshadow issues: mode: 000 (expected 640)"
     },
     {
       "rule_id": "7.1.8",
       "title": "Ensure permissions on /etc/gshadow- are configured",
-      "status": "INFO",
-      "details": "gshadow- not found in collected data (acceptable for backup files)",
+      "status": "FAIL",
+      "details": "/etc/gshadow- issues: mode: 000 (expected 640)",
       "severity": "High",
       "section": "system_maintenance",
-      "section_name": "System Maintenance"
+      "remediation": "Run: chown root:root /etc/gshadow- && chmod 640 /etc/gshadow-",
+      "section_name": "System Maintenance",
+      "final_status": "FAIL",
+      "final_details": "/etc/gshadow- issues: mode: 000 (expected 640)"
     },
     {
       "rule_id": "7.1.9",
       "title": "Ensure permissions on /etc/shells are configured",
-      "status": "MANUAL",
-      "details": "shells file found in collected data - manual review of permissions required",
+      "status": "PASS",
+      "details": "/etc/shells has correct permissions (644) and ownership (root:root)",
       "severity": "High",
       "section": "system_maintenance",
-      "remediation": "Verify permissions: should be 644 root:root",
-      "section_name": "System Maintenance"
+      "section_name": "System Maintenance",
+      "final_status": "PASS",
+      "final_details": "/etc/shells has correct permissions (644) and ownership (root:root)"
     },
     {
       "rule_id": "7.1.10",
       "title": "Ensure permissions on /etc/security/opasswd are configured",
-      "status": "MANUAL",
-      "details": "opasswd file found in collected data - manual review of permissions required",
+      "status": "PASS",
+      "details": "/etc/security/opasswd has correct permissions (600) and ownership (root:root)",
       "severity": "High",
       "section": "system_maintenance",
-      "remediation": "Verify permissions: should be 600 root:root",
-      "section_name": "System Maintenance"
+      "section_name": "System Maintenance",
+      "final_status": "PASS",
+      "final_details": "/etc/security/opasswd has correct permissions (600) and ownership (root:root)"
     },
     {
       "rule_id": "7.1.11",
       "title": "Ensure world writable files and directories are secured",
-      "status": "ERROR",
-      "details": "Check requires live system access for filesystem scanning",
+      "status": "PASS",
+      "details": "No inappropriate world-writable files found",
       "severity": "Medium",
       "section": "system_maintenance",
-      "section_name": "System Maintenance"
+      "section_name": "System Maintenance",
+      "final_status": "PASS",
+      "final_details": "No inappropriate world-writable files found"
     },
     {
       "rule_id": "7.1.12",
       "title": "Ensure no files or directories without an owner and a group exist",
-      "status": "ERROR",
-      "details": "Check requires live system access for filesystem scanning",
+      "status": "PASS",
+      "details": "No orphaned files or directories found",
       "severity": "Medium",
       "section": "system_maintenance",
-      "section_name": "System Maintenance"
+      "section_name": "System Maintenance",
+      "final_status": "PASS",
+      "final_details": "No orphaned files or directories found"
     },
     {
       "rule_id": "7.1.13",
       "title": "Ensure SUID and SGID files are reviewed",
-      "status": "ERROR",
-      "details": "Check requires live system access for filesystem scanning",
+      "status": "MANUAL",
+      "details": "Found 28 SUID files; 5 SGID files - manual review required",
       "severity": "Medium",
       "section": "system_maintenance",
-      "section_name": "System Maintenance"
+      "remediation": "Review SUID/SGID files and remove unnecessary permissions",
+      "section_name": "System Maintenance",
+      "final_status": "SKIP",
+      "final_details": "Test skipped (status: MANUAL): Found 28 SUID files; 5 SGID files - manual review required"
     },
     {
       "rule_id": "7.2.1",
@@ -2071,25 +3014,9 @@
       "details": "All accounts use shadowed passwords",
       "severity": "High",
       "section": "system_maintenance",
-      "section_name": "System Maintenance"
-    },
-    {
-      "rule_id": "7.2.4",
-      "title": "Ensure no duplicate UIDs exist",
-      "status": "PASS",
-      "details": "No duplicate UIDs found",
-      "severity": "High",
-      "section": "system_maintenance",
-      "section_name": "System Maintenance"
-    },
-    {
-      "rule_id": "7.2.6",
-      "title": "Ensure no duplicate user names exist",
-      "status": "PASS",
-      "details": "No duplicate usernames found",
-      "severity": "Medium",
-      "section": "system_maintenance",
-      "section_name": "System Maintenance"
+      "section_name": "System Maintenance",
+      "final_status": "PASS",
+      "final_details": "All accounts use shadowed passwords"
     },
     {
       "rule_id": "7.2.2",
@@ -2098,25 +3025,9 @@
       "details": "No accounts with empty password fields found",
       "severity": "High",
       "section": "system_maintenance",
-      "section_name": "System Maintenance"
-    },
-    {
-      "rule_id": "7.2.5",
-      "title": "Ensure no duplicate GIDs exist",
-      "status": "PASS",
-      "details": "No duplicate GIDs found",
-      "severity": "Medium",
-      "section": "system_maintenance",
-      "section_name": "System Maintenance"
-    },
-    {
-      "rule_id": "7.2.7",
-      "title": "Ensure no duplicate group names exist",
-      "status": "PASS",
-      "details": "No duplicate group names found",
-      "severity": "Medium",
-      "section": "system_maintenance",
-      "section_name": "System Maintenance"
+      "section_name": "System Maintenance",
+      "final_status": "PASS",
+      "final_details": "No accounts with empty password fields found"
     },
     {
       "rule_id": "7.2.3",
@@ -2125,25 +3036,75 @@
       "details": "All groups referenced in /etc/passwd exist in /etc/group",
       "severity": "Medium",
       "section": "system_maintenance",
-      "section_name": "System Maintenance"
+      "section_name": "System Maintenance",
+      "final_status": "PASS",
+      "final_details": "All groups referenced in /etc/passwd exist in /etc/group"
+    },
+    {
+      "rule_id": "7.2.4",
+      "title": "Ensure no duplicate UIDs exist",
+      "status": "PASS",
+      "details": "No duplicate UIDs found",
+      "severity": "High",
+      "section": "system_maintenance",
+      "section_name": "System Maintenance",
+      "final_status": "PASS",
+      "final_details": "No duplicate UIDs found"
+    },
+    {
+      "rule_id": "7.2.5",
+      "title": "Ensure no duplicate GIDs exist",
+      "status": "PASS",
+      "details": "No duplicate GIDs found",
+      "severity": "Medium",
+      "section": "system_maintenance",
+      "section_name": "System Maintenance",
+      "final_status": "PASS",
+      "final_details": "No duplicate GIDs found"
+    },
+    {
+      "rule_id": "7.2.6",
+      "title": "Ensure no duplicate user names exist",
+      "status": "PASS",
+      "details": "No duplicate usernames found",
+      "severity": "Medium",
+      "section": "system_maintenance",
+      "section_name": "System Maintenance",
+      "final_status": "PASS",
+      "final_details": "No duplicate usernames found"
+    },
+    {
+      "rule_id": "7.2.7",
+      "title": "Ensure no duplicate group names exist",
+      "status": "PASS",
+      "details": "No duplicate group names found",
+      "severity": "Medium",
+      "section": "system_maintenance",
+      "section_name": "System Maintenance",
+      "final_status": "PASS",
+      "final_details": "No duplicate group names found"
     },
     {
       "rule_id": "7.2.8",
       "title": "Ensure local interactive user home directories are configured",
-      "status": "ERROR",
-      "details": "Check requires live system access for home directory inspection",
+      "status": "PASS",
+      "details": "All 1 interactive user home directories are properly configured",
       "severity": "Medium",
       "section": "system_maintenance",
-      "section_name": "System Maintenance"
+      "section_name": "System Maintenance",
+      "final_status": "PASS",
+      "final_details": "All 1 interactive user home directories are properly configured"
     },
     {
       "rule_id": "7.2.9",
       "title": "Ensure local interactive user dot files access is configured",
-      "status": "ERROR",
-      "details": "Check requires live system access for home directory inspection",
+      "status": "PASS",
+      "details": "Dot files for 1 interactive users are properly configured",
       "severity": "Medium",
       "section": "system_maintenance",
-      "section_name": "System Maintenance"
+      "section_name": "System Maintenance",
+      "final_status": "PASS",
+      "final_details": "Dot files for 1 interactive users are properly configured"
     }
   ]
 }

@@ -8,6 +8,6 @@
     link/ether 00:0c:29:17:a0:a2 brd ff:ff:ff:ff:ff:ff
     altname enp3s0
     inet 192.168.136.135/24 brd 192.168.136.255 scope global dynamic noprefixroute ens160
-       valid_lft 1569sec preferred_lft 1569sec
+       valid_lft 1248sec preferred_lft 1248sec
     inet6 fe80::20c:29ff:fe17:a0a2/64 scope link noprefixroute 
        valid_lft forever preferred_lft forever

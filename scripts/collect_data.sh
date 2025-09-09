@@ -109,7 +109,7 @@ safe_copy_dir() {
 
 # Create data directory structure
 create_directories() {
-    log "${BLUE}📁 Creating data directory structure...${NC}"
+    log "${BLUE} Creating data directory structure...${NC}"
     
     # Create all required directories
     mkdir -p "$DATA_DIR"/{system,network,services,security,logging,auditing,filesystem} 2>/dev/null
@@ -123,12 +123,12 @@ create_directories() {
         chown -R "$ORIGINAL_USER:$ORIGINAL_USER" "$DATA_DIR" 2>/dev/null || true
     fi
     
-    log "${GREEN}✅ Directory structure created${NC}"
+    log "${GREEN} Directory structure created${NC}"
 }
 
 # System information collection
 collect_system_info() {
-    log "${BLUE}🖥️  Collecting system information...${NC}"
+    log "${BLUE}  Collecting system information...${NC}"
     
     safe_exec "hostnamectl" "$DATA_DIR/system/hostnamectl.txt" "hostnamectl failed"
     safe_exec "uname -a" "$DATA_DIR/system/uname.txt" "uname failed"
@@ -151,12 +151,12 @@ collect_system_info() {
     safe_copy "/boot/grub2/grub.cfg" "$DATA_DIR/system/grub.cfg"
     safe_copy "/boot/efi/EFI/redhat/grub.cfg" "$DATA_DIR/system/grub-efi.cfg"
     
-    log "${GREEN}✅ System information collected${NC}"
+    log "${GREEN} System information collected${NC}"
 }
 
 # Network configuration collection
 collect_network_info() {
-    log "${BLUE}🌐 Collecting network configuration...${NC}"
+    log "${BLUE} Collecting network configuration...${NC}"
     
     safe_exec "ip addr show" "$DATA_DIR/network/interfaces/ip-addr.txt" "ip addr failed"
     safe_exec "ip route show" "$DATA_DIR/network/routing/ip-route.txt" "ip route failed"
@@ -177,12 +177,12 @@ collect_network_info() {
         safe_exec "sysctl -a 2>/dev/null | grep -E '(net\\.|kernel\\.)' | grep -v 'permission denied'" "$DATA_DIR/network/sysctl-network.txt" "sysctl failed"
     fi
     
-    log "${GREEN}✅ Network configuration collected${NC}"
+    log "${GREEN} Network configuration collected${NC}"
 }
 
 # Services and processes collection
 collect_services_info() {
-    log "${BLUE}⚙️  Collecting services information...${NC}"
+    log "${BLUE}  Collecting services information...${NC}"
     
     safe_exec "systemctl list-units --type=service" "$DATA_DIR/system/services/systemctl-services.txt" "systemctl failed"
     safe_exec "systemctl list-unit-files --type=service" "$DATA_DIR/system/services/systemctl-unit-files.txt" "systemctl unit-files failed"
@@ -197,12 +197,12 @@ collect_services_info() {
     safe_exec "crontab -l" "$DATA_DIR/system/services/user-crontab.txt" "No user crontab"
     safe_exec "ls -la /etc/cron*" "$DATA_DIR/system/services/system-cron.txt" "cron listing failed"
     
-    log "${GREEN}✅ Services information collected${NC}"
+    log "${GREEN} Services information collected${NC}"
 }
 
 # Security configuration collection
 collect_security_info() {
-    log "${BLUE}🔒 Collecting security configuration...${NC}"
+    log "${BLUE} Collecting security configuration...${NC}"
     
     # SSH Configuration
     safe_copy "/etc/ssh/sshd_config" "$DATA_DIR/security/ssh/sshd_config"
@@ -252,12 +252,12 @@ collect_security_info() {
     safe_exec "firewall-cmd --list-all-zones" "$DATA_DIR/security/firewall/all-zones.txt" "firewall zones failed"
     safe_exec "iptables -L" "$DATA_DIR/security/firewall/iptables.txt" "iptables failed"
     
-    log "${GREEN}✅ Security configuration collected${NC}"
+    log "${GREEN} Security configuration collected${NC}"
 }
 
 # Logging and Auditing collection
 collect_logging_auditing_info() {
-    log "${BLUE}📋 Collecting logging and auditing configuration...${NC}"
+    log "${BLUE} Collecting logging and auditing configuration...${NC}"
     
     # Journald Configuration
     safe_copy "/etc/systemd/journald.conf" "$DATA_DIR/logging/journald.conf"
@@ -297,12 +297,12 @@ collect_logging_auditing_info() {
     safe_exec "tail -100 /var/log/audit/audit.log" "$DATA_DIR/auditing/audit-sample.txt" "audit log not accessible" true
     safe_exec "journalctl --no-pager -n 100" "$DATA_DIR/logging/journalctl-sample.txt" "journalctl failed"
     
-    log "${GREEN}✅ Logging and auditing configuration collected${NC}"
+    log "${GREEN} Logging and auditing configuration collected${NC}"
 }
 
 # Filesystem information collection
 collect_filesystem_info() {
-    log "${BLUE}💾 Collecting filesystem information...${NC}"
+    log "${BLUE} Collecting filesystem information...${NC}"
     
     safe_exec "mount" "$DATA_DIR/filesystem/mount.txt" "mount failed"
     safe_exec "cat /proc/mounts" "$DATA_DIR/filesystem/proc-mounts.txt" "proc-mounts failed"
@@ -318,12 +318,12 @@ collect_filesystem_info() {
     safe_exec "find /etc /usr/bin /usr/sbin /bin /sbin -nouser -o -nogroup 2>/dev/null | head -50" "$DATA_DIR/filesystem/orphaned-files.txt" "orphaned files search failed"
     safe_exec "find /usr/bin /usr/sbin /bin /sbin -type f \$$ -perm -4000 -o -perm -2000 \$$ 2>/dev/null" "$DATA_DIR/filesystem/suid-sgid-files.txt" "suid/sgid search failed"
     
-    log "${GREEN}✅ Filesystem information collected${NC}"
+    log "${GREEN} Filesystem information collected${NC}"
 }
 
 # Kernel and boot configuration
 collect_kernel_boot_info() {
-    log "${BLUE}🔧 Collecting kernel and boot configuration...${NC}"
+    log "${BLUE} Collecting kernel and boot configuration...${NC}"
     
     # Kernel parameters
     if [[ "$IS_ROOT" == "true" ]]; then
@@ -337,12 +337,12 @@ collect_kernel_boot_info() {
     safe_exec "ls -la /boot/" "$DATA_DIR/system/boot/boot-files.txt" "boot listing failed"
     safe_copy "/etc/default/grub" "$DATA_DIR/system/boot/grub"
     
-    log "${GREEN}✅ Kernel and boot configuration collected${NC}"
+    log "${GREEN} Kernel and boot configuration collected${NC}"
 }
 
 # Time synchronization
 collect_time_sync_info() {
-    log "${BLUE}⏰ Collecting time synchronization information...${NC}"
+    log "${BLUE} Collecting time synchronization information...${NC}"
     
     safe_exec "systemctl is-enabled chronyd" "$DATA_DIR/system/services/chronyd-enabled.txt" "disabled"
     safe_exec "systemctl is-active chronyd" "$DATA_DIR/system/services/chronyd-active.txt" "inactive"
@@ -353,23 +353,23 @@ collect_time_sync_info() {
     safe_copy "/etc/systemd/timesyncd.conf" "$DATA_DIR/system/timesyncd.conf"
     safe_exec "timedatectl" "$DATA_DIR/system/timedatectl.txt" "timedatectl failed"
     
-    log "${GREEN}✅ Time synchronization information collected${NC}"
+    log "${GREEN} Time synchronization information collected${NC}"
 }
 
 # Main execution
 main() {
     # Display mode information
     if [[ "$IS_ROOT" == "true" ]]; then
-        log "${GREEN}🔴 Starting CIS RHEL 9 data collection (ROOT MODE)...${NC}"
-        log "${BLUE}👤 Original user: $ORIGINAL_USER${NC}"
+        log "${GREEN} Starting CIS RHEL 9 data collection (ROOT MODE)...${NC}"
+        log "${BLUE} Original user: $ORIGINAL_USER${NC}"
     else
-        log "${GREEN}🔴 Starting CIS RHEL 9 data collection (USER MODE)...${NC}"
-        log "${YELLOW}💡 Run with 'sudo' for complete privileged data collection${NC}"
+        log "${GREEN} Starting CIS RHEL 9 data collection (USER MODE)...${NC}"
+        log "${YELLOW} Run with 'sudo' for complete privileged data collection${NC}"
     fi
     
-    log "${BLUE}📅 Timestamp: $TIMESTAMP${NC}"
-    log "${BLUE}📁 Data directory: $DATA_DIR${NC}"
-    log "${BLUE}📝 Log file: $LOG_FILE${NC}"
+    log "${BLUE} Timestamp: $TIMESTAMP${NC}"
+    log "${BLUE} Data directory: $DATA_DIR${NC}"
+    log "${BLUE} Log file: $LOG_FILE${NC}"
     
     create_directories
     collect_system_info
@@ -386,13 +386,13 @@ main() {
         chown -R "$ORIGINAL_USER:$ORIGINAL_USER" "$DATA_DIR" 2>/dev/null || true
     fi
     
-    log "${GREEN}🎉 Data collection completed successfully!${NC}"
-    log "${BLUE}📊 Data collected in: $DATA_DIR${NC}"
-    log "${BLUE}📝 Collection log: $LOG_FILE${NC}"
+    log "${GREEN} Data collection completed successfully!${NC}"
+    log "${BLUE} Data collected in: $DATA_DIR${NC}"
+    log "${BLUE} Collection log: $LOG_FILE${NC}"
     
     # Show directory size
     du -sh "$DATA_DIR" 2>/dev/null | while read size path; do
-        log "${BLUE}📦 Total size: $size${NC}"
+        log "${BLUE} Total size: $size${NC}"
     done
     
     echo
@@ -402,25 +402,25 @@ main() {
     log "${YELLOW} 3. Check collection log: $LOG_FILE${NC}"
     
     # Display collection summary based on mode
-    log "${BLUE}📋 Collection Summary:${NC}"
+    log "${BLUE} Collection Summary:${NC}"
     if [[ "$IS_ROOT" == "true" ]]; then
-        log "${BLUE} ✅ System information and packages (complete)${NC}"
-        log "${BLUE} ✅ Network configuration and services (complete)${NC}"
-        log "${BLUE} ✅ Security configuration (complete - includes SSH keys, shadow files)${NC}"
-        log "${BLUE} ✅ Logging and auditing configuration (complete - includes audit logs)${NC}"
-        log "${BLUE} ✅ Filesystem information and permissions (complete)${NC}"
-        log "${BLUE} ✅ Kernel and boot configuration (complete - all parameters)${NC}"
-        log "${BLUE} ✅ Time synchronization settings (complete)${NC}"
+        log "${BLUE}  System information and packages (complete)${NC}"
+        log "${BLUE}  Network configuration and services (complete)${NC}"
+        log "${BLUE}  Security configuration (complete - includes SSH keys, shadow files)${NC}"
+        log "${BLUE}  Logging and auditing configuration (complete - includes audit logs)${NC}"
+        log "${BLUE}  Filesystem information and permissions (complete)${NC}"
+        log "${BLUE}  Kernel and boot configuration (complete - all parameters)${NC}"
+        log "${BLUE}  Time synchronization settings (complete)${NC}"
     else
-        log "${BLUE} ✅ System information and packages${NC}"
-        log "${BLUE} ✅ Network configuration and services${NC}"
-        log "${BLUE} ⚠️  Security configuration (limited - some files require root)${NC}"
-        log "${BLUE} ⚠️  Logging and auditing configuration (limited - audit logs require root)${NC}"
-        log "${BLUE} ✅ Filesystem information and permissions${NC}"
-        log "${BLUE} ⚠️  Kernel and boot configuration (limited - some parameters require root)${NC}"
-        log "${BLUE} ✅ Time synchronization settings${NC}"
+        log "${BLUE}  System information and packages${NC}"
+        log "${BLUE}  Network configuration and services${NC}"
+        log "${BLUE}  Security configuration (limited - some files require root)${NC}"
+        log "${BLUE}  Logging and auditing configuration (limited - audit logs require root)${NC}"
+        log "${BLUE}  Filesystem information and permissions${NC}"
+        log "${BLUE}  Kernel and boot configuration (limited - some parameters require root)${NC}"
+        log "${BLUE}  Time synchronization settings${NC}"
         echo
-        log "${YELLOW}💡 For complete data collection, run: sudo $0${NC}"
+        log "${YELLOW} For complete data collection, run: sudo $0${NC}"
     fi
 }
 
