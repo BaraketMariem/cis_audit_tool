@@ -1,0 +1,29 @@
+-rw-r--r--. 1 root root   0 Jul 11  2022 /etc/cron.deny
+-rw-r--r--. 1 root root 451 Mar 23  2022 /etc/crontab
+
+/etc/cron.d:
+total 16
+drwxr-xr-x.   2 root root   21 Jun 20 16:30 .
+drwxr-xr-x. 133 root root 8192 Sep  9 11:56 ..
+-rw-r--r--.   1 root root  128 Jul 11  2022 0hourly
+
+/etc/cron.daily:
+total 12
+drwxr-xr-x.   2 root root    6 Mar 23  2022 .
+drwxr-xr-x. 133 root root 8192 Sep  9 11:56 ..
+
+/etc/cron.hourly:
+total 16
+drwxr-xr-x.   2 root root   22 Mar 23  2022 .
+drwxr-xr-x. 133 root root 8192 Sep  9 11:56 ..
+-rwxr-xr-x.   1 root root  610 Jul 11  2022 0anacron
+
+/etc/cron.monthly:
+total 12
+drwxr-xr-x.   2 root root    6 Mar 23  2022 .
+drwxr-xr-x. 133 root root 8192 Sep  9 11:56 ..
+
+/etc/cron.weekly:
+total 12
+drwxr-xr-x.   2 root root    6 Mar 23  2022 .
+drwxr-xr-x. 133 root root 8192 Sep  9 11:56 ..

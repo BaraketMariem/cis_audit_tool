@@ -1,0 +1,21 @@
+Sep  9 11:56:11 localhost polkitd[873]: Loading rules from directory /etc/polkit-1/rules.d
+Sep  9 11:56:11 localhost polkitd[873]: Loading rules from directory /usr/share/polkit-1/rules.d
+Sep  9 11:56:11 localhost polkitd[873]: Finished loading, compiling and executing 13 rules
+Sep  9 11:56:11 localhost polkitd[873]: Acquired the name org.freedesktop.PolicyKit1 on the system bus
+Sep  9 11:56:24 localhost sshd[1117]: Server listening on 0.0.0.0 port 22.
+Sep  9 11:56:24 localhost sshd[1117]: Server listening on :: port 22.
+Sep  9 11:56:33 localhost systemd[1245]: pam_unix(systemd-user:session): session opened for user gdm(uid=42) by (uid=0)
+Sep  9 11:56:36 localhost gdm-launch-environment][1218]: pam_unix(gdm-launch-environment:session): session opened for user gdm(uid=42) by (uid=0)
+Sep  9 11:56:58 localhost polkitd[873]: Registered Authentication Agent for unix-session:c1 (system bus name :1.26 [/usr/bin/gnome-shell], object path /org/freedesktop/PolicyKit1/AuthenticationAgent, locale en_US.UTF-8)
+Sep  9 11:58:25 localhost gdm-password][2067]: gkr-pam: unable to locate daemon control file
+Sep  9 11:58:25 localhost gdm-password][2067]: gkr-pam: stashed password to try later in open session
+Sep  9 11:58:28 localhost systemd[2091]: pam_unix(systemd-user:session): session opened for user mariem(uid=1000) by (uid=0)
+Sep  9 11:58:30 localhost gdm-password][2067]: pam_unix(gdm-password:session): session opened for user mariem(uid=1000) by (uid=0)
+Sep  9 11:58:30 localhost gdm-password][2067]: gkr-pam: gnome-keyring-daemon started properly and unlocked keyring
+Sep  9 11:58:43 localhost gdm-launch-environment][1218]: pam_unix(gdm-launch-environment:session): session closed for user gdm
+Sep  9 11:58:43 localhost polkitd[873]: Unregistered Authentication Agent for unix-session:c1 (system bus name :1.26, object path /org/freedesktop/PolicyKit1/AuthenticationAgent, locale en_US.UTF-8) (disconnected from bus)
+Sep  9 11:58:50 localhost polkitd[873]: Registered Authentication Agent for unix-session:2 (system bus name :1.71 [/usr/bin/gnome-shell], object path /org/freedesktop/PolicyKit1/AuthenticationAgent, locale en_US.UTF-8)
+Sep  9 12:06:59 localhost polkitd[873]: Operator of unix-session:2 successfully authenticated as unix-user:mariem to gain TEMPORARY authorization for action org.fedoraproject.FirewallD1.config.info for system-bus-name::1.139 [/usr/bin/python3 -s /usr/bin/firewall-cmd --list-all] (owned by unix-user:mariem)
+Sep  9 13:08:34 localhost gdm-password][4987]: gkr-pam: unlocked login keyring
+Sep  9 13:22:26 localhost sudo[5407]:  mariem : TTY=pts/0 ; PWD=/home/mariem/cis_audit_tool/scripts ; USER=root ; COMMAND=./collect_data.sh
+Sep  9 13:22:26 localhost sudo[5407]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)

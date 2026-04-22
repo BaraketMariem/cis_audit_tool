@@ -1,0 +1,9 @@
+Filesystem             Size  Used Avail Use% Mounted on
+devtmpfs               4.0M     0  4.0M   0% /dev
+tmpfs                  1.8G     0  1.8G   0% /dev/shm
+tmpfs                  724M   12M  713M   2% /run
+/dev/mapper/rhel-root   64G  6.5G   58G  11% /
+/dev/nvme0n1p1         960M  300M  661M  32% /boot
+/dev/mapper/rhel-home   32G  427M   31G   2% /home
+tmpfs                  362M  912K  361M   1% /run/user/1000
+/dev/sr0               9.9G  9.9G     0 100% /run/media/mariem/RHEL-9-3-0-BaseOS-x86_64

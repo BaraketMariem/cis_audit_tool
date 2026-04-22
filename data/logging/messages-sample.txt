@@ -1,0 +1,100 @@
+Sep  9 12:26:37 localhost systemd[1]: NetworkManager-dispatcher.service: Deactivated successfully.
+Sep  9 12:27:39 localhost firefox.desktop[3799]: Crash Annotation GraphicsCriticalError: |[C0][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=215.612) |[C1][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=391.301) |[C2][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=419.868) |[C3][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=566.307) [GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM;
+Sep  9 12:27:44 localhost firefox.desktop[4069]: Crash Annotation GraphicsCriticalError: |[C0][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=179.81) [GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM;
+Sep  9 12:27:44 localhost firefox.desktop[4069]: Crash Annotation GraphicsCriticalError: |[C0][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=179.81) |[C1][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=179.828) [GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM;
+Sep  9 12:27:46 localhost rtkit-daemon[875]: Successfully made thread 4222 of process 4069 (/usr/lib64/firefox/firefox) owned by '1000' RT at priority 10.
+Sep  9 12:28:16 localhost firefox.desktop[3799]: Crash Annotation GraphicsCriticalError: |[C0][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=215.612) |[C1][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=391.301) |[C2][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=419.868) |[C3][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=566.307) |[C4][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=603.323) [GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM;
+Sep  9 12:30:10 localhost firefox.desktop[3799]: Crash Annotation GraphicsCriticalError: |[C0][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=215.612) |[C1][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=391.301) |[C2][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=419.868) |[C3][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=566.307) |[C4][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=603.323) |[C5][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=717.303) [GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM;
+Sep  9 12:33:30 localhost chronyd[904]: System clock wrong by -2.761797 seconds
+Sep  9 12:41:30 localhost NetworkManager[1086]: <info>  [1757418090.4634] dhcp4 (ens160): state changed new lease, address=192.168.136.135
+Sep  9 12:41:30 localhost systemd[1]: Starting Network Manager Script Dispatcher Service...
+Sep  9 12:41:30 localhost systemd[1]: Started Network Manager Script Dispatcher Service.
+Sep  9 12:41:41 localhost systemd[1]: NetworkManager-dispatcher.service: Deactivated successfully.
+Sep  9 12:42:52 localhost rtkit-daemon[875]: The canary thread is apparently starving. Taking action.
+Sep  9 12:42:52 localhost rtkit-daemon[875]: Demoting known real-time threads.
+Sep  9 12:42:52 localhost rtkit-daemon[875]: Successfully demoted thread 3775 of process 3634 (/usr/lib64/firefox/firefox).
+Sep  9 12:42:52 localhost rtkit-daemon[875]: Successfully demoted thread 2317 of process 2302 (/usr/bin/wireplumber).
+Sep  9 12:42:52 localhost rtkit-daemon[875]: Successfully demoted thread 2302 of process 2302 (/usr/bin/wireplumber).
+Sep  9 12:42:52 localhost rtkit-daemon[875]: Successfully demoted thread 2319 of process 2303 (/usr/bin/pipewire-pulse).
+Sep  9 12:42:52 localhost rtkit-daemon[875]: Successfully demoted thread 2303 of process 2303 (/usr/bin/pipewire-pulse).
+Sep  9 12:42:54 localhost rtkit-daemon[875]: Successfully demoted thread 2318 of process 2301 (/usr/bin/pipewire).
+Sep  9 12:42:54 localhost rtkit-daemon[875]: Successfully demoted thread 2301 of process 2301 (/usr/bin/pipewire).
+Sep  9 12:42:54 localhost rtkit-daemon[875]: Demoted 7 threads.
+Sep  9 12:45:03 localhost chronyd[904]: Forward time jump detected!
+Sep  9 12:45:03 localhost chronyd[904]: Can't synchronise: no selectable sources
+Sep  9 12:45:16 localhost firefox.desktop[4203]: Crash Annotation GraphicsCriticalError: |[C0][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=937.769) [GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM;
+Sep  9 12:47:23 localhost kernel: hrtimer: interrupt took 4994884 ns
+Sep  9 12:48:44 localhost firefox.desktop[4203]: Crash Annotation GraphicsCriticalError: |[C0][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=937.769) |[C1][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=1146.31) [GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM;
+Sep  9 12:49:22 localhost chronyd[904]: Selected source 197.17.32.249 (2.rhel.pool.ntp.org)
+Sep  9 12:49:22 localhost chronyd[904]: System clock wrong by -3.536816 seconds
+Sep  9 12:52:07 localhost firefox.desktop[4203]: Crash Annotation GraphicsCriticalError: |[C0][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=937.769) |[C1][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=1146.31) |[C2][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=1348.91) [GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM;
+Sep  9 12:52:08 localhost firefox.desktop[4203]: Crash Annotation GraphicsCriticalError: |[C0][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=937.769) |[C1][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=1146.31) |[C2][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=1348.91) |[C3][GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM; (t=1350.55) [GFX1-]: Couldn't sanitize RENDERER device: SVGA3D; build: RELEASE;  LLVM;
+Sep  9 12:54:19 localhost systemd[1]: Starting Hostname Service...
+Sep  9 12:54:20 localhost systemd[1]: Started Hostname Service.
+Sep  9 12:54:44 localhost firefox[3634]: Failed to fetch network locations: Timeout was reached
+Sep  9 12:54:50 localhost systemd[1]: systemd-hostnamed.service: Deactivated successfully.
+Sep  9 12:58:21 localhost NetworkManager[1086]: <info>  [1757419101.8202] dhcp4 (ens160): state changed new lease, address=192.168.136.135
+Sep  9 12:58:21 localhost systemd[1]: Starting Network Manager Script Dispatcher Service...
+Sep  9 12:58:21 localhost systemd[1]: Started Network Manager Script Dispatcher Service.
+Sep  9 12:58:31 localhost systemd[1]: NetworkManager-dispatcher.service: Deactivated successfully.
+Sep  9 12:58:48 localhost gsd-color[2418]: unable to get EDID for xrandr-Virtual-1: unable to get EDID for output
+Sep  9 12:59:19 localhost cupsd[1115]: REQUEST localhost - - "POST / HTTP/1.1" 200 185 Renew-Subscription client-error-not-found
+Sep  9 13:08:20 localhost gsd-color[2418]: unable to get EDID for xrandr-Virtual-1: unable to get EDID for output
+Sep  9 13:08:24 localhost systemd[1]: Starting Fingerprint Authentication Daemon...
+Sep  9 13:08:24 localhost systemd[1]: Started Fingerprint Authentication Daemon.
+Sep  9 13:08:35 localhost NetworkManager[1086]: <info>  [1757419715.2522] agent-manager: agent[faa04f8889cd1f49,:1.71/org.gnome.Shell.NetworkAgent/1000]: agent registered
+Sep  9 13:08:55 localhost systemd[1]: fprintd.service: Deactivated successfully.
+Sep  9 13:09:28 localhost packagekitd[1699]: Skipping refresh of media: Cannot update read-only repo
+Sep  9 13:11:47 localhost systemd[1]: Starting Fingerprint Authentication Daemon...
+Sep  9 13:11:47 localhost systemd[1]: Started Fingerprint Authentication Daemon.
+Sep  9 13:12:08 localhost packagekitd[1699]: Skipping refresh of media: Cannot update read-only repo
+Sep  9 13:12:09 localhost gnome-shell[2200]: libinput error: event2  - VirtualPS/2 VMware VMMouse: client bug: event processing lagging behind by 20ms, your system is too slow
+Sep  9 13:12:10 localhost pipewire[2301]: spa.alsa: front:0: (0 missed) snd_pcm_avail after recover: Broken pipe
+Sep  9 13:12:12 localhost gsd-color[2418]: unable to get EDID for xrandr-Virtual-1: unable to get EDID for output
+Sep  9 13:12:14 localhost gsd-color[2418]: unable to get EDID for xrandr-Virtual-1: unable to get EDID for output
+Sep  9 13:12:18 localhost systemd[1]: fprintd.service: Deactivated successfully.
+Sep  9 13:12:59 localhost systemd[2091]: Created slice Slice /app/dbus-:1.2-org.gnome.gedit.
+Sep  9 13:12:59 localhost systemd[2091]: Started dbus-:1.2-org.gnome.gedit@0.service.
+Sep  9 13:13:02 localhost gnome-shell[2200]: meta_window_set_stack_position_no_sync: assertion 'window->stack_position >= 0' failed
+Sep  9 13:13:13 localhost systemd[2091]: dbus-:1.2-org.gnome.gedit@0.service: Consumed 4.998s CPU time.
+Sep  9 13:13:21 localhost NetworkManager[1086]: <info>  [1757420001.8105] dhcp4 (ens160): state changed new lease, address=192.168.136.135
+Sep  9 13:13:21 localhost systemd[1]: Starting Network Manager Script Dispatcher Service...
+Sep  9 13:13:21 localhost systemd[1]: Started Network Manager Script Dispatcher Service.
+Sep  9 13:13:32 localhost systemd[1]: NetworkManager-dispatcher.service: Deactivated successfully.
+Sep  9 13:13:55 localhost gnome-shell[2200]: Source ID 11687 was not found when attempting to remove it
+Sep  9 13:14:06 localhost packagekitd[1699]: Skipping refresh of media: Cannot update read-only repo
+Sep  9 13:14:42 localhost systemd[2091]: Started dbus-:1.2-org.gnome.gedit@1.service.
+Sep  9 13:14:43 localhost gnome-shell[2200]: meta_window_set_stack_position_no_sync: assertion 'window->stack_position >= 0' failed
+Sep  9 13:18:10 localhost systemd[2091]: dbus-:1.2-org.gnome.gedit@1.service: Consumed 42.462s CPU time.
+Sep  9 13:18:29 localhost systemd[1]: Starting Fingerprint Authentication Daemon...
+Sep  9 13:18:30 localhost systemd[1]: Started Fingerprint Authentication Daemon.
+Sep  9 13:18:45 localhost packagekitd[1699]: Skipping refresh of media: Cannot update read-only repo
+Sep  9 13:19:00 localhost systemd[1]: fprintd.service: Deactivated successfully.
+Sep  9 13:19:33 localhost chronyd[904]: Can't synchronise: no selectable sources
+Sep  9 13:19:33 localhost chronyd[904]: Source 197.17.32.249 replaced with 102.64.113.151 (2.rhel.pool.ntp.org)
+Sep  9 13:19:39 localhost chronyd[904]: Selected source 160.119.216.197 (2.rhel.pool.ntp.org)
+Sep  9 13:20:20 localhost systemd[2091]: Started dbus-:1.2-org.gnome.gedit@2.service.
+Sep  9 13:20:22 localhost gnome-shell[2200]: meta_window_set_stack_position_no_sync: assertion 'window->stack_position >= 0' failed
+Sep  9 13:20:47 localhost chronyd[904]: Selected source 155.232.19.7 (2.rhel.pool.ntp.org)
+Sep  9 13:22:15 localhost rhsm-service[2696]: INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Sep  9 13:22:15 localhost rhsm-service[2696]: INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Sep  9 13:22:15 localhost rhsm-service[2696]: INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Sep  9 13:22:15 localhost rhsm-service[2696]: INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Sep  9 13:22:19 localhost rhsm-service[2696]: INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Sep  9 13:22:19 localhost rhsm-service[2696]: INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Sep  9 13:22:19 localhost rhsm-service[2696]: INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Sep  9 13:22:19 localhost rhsm-service[2696]: INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Sep  9 13:22:20 localhost rhsm-service[2696]: INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Sep  9 13:22:20 localhost rhsm-service[2696]: INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Sep  9 13:22:20 localhost rhsm-service[2696]: INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Sep  9 13:22:20 localhost rhsm-service[2696]: INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Sep  9 13:22:22 localhost rhsm-service[2696]: INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Sep  9 13:22:22 localhost rhsm-service[2696]: INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Sep  9 13:22:22 localhost rhsm-service[2696]: INFO [subscription_manager.i18n:169] Could not import locale for C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Sep  9 13:22:22 localhost rhsm-service[2696]: INFO [subscription_manager.i18n:139] Could not import locale either for C.UTF-8_C.UTF-8: [Errno 2] No translation file found for domain: 'rhsm'
+Sep  9 13:22:27 localhost systemd[1]: Starting Hostname Service...
+Sep  9 13:22:28 localhost systemd[1]: Started Hostname Service.
+Sep  9 13:22:34 localhost systemd[1]: proc-sys-fs-binfmt_misc.automount: Got automount request for /proc/sys/fs/binfmt_misc, triggered by 5636 (sysctl)
+Sep  9 13:22:34 localhost systemd[1]: Mounting Arbitrary Executable File Formats File System...
+Sep  9 13:22:35 localhost systemd[1]: Mounted Arbitrary Executable File Formats File System.
+Sep  9 13:22:58 localhost systemd[1]: systemd-hostnamed.service: Deactivated successfully.

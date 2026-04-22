@@ -1,0 +1,14 @@
+   Static hostname: (unset)
+Transient hostname: localhost
+         Icon name: computer-vm
+           Chassis: vm 🖴
+        Machine ID: 481147ff42ac4cc08a40b7c37d751d37
+           Boot ID: 7f2853c7fda84d6faced73f259018dbf
+    Virtualization: vmware
+  Operating System: Red Hat Enterprise Linux 9.3 (Plow)
+       CPE OS Name: cpe:/o:redhat:enterprise_linux:9::baseos
+            Kernel: Linux 5.14.0-362.8.1.el9_3.x86_64
+      Architecture: x86-64
+   Hardware Vendor: VMware, Inc.
+    Hardware Model: VMware Virtual Platform
+  Firmware Version: 6.00

@@ -1,0 +1,7 @@
+               Local time: Tue 2025-09-09 13:23:04 CET
+           Universal time: Tue 2025-09-09 12:23:04 UTC
+                 RTC time: Tue 2025-09-09 12:23:04
+                Time zone: Africa/Tunis (CET, +0100)
+System clock synchronized: yes
+              NTP service: active
+          RTC in local TZ: no

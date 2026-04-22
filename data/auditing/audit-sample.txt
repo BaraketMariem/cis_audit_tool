@@ -1,0 +1,100 @@
+type=BPF msg=audit(1757415543.355:141): prog-id=46 op=UNLOAD
+type=SELINUX_ERR msg=audit(1757415543.637:142): op=security_compute_sid invalid_context="unconfined_u:unconfined_r:vmtools_unconfined_t:s0-s0:c0.c1023" scontext=unconfined_u:unconfined_r:vmtools_t:s0-s0:c0.c1023 tcontext=system_u:object_r:shell_exec_t:s0 tclass=process
+type=SYSCALL msg=audit(1757415543.637:142): arch=c000003e syscall=59 success=no exit=-13 a0=7f4f80db811b a1=7ffd12b52f70 a2=7ffd12b543e8 a3=8 items=0 ppid=2508 pid=2535 auid=1000 uid=1000 gid=1000 euid=1000 suid=1000 fsuid=1000 egid=1000 sgid=1000 fsgid=1000 tty=(none) ses=3 comm="vmtoolsd" exe="/usr/bin/vmtoolsd" subj=unconfined_u:unconfined_r:vmtools_t:s0-s0:c0.c1023 key=(null)ARCH=x86_64 SYSCALL=execve AUID="mariem" UID="mariem" GID="mariem" EUID="mariem" SUID="mariem" FSUID="mariem" EGID="mariem" SGID="mariem" FSGID="mariem"
+type=PROCTITLE msg=audit(1757415543.637:142): proctitle=2F7573722F62696E2F766D746F6F6C7364002D6E00766D757372002D2D626C6F636B46640033002D2D75696E70757446640034
+type=BPF msg=audit(1757415544.803:143): prog-id=48 op=LOAD
+type=BPF msg=audit(1757415544.814:144): prog-id=49 op=LOAD
+type=SERVICE_START msg=audit(1757415545.603:145): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=systemd-hostnamed comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=BPF msg=audit(1757415565.663:146): prog-id=50 op=LOAD
+type=BPF msg=audit(1757415565.666:147): prog-id=51 op=LOAD
+type=BPF msg=audit(1757415565.668:148): prog-id=52 op=LOAD
+type=SERVICE_START msg=audit(1757415569.952:149): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=systemd-localed comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=SERVICE_START msg=audit(1757415588.416:150): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=rhsm comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=SERVICE_START msg=audit(1757415590.563:151): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=fwupd comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=SERVICE_STOP msg=audit(1757415596.564:152): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=systemd-hostnamed comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=BPF msg=audit(1757415596.581:153): prog-id=49 op=UNLOAD
+type=BPF msg=audit(1757415596.584:154): prog-id=48 op=UNLOAD
+type=SERVICE_STOP msg=audit(1757415600.021:155): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=systemd-localed comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=BPF msg=audit(1757415600.033:156): prog-id=52 op=UNLOAD
+type=BPF msg=audit(1757415600.033:157): prog-id=51 op=UNLOAD
+type=BPF msg=audit(1757415600.033:158): prog-id=50 op=UNLOAD
+type=BPF msg=audit(1757415916.690:159): prog-id=53 op=LOAD
+type=SERVICE_START msg=audit(1757415917.406:160): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=fprintd comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=USER_AUTH msg=audit(1757415923.475:161): pid=3006 uid=1000 auid=1000 ses=3 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 msg='op=PAM:authentication grantors=pam_usertype,pam_localuser,pam_unix acct="mariem" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/pts/0 res=success'UID="mariem" AUID="mariem"
+type=USER_ACCT msg=audit(1757415923.617:162): pid=3006 uid=1000 auid=1000 ses=3 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 msg='op=PAM:accounting grantors=pam_unix,pam_localuser acct="mariem" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/pts/0 res=success'UID="mariem" AUID="mariem"
+type=USER_CMD msg=audit(1757415923.619:163): pid=3006 uid=1000 auid=1000 ses=3 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 msg='cwd="/home/mariem/cis_audit_tool" cmd=707974686E33206D61696E2E7079202D2D6F6E6C696E65 exe="/usr/bin/sudo" terminal=pts/0 res=failed'UID="mariem" AUID="mariem"
+type=BPF msg=audit(1757415942.236:164): prog-id=54 op=LOAD
+type=BPF msg=audit(1757415942.239:165): prog-id=55 op=LOAD
+type=SERVICE_START msg=audit(1757415943.680:166): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=systemd-hostnamed comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=SERVICE_STOP msg=audit(1757415947.224:167): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=fprintd comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=BPF msg=audit(1757415947.236:168): prog-id=53 op=UNLOAD
+type=SERVICE_STOP msg=audit(1757415974.314:169): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=systemd-hostnamed comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=BPF msg=audit(1757415974.328:170): prog-id=55 op=UNLOAD
+type=BPF msg=audit(1757415974.328:171): prog-id=54 op=UNLOAD
+type=BPF msg=audit(1757416011.412:172): prog-id=56 op=LOAD
+type=SERVICE_START msg=audit(1757416012.185:173): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=fprintd comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=USER_AUTH msg=audit(1757416019.095:174): pid=3311 uid=1000 auid=1000 ses=3 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 msg='op=PAM:authentication grantors=pam_usertype,pam_localuser,pam_unix acct="mariem" exe="/usr/lib/polkit-1/polkit-agent-helper-1" hostname=? addr=? terminal=? res=success'UID="mariem" AUID="mariem"
+type=USER_ACCT msg=audit(1757416019.330:175): pid=3311 uid=1000 auid=1000 ses=3 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 msg='op=PAM:accounting grantors=pam_unix,pam_localuser acct="mariem" exe="/usr/lib/polkit-1/polkit-agent-helper-1" hostname=? addr=? terminal=? res=success'UID="mariem" AUID="mariem"
+type=USER_ACCT msg=audit(1757416024.334:176): pid=3437 uid=1000 auid=1000 ses=3 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 msg='op=PAM:accounting grantors=pam_access,pam_unix,pam_localuser acct="mariem" exe="/usr/bin/crontab" hostname=? addr=? terminal=cron res=success'UID="mariem" AUID="mariem"
+type=CRED_ACQ msg=audit(1757416024.339:177): pid=3437 uid=1000 auid=1000 ses=3 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 msg='op=PAM:setcred grantors=pam_env,pam_fprintd acct="mariem" exe="/usr/bin/crontab" hostname=? addr=? terminal=cron res=success'UID="mariem" AUID="mariem"
+type=SERVICE_STOP msg=audit(1757416042.285:178): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=fprintd comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=BPF msg=audit(1757416042.314:179): prog-id=56 op=UNLOAD
+type=SERVICE_START msg=audit(1757416185.869:180): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=systemd-tmpfiles-clean comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=SERVICE_STOP msg=audit(1757416185.869:181): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=systemd-tmpfiles-clean comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=SERVICE_START msg=audit(1757416287.006:182): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=NetworkManager-dispatcher comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=SERVICE_STOP msg=audit(1757416297.156:183): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=NetworkManager-dispatcher comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=BPF msg=audit(1757416522.128:184): prog-id=57 op=LOAD
+type=BPF msg=audit(1757416522.132:185): prog-id=58 op=LOAD
+type=SERVICE_START msg=audit(1757416523.735:186): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=systemd-hostnamed comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=SERVICE_STOP msg=audit(1757416554.131:187): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=systemd-hostnamed comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=BPF msg=audit(1757416554.154:188): prog-id=58 op=UNLOAD
+type=BPF msg=audit(1757416554.154:189): prog-id=57 op=UNLOAD
+type=SERVICE_START msg=audit(1757416652.261:190): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=dnf-makecache comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=SERVICE_STOP msg=audit(1757416652.263:191): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=dnf-makecache comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=SERVICE_START msg=audit(1757417187.105:192): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=NetworkManager-dispatcher comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=SERVICE_STOP msg=audit(1757417197.200:193): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=NetworkManager-dispatcher comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=SERVICE_START msg=audit(1757418090.668:194): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=NetworkManager-dispatcher comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=SERVICE_STOP msg=audit(1757418101.021:195): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=NetworkManager-dispatcher comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=BPF msg=audit(1757418859.069:196): prog-id=59 op=LOAD
+type=BPF msg=audit(1757418859.074:197): prog-id=60 op=LOAD
+type=SERVICE_START msg=audit(1757418860.134:198): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=systemd-hostnamed comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=SERVICE_STOP msg=audit(1757418890.805:199): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=systemd-hostnamed comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=BPF msg=audit(1757418890.819:200): prog-id=60 op=UNLOAD
+type=BPF msg=audit(1757418890.819:201): prog-id=59 op=UNLOAD
+type=SERVICE_START msg=audit(1757419101.873:202): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=NetworkManager-dispatcher comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=SERVICE_STOP msg=audit(1757419111.937:203): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=NetworkManager-dispatcher comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=BPF msg=audit(1757419704.309:204): prog-id=61 op=LOAD
+type=SERVICE_START msg=audit(1757419704.556:205): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=fprintd comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=USER_AUTH msg=audit(1757419714.355:206): pid=4987 uid=0 auid=1000 ses=2 subj=system_u:system_r:xdm_t:s0-s0:c0.c1023 msg='op=PAM:authentication grantors=pam_usertype,pam_localuser,pam_unix,pam_gnome_keyring acct="mariem" exe="/usr/libexec/gdm-session-worker" hostname=localhost.localdomain addr=? terminal=/dev/tty1 res=success'UID="root" AUID="mariem"
+type=USER_ACCT msg=audit(1757419714.623:207): pid=4987 uid=0 auid=1000 ses=2 subj=system_u:system_r:xdm_t:s0-s0:c0.c1023 msg='op=PAM:accounting grantors=pam_unix,pam_localuser acct="mariem" exe="/usr/libexec/gdm-session-worker" hostname=localhost.localdomain addr=? terminal=/dev/tty1 res=success'UID="root" AUID="mariem"
+type=CRED_REFR msg=audit(1757419714.628:208): pid=4987 uid=0 auid=1000 ses=2 subj=system_u:system_r:xdm_t:s0-s0:c0.c1023 msg='op=PAM:setcred grantors=pam_localuser,pam_unix,pam_gnome_keyring acct="mariem" exe="/usr/libexec/gdm-session-worker" hostname=localhost.localdomain addr=? terminal=/dev/tty1 res=success'UID="root" AUID="mariem"
+type=SERVICE_STOP msg=audit(1757419735.119:209): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=fprintd comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=BPF msg=audit(1757419735.135:210): prog-id=61 op=UNLOAD
+type=BPF msg=audit(1757419907.060:211): prog-id=62 op=LOAD
+type=SERVICE_START msg=audit(1757419907.327:212): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=fprintd comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=USER_AUTH msg=audit(1757419911.976:213): pid=5057 uid=1000 auid=1000 ses=3 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 msg='op=PAM:authentication grantors=pam_usertype,pam_localuser,pam_unix acct="mariem" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/pts/0 res=success'UID="mariem" AUID="mariem"
+type=USER_ACCT msg=audit(1757419912.102:214): pid=5057 uid=1000 auid=1000 ses=3 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 msg='op=PAM:accounting grantors=pam_unix,pam_localuser acct="mariem" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/pts/0 res=success'UID="mariem" AUID="mariem"
+type=USER_CMD msg=audit(1757419912.103:215): pid=5057 uid=1000 auid=1000 ses=3 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 msg='cwd="/home/mariem/cis_audit_tool/scripts" cmd="collect_data.sh" exe="/usr/bin/sudo" terminal=pts/0 res=failed'UID="mariem" AUID="mariem"
+type=SERVICE_STOP msg=audit(1757419938.142:216): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=fprintd comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=BPF msg=audit(1757419938.165:217): prog-id=62 op=UNLOAD
+type=USER_ACCT msg=audit(1757419997.179:218): pid=5157 uid=1000 auid=1000 ses=3 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 msg='op=PAM:accounting grantors=pam_unix,pam_localuser acct="mariem" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/pts/0 res=success'UID="mariem" AUID="mariem"
+type=USER_CMD msg=audit(1757419997.180:219): pid=5157 uid=1000 auid=1000 ses=3 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 msg='cwd="/home/mariem/cis_audit_tool/scripts" cmd="collect_data.sh" exe="/usr/bin/sudo" terminal=pts/0 res=failed'UID="mariem" AUID="mariem"
+type=SERVICE_START msg=audit(1757420001.933:220): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=NetworkManager-dispatcher comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=SERVICE_STOP msg=audit(1757420012.096:221): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=NetworkManager-dispatcher comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=BPF msg=audit(1757420309.635:222): prog-id=63 op=LOAD
+type=SERVICE_START msg=audit(1757420310.023:223): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=fprintd comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=USER_AUTH msg=audit(1757420316.084:224): pid=5304 uid=1000 auid=1000 ses=3 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 msg='op=PAM:authentication grantors=pam_usertype,pam_localuser,pam_unix acct="mariem" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/pts/0 res=success'UID="mariem" AUID="mariem"
+type=USER_ACCT msg=audit(1757420316.245:225): pid=5304 uid=1000 auid=1000 ses=3 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 msg='op=PAM:accounting grantors=pam_unix,pam_localuser acct="mariem" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/pts/0 res=success'UID="mariem" AUID="mariem"
+type=USER_CMD msg=audit(1757420316.246:226): pid=5304 uid=1000 auid=1000 ses=3 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 msg='cwd="/home/mariem/cis_audit_tool/scripts" cmd="collect_data.sh" exe="/usr/bin/sudo" terminal=pts/0 res=failed'UID="mariem" AUID="mariem"
+type=SERVICE_STOP msg=audit(1757420340.122:227): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=fprintd comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=BPF msg=audit(1757420340.140:228): prog-id=63 op=UNLOAD
+type=USER_ACCT msg=audit(1757420546.879:229): pid=5407 uid=1000 auid=1000 ses=3 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 msg='op=PAM:accounting grantors=pam_unix,pam_localuser acct="mariem" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/pts/0 res=success'UID="mariem" AUID="mariem"
+type=USER_CMD msg=audit(1757420546.881:230): pid=5407 uid=1000 auid=1000 ses=3 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 msg='cwd="/home/mariem/cis_audit_tool/scripts" cmd="./collect_data.sh" exe="/usr/bin/sudo" terminal=pts/0 res=success'UID="mariem" AUID="mariem"
+type=CRED_REFR msg=audit(1757420546.883:231): pid=5407 uid=1000 auid=1000 ses=3 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 msg='op=PAM:setcred grantors=pam_env,pam_fprintd acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/pts/0 res=success'UID="mariem" AUID="mariem"
+type=USER_START msg=audit(1757420546.898:232): pid=5407 uid=1000 auid=1000 ses=3 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 msg='op=PAM:session_open grantors=pam_keyinit,pam_limits,pam_systemd,pam_unix acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/pts/0 res=success'UID="mariem" AUID="mariem"
+type=BPF msg=audit(1757420547.950:233): prog-id=64 op=LOAD
+type=BPF msg=audit(1757420547.951:234): prog-id=65 op=LOAD
+type=SERVICE_START msg=audit(1757420548.432:235): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=systemd-hostnamed comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=SERVICE_STOP msg=audit(1757420578.678:236): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=systemd-hostnamed comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=BPF msg=audit(1757420578.712:237): prog-id=65 op=UNLOAD
+type=BPF msg=audit(1757420578.712:238): prog-id=64 op=UNLOAD
